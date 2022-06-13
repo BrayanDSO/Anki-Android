@@ -87,7 +87,7 @@ enum class ViewerCommand(val resourceId: Int, private val preferenceValue: Int) 
     }
 
     val preferenceKey: String
-        get() = "binding_" + name.replaceFirst("COMMAND_".toRegex(), "")
+        get() = "binding_" + name.replaceFirst("COMMAND_", "")
 
     fun addBinding(preferences: SharedPreferences, binding: MappableBinding) {
         val addAtStart = BiFunction { collection: MutableList<MappableBinding>, element: MappableBinding ->
