@@ -103,14 +103,22 @@ class ControlPreference : ListPreference {
     override fun callChangeListener(newValue: Any?): Boolean {
         when (val index: Int = (newValue as String).toInt()) {
             ADD_KEY_INDEX -> {
-                KeySelectionDialogBuilder(context)
-                    .onBindingChanged { binding -> checkExistingBinding(MappableBinding(binding, MappableBinding.Screen.Reviewer(CardSide.BOTH))) }
-                    // select a side, then add
-                    .onBindingSubmitted { binding ->
-                        CardSideSelectionDialog.displayInstance(context) { side -> addBinding(MappableBinding(binding, MappableBinding.Screen.Reviewer(side))) }
+                KeySelectionDialogBuilder(context).apply {
+                    onBindingChanged { binding -> checkExistingBinding(MappableBinding(binding, MappableBinding.Screen.Reviewer(CardSide.BOTH))) }
+                    onPositive { dialog, _ ->
+                        val binding = mKeyPicker.getBinding() ?: return@onPositive
+                        // Use CardSide.BOTH as placeholder just to check if binding exists
+                        if (!checkExistingBinding(MappableBinding(binding, MappableBinding.Screen.Reviewer(CardSide.BOTH)))) {
+                            // select a side, then add
+                            CardSideSelectionDialog.displayInstance(context) { side ->
+                                addBinding(MappableBinding(binding, MappableBinding.Screen.Reviewer(side)))
+                                dialog.dismiss()
+                            }
+                        }
                     }
-                    .disallowModifierKeys()
-                    .show()
+                    autoDismiss(false)
+                    disallowModifierKeys()
+                }.show()
             }
             else -> {
                 val bindings: MutableList<MappableBinding> = MappableBinding.fromPreferenceString(value)
@@ -130,12 +138,13 @@ class ControlPreference : ListPreference {
     }
 
     /** Displays a warning to the user if the provided binding couldn't be used */
-    private fun checkExistingBinding(binding: MappableBinding) {
+    private fun checkExistingBinding(binding: MappableBinding): Boolean {
         val existingCommands = getExistingCommands(binding).toList()
-        if (existingCommands.isEmpty()) return // no conflicts
+        if (existingCommands.isEmpty()) return false // no conflicts
         val commandNames = existingCommands.map { context.getString(it.resourceId) }
         val text = context.getString(R.string.bindings_already_bound, TextUtils.join(", ", commandNames))
         UIUtils.showThemedToast(context, text, true)
+        return true
     }
 
     /** return all commands where the binding is already mapped excluding the current command */
