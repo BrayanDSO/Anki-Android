@@ -56,7 +56,7 @@ constructor(ctx: Context, attributeSet: AttributeSet? = null, defStyleAttr: Int 
         mGestureSpinner.onItemSelectedListener = InnerSpinner()
     }
 
-    fun getGesture() = mGestureDisplay.getGesture()
+    fun getGesture() = mGestureDisplay.mGesture
 
     private fun onGesture(gesture: Gesture?) {
         Timber.d("gesture: %s", gesture?.toDisplayString(context))

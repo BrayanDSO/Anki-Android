@@ -53,7 +53,7 @@ constructor(context: Context, attributeSet: AttributeSet? = null, defStyleAttr: 
     private val mTapGestureMode: TapGestureMode
 
     /** The last recorded gesture (null if no gestures provided, or if explicitly set)  */
-    private var mGesture: Gesture? = null
+    var mGesture: Gesture? = null
 
     private var mSwipeView: ImageView
 
@@ -89,8 +89,6 @@ constructor(context: Context, attributeSet: AttributeSet? = null, defStyleAttr: 
         val width = measuredWidth
         setMeasuredDimension(width, width)
     }
-
-    fun getGesture() = mGesture
 
     /** Updates the UI from a new gesture
      * fires the "Gesture Changed" event if the gesture has changed and is non-null
