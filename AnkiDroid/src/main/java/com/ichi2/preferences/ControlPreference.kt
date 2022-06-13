@@ -28,12 +28,15 @@ import androidx.preference.PreferenceCategory
 import com.ichi2.anki.AnkiDroidApp
 import com.ichi2.anki.R
 import com.ichi2.anki.UIUtils
+import com.ichi2.anki.cardviewer.GestureProcessor
 import com.ichi2.anki.cardviewer.ViewerCommand
 import com.ichi2.anki.dialogs.CardSideSelectionDialog
+import com.ichi2.anki.dialogs.GestureSelectionDialogBuilder
 import com.ichi2.anki.dialogs.KeySelectionDialogBuilder
 import com.ichi2.anki.reviewer.Binding
 import com.ichi2.anki.reviewer.CardSide
 import com.ichi2.anki.reviewer.MappableBinding
+import com.ichi2.anki.reviewer.MappableBinding.Companion.fromGesture
 import com.ichi2.anki.reviewer.MappableBinding.Companion.toPreferenceString
 import timber.log.Timber
 import java.util.*
@@ -61,6 +64,11 @@ class ControlPreference : ListPreference {
         // negative indices are "add"
         entryTitles.add(context.getString(R.string.binding_add_key))
         entryIndices.add(ADD_KEY_INDEX)
+        // Put "Add gesture" option if gestures are enabled
+        if (AnkiDroidApp.getSharedPrefs(context).getBoolean(GestureProcessor.PREF_KEY, false)) {
+            entryTitles.add(context.getString(R.string.binding_add_gesture))
+            entryIndices.add(ADD_GESTURE_INDEX)
+        }
         // 0 and above are "delete" actions for already mapped preferences
         for ((i, binding) in MappableBinding.fromPreferenceString(value).withIndex()) {
             entryTitles.add(context.getString(R.string.binding_remove_binding, binding.toDisplayString(context)))
@@ -102,6 +110,22 @@ class ControlPreference : ListPreference {
     /** Called when an element is selected in the ListView */
     override fun callChangeListener(newValue: Any?): Boolean {
         when (val index: Int = (newValue as String).toInt()) {
+            ADD_GESTURE_INDEX -> {
+                GestureSelectionDialogBuilder(context).apply {
+                    onGestureChanged { gesture ->
+                        checkExistingBinding(fromGesture(Binding.gesture(gesture)))
+                    }
+                    onPositive { dialog, _ ->
+                        val gesture = mGesturePicker.getGesture() ?: return@onPositive
+                        val mappableBinding = fromGesture(Binding.gesture(gesture))
+                        if (!checkExistingBinding((mappableBinding))) {
+                            addBinding(mappableBinding)
+                            dialog.dismiss()
+                        }
+                    }
+                    autoDismiss(false)
+                }.show()
+            }
             ADD_KEY_INDEX -> {
                 KeySelectionDialogBuilder(context).apply {
                     onBindingChanged { binding -> checkExistingBinding(MappableBinding(binding, MappableBinding.Screen.Reviewer(CardSide.BOTH))) }
@@ -168,7 +192,8 @@ class ControlPreference : ListPreference {
     }
 
     companion object {
-        private const val ADD_KEY_INDEX = -1
+        private const val ADD_KEY_INDEX = -2
+        private const val ADD_GESTURE_INDEX = -1
 
         /** Attaches all possible [ControlPreference] elements to a given [PreferenceCategory] */
         @JvmStatic

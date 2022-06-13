@@ -21,8 +21,10 @@ import android.view.KeyEvent
 import androidx.annotation.VisibleForTesting
 import androidx.core.content.edit
 import com.ichi2.anki.AnkiDroidApp
+import com.ichi2.anki.cardviewer.Gesture
 import com.ichi2.anki.cardviewer.ViewerCommand
 import com.ichi2.anki.noteeditor.CustomToolbarButton
+import com.ichi2.anki.reviewer.Binding
 import com.ichi2.anki.reviewer.Binding.Companion.keyCode
 import com.ichi2.anki.reviewer.CardSide
 import com.ichi2.anki.reviewer.FullScreenMode
@@ -81,6 +83,7 @@ object PreferenceUpgradeService {
                 yield(UpgradeVolumeButtonsToBindings())
                 yield(RemoveLegacyMediaSyncUrl())
                 yield(UpdateNoteEditorToolbarPrefs())
+                yield(UpgradeGesturesToControls())
             }
 
             /** Returns a list of preference upgrade classes which have not been applied */
@@ -277,6 +280,64 @@ object PreferenceUpgradeService {
                     buttons.add(CustomToolbarButton(index, buttonText, fields[1], fields[2]))
                 }
                 return buttons
+            }
+        }
+
+        internal class UpgradeGesturesToControls : PreferenceUpgrade(5) {
+            override fun upgrade(preferences: SharedPreferences) {
+                upgradeGestureToBinding(preferences, "gestureSwipeUp", Gesture.SWIPE_UP)
+                upgradeGestureToBinding(preferences, "gestureSwipeDown", Gesture.SWIPE_DOWN)
+                upgradeGestureToBinding(preferences, "gestureSwipeLeft", Gesture.SWIPE_LEFT)
+                upgradeGestureToBinding(preferences, "gestureSwipeRight", Gesture.SWIPE_RIGHT)
+                upgradeGestureToBinding(preferences, "gestureLongclick", Gesture.LONG_TAP)
+                upgradeGestureToBinding(preferences, "gestureDoubleTap", Gesture.DOUBLE_TAP)
+                upgradeGestureToBinding(preferences, "gestureTapTopLeft", Gesture.TAP_TOP_LEFT)
+                upgradeGestureToBinding(preferences, "gestureTapTop", Gesture.TAP_TOP)
+                upgradeGestureToBinding(preferences, "gestureTapTopRight", Gesture.TAP_TOP_RIGHT)
+                upgradeGestureToBinding(preferences, "gestureTapLeft", Gesture.TAP_LEFT)
+                upgradeGestureToBinding(preferences, "gestureTapCenter", Gesture.TAP_CENTER)
+                upgradeGestureToBinding(preferences, "gestureTapRight", Gesture.TAP_RIGHT)
+                upgradeGestureToBinding(preferences, "gestureTapBottomLeft", Gesture.TAP_BOTTOM_LEFT)
+                upgradeGestureToBinding(preferences, "gestureTapBottom", Gesture.TAP_BOTTOM)
+                upgradeGestureToBinding(preferences, "gestureTapBottomRight", Gesture.TAP_BOTTOM_RIGHT)
+            }
+
+            @VisibleForTesting
+            internal fun upgradeGestureToBinding(preferences: SharedPreferences, oldGesturePreferenceKey: String, gesture: Gesture) {
+                Timber.d("Replacing gesture '%s' with binding", oldGesturePreferenceKey)
+
+                // This exists as a user may have mapped "volume down" to "UNDO".
+                // Undo already exists as a key binding, and we don't want to trash this during an upgrade
+                if (!preferences.contains(oldGesturePreferenceKey)) {
+                    Timber.v("No preference to upgrade")
+                    return
+                }
+
+                try {
+                    replaceGestureWithBinding(preferences, oldGesturePreferenceKey, gesture)
+                } finally {
+                    Timber.v("removing pref key: '%s'", oldGesturePreferenceKey)
+                    // remove the old key
+                    preferences.edit { remove(oldGesturePreferenceKey) }
+                }
+            }
+
+            private fun replaceGestureWithBinding(preferences: SharedPreferences, oldGesturePreferenceKey: String, gesture: Gesture) {
+                // the preference should be set, but if it's null, then we have nothing to do
+                val pref = preferences.getString(oldGesturePreferenceKey, "0") ?: return
+                // If the preference doesn't map (for example: it was removed), then nothing to do
+                val asInt = pref.toIntOrNull() ?: return
+                val command = ViewerCommand.fromInt(asInt) ?: return
+
+                if (command == ViewerCommand.COMMAND_NOTHING) {
+                    return
+                }
+
+                Timber.i("Moving preference from '%s' to '%s'", oldGesturePreferenceKey, command.preferenceKey)
+
+                // add to the binding_COMMANDNAME preference
+                val binding = MappableBinding(Binding.gesture(gesture), MappableBinding.Screen.Reviewer(CardSide.BOTH))
+                command.addBindingAtEnd(preferences, binding)
             }
         }
     }

@@ -78,8 +78,8 @@ class BindingTest {
             val bindings = Binding.key(mock)
 
             for (binding in bindings) {
-                assertThat("Should match when '$name:$returnedFromMock': ", getValue(binding.getModifierKeys()!!, true), `is`(returnedFromMock))
-                assertThat("Should match when '$name:${!returnedFromMock}': ", getValue(binding.getModifierKeys()!!, false), `is`(!returnedFromMock))
+                assertThat("Should match when '$name:$returnedFromMock': ", getValue(binding.modifierKeys!!, true), `is`(returnedFromMock))
+                assertThat("Should match when '$name:${!returnedFromMock}': ", getValue(binding.modifierKeys!!, false), `is`(!returnedFromMock))
             }
         }
 
