@@ -66,7 +66,6 @@ import com.ichi2.libanki.Utils
 import com.ichi2.libanki.backend.exception.BackendNotSupportedException
 import com.ichi2.libanki.utils.TimeManager
 import com.ichi2.preferences.*
-import com.ichi2.preferences.ControlPreference.Companion.setup
 import com.ichi2.themes.Themes
 import com.ichi2.themes.Themes.setThemeLegacy
 import com.ichi2.themes.Themes.systemIsInNightMode
@@ -627,9 +626,6 @@ class Preferences : AnkiActivity() {
                     }
                     CardBrowserContextMenu.CARD_BROWSER_CONTEXT_MENU_PREF_KEY -> CardBrowserContextMenu.ensureConsistentStateWithSharedPreferences(preferencesActivity)
                     AnkiCardContextMenu.ANKI_CARD_CONTEXT_MENU_PREF_KEY -> AnkiCardContextMenu.ensureConsistentStateWithSharedPreferences(preferencesActivity)
-                    "gestureCornerTouch" -> {
-                        GesturesSettingsFragment.updateGestureCornerTouch(preferencesActivity, screen)
-                    }
                 }
                 // Update the summary text to reflect new value
                 preferencesActivity.updateSummary(pref)
@@ -978,40 +974,6 @@ class Preferences : AnkiActivity() {
         }
     }
 
-    class GesturesSettingsFragment : SpecificSettingsFragment() {
-        override val preferenceResource: Int
-            get() = R.xml.preferences_gestures
-        override val analyticsScreenNameConstant: String
-            get() = "prefs.gestures"
-
-        override fun initSubscreen() {
-            addPreferencesFromResource(R.xml.preferences_gestures)
-            val screen = preferenceScreen
-            updateGestureCornerTouch(screen)
-        }
-
-        private fun updateGestureCornerTouch(screen: PreferenceScreen) {
-            updateGestureCornerTouch(requireContext(), screen)
-        }
-
-        companion object {
-            fun updateGestureCornerTouch(context: Context?, screen: PreferenceScreen) {
-                val gestureCornerTouch = AnkiDroidApp.getSharedPrefs(context).getBoolean("gestureCornerTouch", false)
-                if (gestureCornerTouch) {
-                    requirePreference<Preference>(screen, "gestureTapTop").setTitle(R.string.gestures_corner_tap_top_center)
-                    requirePreference<Preference>(screen, "gestureTapLeft").setTitle(R.string.gestures_corner_tap_middle_left)
-                    requirePreference<Preference>(screen, "gestureTapRight").setTitle(R.string.gestures_corner_tap_middle_right)
-                    requirePreference<Preference>(screen, "gestureTapBottom").setTitle(R.string.gestures_corner_tap_bottom_center)
-                } else {
-                    requirePreference<Preference>(screen, "gestureTapTop").setTitle(R.string.gestures_tap_top)
-                    requirePreference<Preference>(screen, "gestureTapLeft").setTitle(R.string.gestures_tap_left)
-                    requirePreference<Preference>(screen, "gestureTapRight").setTitle(R.string.gestures_tap_right)
-                    requirePreference<Preference>(screen, "gestureTapBottom").setTitle(R.string.gestures_tap_bottom)
-                }
-            }
-        }
-    }
-
     class AdvancedSettingsFragment : SpecificSettingsFragment() {
         override val preferenceResource: Int
             get() = R.xml.preferences_advanced
@@ -1256,7 +1218,7 @@ class Preferences : AnkiActivity() {
         override fun initSubscreen() {
             addPreferencesFromResource(R.xml.preferences_controls)
             val cat = requirePreference<PreferenceCategory>("key_map_category")
-            setup(cat)
+            ControlPreference.setup(cat)
         }
     }
 
