@@ -17,6 +17,7 @@ package com.ichi2.anki.servicemodel
 
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ichi2.anki.RobolectricTest
 import com.ichi2.anki.cardviewer.ViewerCommand
 import com.ichi2.anki.reviewer.Binding.Companion.keyCode
@@ -33,11 +34,10 @@ import org.hamcrest.Matchers.hasSize
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.ParameterizedRobolectricTestRunner
 import timber.log.Timber
 
-@RunWith(ParameterizedRobolectricTestRunner::class)
-class UpgradeVolumeButtonsToBindingsTest(private val testData: TestData) : RobolectricTest() {
+@RunWith(AndroidJUnit4::class)
+class UpgradeVolumeButtonsToBindingsTest : RobolectricTest() {
     private val changedKeys = HashSet<String>()
 
     private lateinit var prefs: SharedPreferences
@@ -82,8 +82,7 @@ class UpgradeVolumeButtonsToBindingsTest(private val testData: TestData) : Robol
         assertThat("Volume gestures are removed", prefs.contains(PREF_KEY_VOLUME_UP), equalTo(false))
     }
 
-    @Test
-    fun gesture_set_no_conflicts() {
+    private fun gesture_set_no_conflicts(testData: TestData) {
         // assume that we have a preference set, and that it has no defaults
         val command = ViewerCommand.SHOW_ANSWER
         prefs.edit { putString(testData.affectedPreferenceKey, command.toPreferenceString()) }
@@ -108,7 +107,16 @@ class UpgradeVolumeButtonsToBindingsTest(private val testData: TestData) : Robol
     }
 
     @Test
-    fun if_mapped_to_non_empty_binding_then_added_to_end() {
+    fun test_volumeUp_gesture_set_no_conflicts() {
+        gesture_set_no_conflicts(volumeUpTestData)
+    }
+
+    @Test
+    fun test_volumeDown_gesture_set_no_conflicts() {
+        gesture_set_no_conflicts(volumeDownTestData)
+    }
+
+    private fun if_mapped_to_non_empty_binding_then_added_to_end(testData: TestData) {
         // common path
         // if the gesture was mapped to a command which already had bindings,
         // check it is added to the list at the end
@@ -143,7 +151,16 @@ class UpgradeVolumeButtonsToBindingsTest(private val testData: TestData) : Robol
     }
 
     @Test
-    fun if_gesture_already_exists_then_do_not_modify_list() {
+    fun test_volumeUp_if_mapped_to_non_empty_binding_then_added_to_end() {
+        if_mapped_to_non_empty_binding_then_added_to_end(volumeUpTestData)
+    }
+
+    @Test
+    fun test_volumeDown_test_if_mapped_to_non_empty_binding_then_added_to_end() {
+        if_mapped_to_non_empty_binding_then_added_to_end(volumeDownTestData)
+    }
+
+    private fun if_gesture_already_exists_then_do_not_modify_list(testData: TestData) {
         // the gestures shouldn't already be a keybind (as we've just introduced the feature)
         // but if it is, then we want to ignore it in the upgrade.
 
@@ -168,7 +185,16 @@ class UpgradeVolumeButtonsToBindingsTest(private val testData: TestData) : Robol
     }
 
     @Test
-    fun invalid_preference_value_results_in_old_null_value_and_no_new_value() {
+    fun test_volumeUp_if_gesture_already_exists_then_do_not_modify_list() {
+        if_gesture_already_exists_then_do_not_modify_list(volumeUpTestData)
+    }
+
+    @Test
+    fun test_volumeDown_if_gesture_already_exists_then_do_not_modify_list() {
+        if_gesture_already_exists_then_do_not_modify_list(volumeDownTestData)
+    }
+
+    private fun invalid_preference_value_results_in_old_null_value_and_no_new_value(testData: TestData) {
         prefs.edit { putString(testData.affectedPreferenceKey, "bananas") }
 
         upgradeAllGestures()
@@ -179,7 +205,16 @@ class UpgradeVolumeButtonsToBindingsTest(private val testData: TestData) : Robol
     }
 
     @Test
-    fun invalid_command_value_results_in_old_null_value_and_no_new_value() {
+    fun test_volumeUp_invalid_preference_value_results_in_old_null_value_and_no_new_value() {
+        invalid_preference_value_results_in_old_null_value_and_no_new_value(volumeUpTestData)
+    }
+
+    @Test
+    fun test_volumeDown_invalid_preference_value_results_in_old_null_value_and_no_new_value() {
+        invalid_preference_value_results_in_old_null_value_and_no_new_value(volumeDownTestData)
+    }
+
+    private fun invalid_command_value_results_in_old_null_value_and_no_new_value(testData: TestData) {
         // a valid int, but not a valid command
         prefs.edit { putString(testData.affectedPreferenceKey, "-1") }
 
@@ -188,6 +223,16 @@ class UpgradeVolumeButtonsToBindingsTest(private val testData: TestData) : Robol
         assertThat("Binding gestures should not be changed", changedKeys, Matchers.containsInAnyOrder("preferenceUpgradeVersion", testData.affectedPreferenceKey))
 
         assertThat("legacy preference removed", prefs.contains(testData.affectedPreferenceKey), equalTo(false))
+    }
+
+    @Test
+    fun test_volumeUp_invalid_command_value_results_in_old_null_value_and_no_new_value() {
+        invalid_command_value_results_in_old_null_value_and_no_new_value(volumeUpTestData)
+    }
+
+    @Test
+    fun test_volumeDown_invalid_command_value_results_in_old_null_value_and_no_new_value() {
+        invalid_command_value_results_in_old_null_value_and_no_new_value(volumeDownTestData)
     }
 
     private fun upgradeAllGestures() {
@@ -204,15 +249,10 @@ class UpgradeVolumeButtonsToBindingsTest(private val testData: TestData) : Robol
         private val volume_up_binding = MappableBinding(keyCode(KEYCODE_VOLUME_UP), Reviewer(CardSide.BOTH))
         private val volume_down_binding = MappableBinding(keyCode(KEYCODE_VOLUME_DOWN), Reviewer(CardSide.BOTH))
 
-        @JvmStatic
-        @ParameterizedRobolectricTestRunner.Parameters(name = "{index}: isValid({0})={1}")
-        fun data(): Iterable<Array<Any>> {
-            // pref key, keyCode, opposite key
-            return arrayListOf<Array<Any>>(
-                arrayOf(TestData(PREF_KEY_VOLUME_UP, KEYCODE_VOLUME_UP, PREF_KEY_VOLUME_DOWN, volume_up_binding)),
-                arrayOf(TestData(PREF_KEY_VOLUME_DOWN, KEYCODE_VOLUME_DOWN, PREF_KEY_VOLUME_UP, volume_down_binding)),
-            ).toList()
-        }
+        val volumeUpTestData
+            get() = TestData(PREF_KEY_VOLUME_UP, KEYCODE_VOLUME_UP, PREF_KEY_VOLUME_DOWN, volume_up_binding)
+        val volumeDownTestData
+            get() = TestData(PREF_KEY_VOLUME_DOWN, KEYCODE_VOLUME_DOWN, PREF_KEY_VOLUME_UP, volume_down_binding)
 
         data class TestData(val affectedPreferenceKey: String, val keyCode: Int, val unaffectedPreferenceKey: String, val binding: MappableBinding)
     }
