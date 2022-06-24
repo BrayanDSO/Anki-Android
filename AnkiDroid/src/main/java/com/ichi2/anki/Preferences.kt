@@ -529,7 +529,6 @@ class Preferences : AnkiActivity() {
                 is ResetLanguageDialogPreference -> ResetLanguageDialogPreference.ResetLanguageDialogFragmentCompat.newInstance(preference.getKey())
                 is ConfirmationPreferenceCompat -> ConfirmationPreferenceCompat.ConfirmationDialogFragmentCompat.newInstance(preference.getKey())
                 is SeekBarPreferenceCompat -> SeekBarPreferenceCompat.SeekBarDialogFragmentCompat.newInstance(preference.getKey())
-                is ControlPreference -> ControlPreference.View.newInstance(preference.getKey())
                 else -> null
             }
 
