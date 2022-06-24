@@ -251,8 +251,8 @@ class Preferences : AnkiActivity() {
                     when (pref.key) {
                         SHOW_ESTIMATE -> (pref as SwitchPreference).isChecked = col.get_config_boolean("estTimes")
                         SHOW_PROGRESS -> (pref as SwitchPreference).isChecked = col.get_config_boolean("dueCounts")
-                        LEARN_CUTOFF -> (pref as NumberRangePreferenceCompat).setValue(col.get_config_int("collapseTime") / 60)
-                        TIME_LIMIT -> (pref as NumberRangePreferenceCompat).setValue(col.get_config_int("timeLim") / 60)
+                        LEARN_CUTOFF -> (pref as NumberPreference).value = (col.get_config_int("collapseTime") / 60).toString()
+                        TIME_LIMIT -> (pref as NumberPreference).value = (col.get_config_int("timeLim") / 60).toString()
                         USE_CURRENT -> (pref as ListPreference).setValueIndex(if (col.get_config("addToCur", true)!!) 0 else 1)
                         AUTOMATIC_ANSWER_ACTION -> (pref as ListPreference).setValueIndex(col.get_config(AutomaticAnswerAction.CONFIG_KEY, 0.toInt())!!)
                         NEW_SPREAD -> (pref as ListPreference).setValueIndex(col.get_config_int("newSpread"))
@@ -338,7 +338,6 @@ class Preferences : AnkiActivity() {
         }
         // Get value text
         val value: String = when (pref) {
-            is NumberRangePreferenceCompat -> pref.getValue().toString()
             is SeekBarPreferenceCompat -> pref.value.toString()
             is ListPreference -> pref.entry?.toString() ?: ""
             is EditTextPreference -> pref.text ?: ""
@@ -519,7 +518,6 @@ class Preferences : AnkiActivity() {
         override fun onDisplayPreferenceDialog(preference: Preference) {
             val dialogFragment = when (preference) {
                 is IncrementerNumberRangePreferenceCompat -> IncrementerNumberRangePreferenceCompat.IncrementerNumberRangeDialogFragmentCompat.newInstance(preference.getKey())
-                is NumberRangePreferenceCompat -> NumberRangePreferenceCompat.NumberRangeDialogFragmentCompat.newInstance(preference.getKey())
                 is SeekBarPreferenceCompat -> SeekBarPreferenceCompat.SeekBarDialogFragmentCompat.newInstance(preference.getKey())
                 is ControlPreference -> ControlPreference.View.newInstance(preference.getKey())
                 else -> null
@@ -569,11 +567,11 @@ class Preferences : AnkiActivity() {
                         preferencesActivity.col.setMod()
                     }
                     TIME_LIMIT -> {
-                        preferencesActivity.col.set_config("timeLim", (pref as NumberRangePreferenceCompat).getValue() * 60)
+                        preferencesActivity.col.set_config("timeLim", (pref as NumberPreference).value.toInt() * 60)
                         preferencesActivity.col.setMod()
                     }
                     LEARN_CUTOFF -> {
-                        preferencesActivity.col.set_config("collapseTime", (pref as NumberRangePreferenceCompat).getValue() * 60)
+                        preferencesActivity.col.set_config("collapseTime", (pref as NumberPreference).value.toInt() * 60)
                         preferencesActivity.col.setMod()
                     }
                     USE_CURRENT -> {

@@ -40,13 +40,13 @@
             app:min="0"
             app:xlabel="@string/xlabel_dayoffset_seekbar"
             app:ylabel="@string/ylabel_dayoffset_seekbar" />
-        <com.ichi2.preferences.NumberRangePreferenceCompat
+        <com.ichi2.preferences.NumberPreference
             android:key="@string/learn_cutoff_preference"
             android:summary="@string/time_limit_summ"
             android:title="@string/learn_cutoff"
             app:max="999"
             app:min="0" />
-        <com.ichi2.preferences.NumberRangePreferenceCompat
+        <com.ichi2.preferences.NumberPreference
             android:key="@string/time_limit_preference"
             android:summary="@string/time_limit_summ"
             android:title="@string/time_limit"
@@ -92,7 +92,7 @@
             android:key="@string/new_timezone_handling_preference"
             android:title="@string/new_timezone"
             android:defaultValue="false" />
-        <com.ichi2.preferences.NumberRangePreferenceCompat
+        <com.ichi2.preferences.NumberPreference
             android:defaultValue="200"
             android:key="@string/double_tap_time_interval_preference"
             android:summary="@string/pref_double_tap_time_interval_summary"

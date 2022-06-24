@@ -23,8 +23,10 @@ import android.text.TextUtils
 import android.util.AttributeSet
 import android.view.View
 import com.ichi2.anki.AnkiDroidApp
+import com.ichi2.utils.KotlinCleanup
 import timber.log.Timber
 
+@KotlinCleanup("Remove this file once DeckOptions migrates to NumberPreference.kt")
 @Suppress("deprecation") // TODO Tracked in https://github.com/ankidroid/Anki-Android/issues/5019 : use NumberRangePreferenceCompat
 open class NumberRangePreference : android.preference.EditTextPreference, AutoFocusable {
     protected val mMin: Int
