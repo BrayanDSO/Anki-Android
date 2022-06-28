@@ -79,6 +79,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.util.*
+import kotlin.collections.HashSet
 
 /**
  * Preferences dialog.
@@ -1116,6 +1117,22 @@ class Preferences : AnkiActivity() {
                 refreshScreen()
                 true
             }
+        }
+
+        @VisibleForTesting(otherwise = VisibleForTesting.NONE)
+        fun allKeys(): HashSet<String> {
+            val allKeys = HashSet<String>()
+            for (i in 0 until preferenceScreen.preferenceCount) {
+                val pref = preferenceScreen.getPreference(i)
+                if (pref is PreferenceCategory) {
+                    for (j in 0 until pref.preferenceCount) {
+                        allKeys.add(pref.getPreference(j).key)
+                    }
+                } else {
+                    allKeys.add(pref.key)
+                }
+            }
+            return allKeys
         }
 
         companion object {
