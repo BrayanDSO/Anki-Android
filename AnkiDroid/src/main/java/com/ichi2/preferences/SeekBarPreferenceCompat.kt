@@ -52,6 +52,11 @@ class SeekBarPreferenceCompat : DialogPreference {
     private var mMin = 0
     private var mInterval = 0
     private var mValue = 0
+    @StringRes var summaryFormattedStringResId: Int? = null
+        set(newValue) {
+            field = newValue ?: return
+            updateSummary(value)
+        }
 
     @StringRes
     private var mXLabel = 0
@@ -93,6 +98,19 @@ class SeekBarPreferenceCompat : DialogPreference {
         } else {
             defaultValue as Int
         }
+    }
+
+    private fun updateSummary(newValue: Any?) {
+        summary = if (summaryFormattedStringResId != null) {
+            context.getString(summaryFormattedStringResId!!, newValue)
+        } else {
+            value.toString()
+        }
+    }
+
+    override fun callChangeListener(newValue: Any?): Boolean {
+        updateSummary(newValue)
+        return super.callChangeListener(newValue)
     }
 
     var value: Int

@@ -25,6 +25,7 @@ import android.text.TextUtils
 import android.util.AttributeSet
 import android.view.View
 import android.widget.EditText
+import androidx.annotation.StringRes
 import androidx.preference.EditTextPreference
 import androidx.preference.EditTextPreferenceDialogFragmentCompat
 import com.ichi2.anki.AnkiDroidApp
@@ -56,6 +57,26 @@ open class NumberRangePreferenceCompat : EditTextPreference {
         protected set
     var max = 0
         private set
+
+    @StringRes
+    var summaryFormattedStringResId: Int? = null
+        set(newValue) {
+            field = newValue ?: return
+            updateSummary(getValue())
+        }
+
+    override fun onSetInitialValue(defaultValue: Any?) {
+        super.onSetInitialValue(defaultValue)
+        updateSummary()
+    }
+
+    private fun updateSummary(newValue: Any? = null) {
+        summary = if (summaryFormattedStringResId != null) {
+            context.getString(summaryFormattedStringResId!!, newValue)
+        } else {
+            getValue().toString()
+        }
+    }
 
     /** The maximum available number of digits */
     val maxDigits: Int get() = max.toString().length
@@ -208,8 +229,9 @@ open class NumberRangePreferenceCompat : EditTextPreference {
             if (!positiveResult) {
                 return
             }
-
-            numberRangePreference.setValue(editText.text.toString())
+            val newValue = editText.text.toString()
+            numberRangePreference.setValue(newValue)
+            numberRangePreference.updateSummary(newValue)
         }
 
         companion object {
