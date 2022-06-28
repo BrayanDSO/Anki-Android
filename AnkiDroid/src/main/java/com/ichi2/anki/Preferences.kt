@@ -57,9 +57,7 @@ import com.ichi2.anki.reviewer.FullScreenMode
 import com.ichi2.anki.services.BootService.Companion.scheduleNotification
 import com.ichi2.anki.services.NotificationService
 import com.ichi2.anki.web.CustomSyncServer
-import com.ichi2.anki.web.CustomSyncServer.getSyncBaseUrlOrDefault
 import com.ichi2.anki.web.CustomSyncServer.handleSyncServerPreferenceChange
-import com.ichi2.anki.web.CustomSyncServer.isEnabled
 import com.ichi2.compat.CompatHelper
 import com.ichi2.libanki.Collection
 import com.ichi2.libanki.Consts
@@ -74,7 +72,6 @@ import com.ichi2.themes.Themes.setThemeLegacy
 import com.ichi2.themes.Themes.systemIsInNightMode
 import com.ichi2.themes.Themes.updateCurrentTheme
 import com.ichi2.utils.AdaptionUtil.isRestrictedLearningDevice
-import com.ichi2.utils.KotlinCleanup
 import com.ichi2.utils.LanguageUtil
 import com.ichi2.utils.VersionUtils.pkgVersionName
 import timber.log.Timber
@@ -87,10 +84,6 @@ import java.util.*
  * Preferences dialog.
  */
 class Preferences : AnkiActivity() {
-    // Other variables
-    @KotlinCleanup("we use string? as some keys were null")
-    private val mOriginalSummaries = HashMap<String?, String>()
-
     /** The collection path when Preferences was opened   */
     private var mOldCollectionPath: String? = null
 
@@ -260,9 +253,6 @@ class Preferences : AnkiActivity() {
         } else if (MINIMUM_CARDS_DUE_FOR_NOTIFICATION == pref.key) {
             updateNotificationPreference(pref as ListPreference)
         }
-        // Set the value from the summary cache
-        val s = pref.summary
-        mOriginalSummaries[pref.key] = s?.toString() ?: ""
         // Update summary
         updateSummary(pref)
     }
@@ -298,74 +288,9 @@ class Preferences : AnkiActivity() {
         listPreference.summary = listPreference.entry.toString()
     }
 
-    private fun updateSummary(pref: Preference?) {
-        if (pref == null || pref.key == null) {
-            return
-        }
-        // Handle special cases
-        when (pref.key) {
-            "about_dialog_preference" -> pref.summary = resources.getString(R.string.about_version) + " " + pkgVersionName
-            "custom_sync_server_link" -> {
-                val preferences = AnkiDroidApp.getSharedPrefs(this)
-                if (!isEnabled(preferences)) {
-                    pref.setSummary(R.string.disabled)
-                } else {
-                    pref.summary = getSyncBaseUrlOrDefault(preferences, "")
-                }
-            }
-            "advanced_statistics_link" -> if (!AnkiDroidApp.getSharedPrefs(this).getBoolean("advanced_statistics_enabled", false)) {
-                pref.setSummary(R.string.disabled)
-            } else {
-                pref.setSummary(R.string.enabled)
-            }
-        }
-        // Get value text
-        val value: String = when (pref) {
-            is NumberRangePreferenceCompat -> pref.getValue().toString()
-            is SeekBarPreferenceCompat -> pref.value.toString()
-            is ListPreference -> pref.entry?.toString() ?: ""
-            is EditTextPreference -> pref.text ?: ""
-            is ControlPreference -> return
-            else -> return
-        }
-
-        // Get summary text
-        val oldSummary = mOriginalSummaries[pref.key] ?: ""
-        // Replace summary text with value according to some rules
-        pref.summary = when {
-            oldSummary == "" -> value
-            value == "" -> oldSummary
-            MINIMUM_CARDS_DUE_FOR_NOTIFICATION == pref.key -> replaceStringIfNumeric(oldSummary, value)
-            else -> replaceString(oldSummary, value)
-        }
-    }
-
-    /**
-     * Replace "XXX" in [str] with [value]
-     *
-     * This exists to enable formatting the summary of a preference with data
-     * As summary is set via XML, this cannot have format strings, so we use "XXX" later on.
-     */
-    private fun replaceString(str: String, value: String): String {
-        return if (str.contains("XXX")) {
-            str.replace("XXX", value)
-        } else {
-            str
-        }
-    }
-
-    /**
-     * If [value] is convertible to a double, replace "XXX" in [str] with the value
-     * @param str A string which may have "XXX", if so, this may be replaced
-     * @param value If this is a double, the "XXX" string in [str] is replaced with [value]
-     */
-    private fun replaceStringIfNumeric(str: String, value: String): String? {
-        return try {
-            value.toDouble()
-            replaceString(str, value)
-        } catch (e: NumberFormatException) {
-            Timber.w(e)
-            value
+    fun updateSummary(preference: Preference) {
+        if (preference is ListPreference) {
+            preference.summary = preference.entry.toString()
         }
     }
 
@@ -375,11 +300,6 @@ class Preferences : AnkiActivity() {
             col.save()
         }
     }
-
-    /** This is not fit for purpose (other than testing a single screen)  */
-    @get:VisibleForTesting(otherwise = VisibleForTesting.NONE)
-    val loadedPreferenceKeys: Set<String>
-        get() = mOriginalSummaries.keys.filterNotNull().toSet()
 
     // ----------------------------------------------------------------------------
     // Inner classes
@@ -756,6 +676,22 @@ class Preferences : AnkiActivity() {
 
         override fun initSubscreen() {
             addPreferencesFromResource(R.xml.preferences_reviewing)
+
+            // Learn ahead limit summary
+            requirePreference<NumberRangePreferenceCompat>(R.string.learn_cutoff_preference)
+                .summaryFormattedStringResId = R.string.pref_summary_minutes
+            // Timebox time limit
+            requirePreference<NumberRangePreferenceCompat>(R.string.time_limit_preference)
+                .summaryFormattedStringResId = R.string.pref_summary_minutes
+            // Start of next day summary
+            requirePreference<SeekBarPreferenceCompat>(R.string.day_offset_preference)
+                .summaryFormattedStringResId = R.string.day_offset_summary
+            // Time to show answer summary
+            requirePreference<SeekBarPreferenceCompat>(R.string.timeout_answer_seconds_preference)
+                .summaryFormattedStringResId = R.string.pref_summary_seconds
+            // Time to show question summary
+            requirePreference<SeekBarPreferenceCompat>(R.string.timeout_question_seconds_preference)
+                .summaryFormattedStringResId = R.string.pref_summary_seconds
         }
     }
 
@@ -802,6 +738,10 @@ class Preferences : AnkiActivity() {
 
         override fun initSubscreen() {
             addPreferencesFromResource(R.xml.preferences_appearance)
+            // Card browser font scaling summary
+            requirePreference<SeekBarPreferenceCompat>(R.string.pref_card_browser_font_scale_key)
+                .summaryFormattedStringResId = R.string.pref_summary_percentage
+
             // Show error toast if the user tries to disable answer button without gestures on
             requirePreference<Preference>(R.string.answer_buttons_position_preference).setOnPreferenceChangeListener() { _, newValue: Any ->
                 val prefs = AnkiDroidApp.getSharedPrefs(requireContext())
@@ -992,22 +932,25 @@ class Preferences : AnkiActivity() {
             addPreferencesFromResource(R.xml.preferences_advanced)
             val screen = preferenceScreen
             // Check that input is valid before committing change in the collection path
-            val collectionPathPreference = requirePreference<EditTextPreference>(CollectionHelper.PREF_COLLECTION_PATH)
-            collectionPathPreference.onPreferenceChangeListener = Preference.OnPreferenceChangeListener { _, newValue: Any? ->
-                val newPath = newValue as String?
-                try {
-                    CollectionHelper.initializeAnkiDroidDirectory(newPath)
-                    return@OnPreferenceChangeListener true
-                } catch (e: StorageAccessException) {
-                    Timber.e(e, "Could not initialize directory: %s", newPath)
-                    MaterialDialog.Builder(requireContext())
-                        .title(R.string.dialog_collection_path_not_dir)
-                        .positiveText(R.string.dialog_ok)
-                        .negativeText(R.string.reset_custom_buttons)
-                        .onPositive { dialog: MaterialDialog, _ -> dialog.dismiss() }
-                        .onNegative { _, _ -> collectionPathPreference.text = CollectionHelper.getDefaultAnkiDroidDirectory(requireContext()) }
-                        .show()
-                    return@OnPreferenceChangeListener false
+            requirePreference<EditTextPreference>(CollectionHelper.PREF_COLLECTION_PATH).apply {
+                summary = text
+                setOnPreferenceChangeListener { _, newValue: Any? ->
+                    val newPath = newValue as String?
+                    summary = newPath
+                    try {
+                        CollectionHelper.initializeAnkiDroidDirectory(newPath)
+                        true
+                    } catch (e: StorageAccessException) {
+                        Timber.e(e, "Could not initialize directory: %s", newPath)
+                        MaterialDialog.Builder(requireContext())
+                            .title(R.string.dialog_collection_path_not_dir)
+                            .positiveText(R.string.dialog_ok)
+                            .negativeText(R.string.reset_custom_buttons)
+                            .onPositive { dialog: MaterialDialog, _ -> dialog.dismiss() }
+                            .onNegative { _, _ -> text = CollectionHelper.getDefaultAnkiDroidDirectory(requireContext()) }
+                            .show()
+                        false
+                    }
                 }
             }
             setupContextMenuPreference(CardBrowserContextMenu.CARD_BROWSER_CONTEXT_MENU_PREF_KEY, R.string.card_browser_context_menu)
@@ -1076,6 +1019,9 @@ class Preferences : AnkiActivity() {
                     .show()
                 true
             }
+            // About summary
+            requirePreference<Preference>("about_dialog_preference")
+                .summary = getString(R.string.about_version) + " " + pkgVersionName
         }
 
         private fun setupContextMenuPreference(key: String, @StringRes contextMenuName: Int) {
@@ -1188,6 +1134,10 @@ class Preferences : AnkiActivity() {
 
         override fun initSubscreen() {
             addPreferencesFromResource(R.xml.preferences_advanced_statistics)
+
+            // Precision of computation summary
+            requirePreference<SeekBarPreferenceCompat>(R.string.pref_computation_precision_key)
+                .summaryFormattedStringResId = R.string.pref_summary_percentage
         }
     }
 
