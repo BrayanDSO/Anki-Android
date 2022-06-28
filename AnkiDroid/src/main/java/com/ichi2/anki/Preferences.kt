@@ -136,7 +136,7 @@ class Preferences : AnkiActivity() {
         }
         supportFragmentManager
             .beginTransaction()
-            .replace(R.id.settings_container, initialFragment)
+            .replace(R.id.settings_container, initialFragment, INITIAL_FRAGMENT_TAG)
             .commit()
     }
 
@@ -1341,7 +1341,8 @@ class Preferences : AnkiActivity() {
             SHOW_ESTIMATE, SHOW_PROGRESS,
             LEARN_CUTOFF, TIME_LIMIT, USE_CURRENT, NEW_SPREAD, DAY_OFFSET, NEW_TIMEZONE_HANDLING, AUTOMATIC_ANSWER_ACTION
         )
-        const val INITIAL_FRAGMENT_EXTRA = "initial_fragment"
+        const val INITIAL_FRAGMENT_TAG = "initial_fragment_tag"
+        const val INITIAL_FRAGMENT_EXTRA = "initial_fragment_extra"
 
         /** Returns the hour that the collection rolls over to the next day  */
         @JvmStatic
