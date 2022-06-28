@@ -29,13 +29,11 @@
         <EditTextPreference
             android:defaultValue="/sdcard/AnkiDroid"
             android:key="deckPath"
-            android:summary="@string/preference_summary_literal"
             android:title="@string/col_path" />
         <PreferenceCategory android:title="@string/pref_cat_performance" >
             <com.ichi2.preferences.IncrementerNumberRangePreferenceCompat
                 android:defaultValue="8"
-                android:key="backupMax"
-                android:summary="@string/preference_summary_literal"
+                android:key="@string/pref_backup_max_key"
                 android:title="@string/pref_backup_max"
                 app:min="0"
                 app:max="99" />
