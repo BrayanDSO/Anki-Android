@@ -14,7 +14,9 @@
   ~  You should have received a copy of the GNU General Public License along with
   ~  this program.  If not, see <http://www.gnu.org/licenses/>.
   -->
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:search="http://schemas.android.com/apk/com.bytehamster.lib.preferencesearch"
     android:title="@string/pref_cat_sync">
     <Preference
         android:dialogTitle="@string/sync_account"
@@ -47,5 +49,6 @@
     <Preference
         android:key="@string/custom_sync_server_key"
         android:title="@string/custom_sync_server_title"
-        android:fragment="com.ichi2.anki.Preferences$CustomSyncServerSettingsFragment" />
+        android:fragment="com.ichi2.anki.Preferences$CustomSyncServerSettingsFragment"
+        search:ignore="true"/>
 </PreferenceScreen>

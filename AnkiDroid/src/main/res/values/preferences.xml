@@ -40,6 +40,9 @@
     <string name="pref_compute_n_days_key">advanced_forecast_stats_compute_n_days</string>
     <string name="pref_advanced_statistics_enabled_key">advanced_statistics_enabled</string>
     <string name="pref_n_iterations_key">advanced_forecast_stats_mc_n_iterations</string>
+    <string name="pref_search_key">searchPreference</string>
+    <string name="custom_sync_screen_key">customSyncScreen</string>
+    <string name="advanced_statistics_screen_key">advancedStatisticsScreen</string>
     <!-- Sync preferences -->
     <string name="pref_sync_screen_key">syncScreen</string>
     <string name="sync_account_key">syncAccount</string>

@@ -43,6 +43,9 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.preference.*
 import com.afollestad.materialdialogs.MaterialDialog
+import com.bytehamster.lib.preferencesearch.SearchPreference
+import com.bytehamster.lib.preferencesearch.SearchPreferenceResult
+import com.bytehamster.lib.preferencesearch.SearchPreferenceResultListener
 import com.ichi2.anim.ActivityTransitionAnimation
 import com.ichi2.anki.UIUtils.showSimpleSnackbar
 import com.ichi2.anki.UIUtils.showThemedToast
@@ -52,12 +55,15 @@ import com.ichi2.anki.contextmenu.AnkiCardContextMenu
 import com.ichi2.anki.contextmenu.CardBrowserContextMenu
 import com.ichi2.anki.exception.ConfirmModSchemaException
 import com.ichi2.anki.exception.StorageAccessException
+import com.ichi2.anki.preferences.AccessibilitySettingsFragment
+import com.ichi2.anki.preferences.NotificationsSettingsFragment
 import com.ichi2.anki.reviewer.AutomaticAnswerAction
 import com.ichi2.anki.reviewer.FullScreenMode
 import com.ichi2.anki.services.BootService.Companion.scheduleNotification
 import com.ichi2.anki.services.NotificationService
 import com.ichi2.anki.web.CustomSyncServer
 import com.ichi2.anki.web.CustomSyncServer.handleSyncServerPreferenceChange
+import com.ichi2.annotations.NeedsTest
 import com.ichi2.compat.CompatHelper
 import com.ichi2.libanki.Collection
 import com.ichi2.libanki.Utils
@@ -85,7 +91,7 @@ import kotlin.collections.HashSet
 /**
  * Preferences dialog.
  */
-class Preferences : AnkiActivity() {
+class Preferences : AnkiActivity(), SearchPreferenceResultListener {
     /** The collection path when Preferences was opened   */
     private var mOldCollectionPath: String? = null
 
@@ -155,6 +161,17 @@ class Preferences : AnkiActivity() {
         } else {
             getString(R.string.settings)
         }
+    }
+
+    override fun onSearchResultClicked(result: SearchPreferenceResult) {
+        val fragment = getFragmentFromXmlRes(result.resourceFile) ?: return
+        result.closeSearchPage(this)
+        supportFragmentManager
+            .beginTransaction()
+            .replace(R.id.settings_container, fragment, fragment::class.java.name)
+            .addToBackStack(null)
+            .commit()
+        result.highlight(fragment)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -339,9 +356,34 @@ class Preferences : AnkiActivity() {
                 getString(R.string.bluetooth)
             )
 
+            // Configure search bar
+            val searchPreference = findPreference<SearchPreference>(getString(R.string.pref_search_key))!!
+            val config = searchPreference.searchConfiguration.apply {
+                setActivity(activity as Preferences)
+                setFragmentContainerViewId(R.id.settings_container)
+                setBreadcrumbsEnabled(true)
+
+                index(R.xml.preferences_general)
+                index(R.xml.preferences_reviewing)
+                index(R.xml.preferences_sync)
+                index(R.xml.preferences_custom_sync_server)
+                    .addBreadcrumb(R.string.pref_cat_sync)
+                index(R.xml.preferences_notifications)
+                index(R.xml.preferences_appearance)
+                index(R.xml.preferences_custom_buttons)
+                    .addBreadcrumb(R.string.pref_cat_appearance)
+                index(R.xml.preferences_controls)
+                index(R.xml.preferences_acessibility)
+            }
+
             if (isRestrictedLearningDevice) {
                 findPreference<Preference>("pref_screen_advanced")!!.isVisible = false
+            } else {
+                config.index(R.xml.preferences_advanced)
+                config.index(R.xml.preferences_advanced_statistics)
+                    .addBreadcrumb(R.string.pref_cat_advanced)
             }
+
             if (BuildConfig.DEBUG) {
                 val devOptions = Preference(requireContext()).apply {
                     title = getString(R.string.pref_cat_dev_options)
@@ -349,7 +391,9 @@ class Preferences : AnkiActivity() {
                     fragment = "com.ichi2.anki.Preferences\$DevOptionsFragment"
                 }
                 preferenceScreen.addPreference(devOptions)
+                config.index(R.xml.preferences_dev_options)
             }
+
             // Set icons colors
             for (index in 0 until preferenceScreen.preferenceCount) {
                 val preference = preferenceScreen.getPreference(index)
@@ -1397,5 +1441,24 @@ class Preferences : AnkiActivity() {
         /** Whether the user is logged on to AnkiWeb  */
         fun hasAnkiWebAccount(preferences: SharedPreferences): Boolean =
             preferences.getString("username", "")!!.isNotEmpty()
+    }
+
+    @NeedsTest("Every preferences screen is mapped here")
+    private fun getFragmentFromXmlRes(@XmlRes screen: Int): SpecificSettingsFragment? {
+        return when (screen) {
+            R.xml.preferences_general -> GeneralSettingsFragment()
+            R.xml.preferences_reviewing -> ReviewingSettingsFragment()
+            R.xml.preferences_sync -> SyncSettingsFragment()
+            R.xml.preferences_custom_sync_server -> CustomSyncServerSettingsFragment()
+            R.xml.preferences_notifications -> NotificationsSettingsFragment()
+            R.xml.preferences_appearance -> AppearanceSettingsFragment()
+            R.xml.preferences_controls -> ControlsSettingsFragment()
+            R.xml.preferences_advanced -> AdvancedSettingsFragment()
+            R.xml.preferences_advanced_statistics -> AdvancedStatisticsSettingsFragment()
+            R.xml.preferences_acessibility -> AccessibilitySettingsFragment()
+            R.xml.preferences_dev_options -> DevOptionsFragment()
+            R.xml.preferences_custom_buttons -> CustomButtonsSettingsFragment()
+            else -> null
+        }
     }
 }
