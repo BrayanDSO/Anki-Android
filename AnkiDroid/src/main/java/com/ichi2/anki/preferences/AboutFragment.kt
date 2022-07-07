@@ -24,10 +24,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.text.parseAsHtml
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import com.ichi2.anki.*
+import com.ichi2.anki.Preferences.DevOptionsFragment
 import com.ichi2.anki.dialogs.HelpDialog
 import com.ichi2.anki.servicelayer.DebugInfoService
 import com.ichi2.utils.IntentUtil
@@ -44,6 +47,10 @@ class AboutFragment : Fragment() {
 
         // Version text
         layoutView.findViewById<TextView>(R.id.about_version).text = pkgVersionName
+
+        // Logo secret
+        layoutView.findViewById<ImageView>(R.id.about_app_logo)
+            .setOnClickListener(DevOptionsSecretClickListener(parentFragmentManager))
 
         // Contributors text
         val contributorsLink = getString(R.string.link_contributors)
@@ -97,6 +104,35 @@ class AboutFragment : Fragment() {
             UIUtils.showThemedToast(context, getString(R.string.about_ankidroid_successfully_copied_debug), true)
         } else {
             UIUtils.showThemedToast(context, getString(R.string.about_ankidroid_error_copy_debug_info), false)
+        }
+    }
+
+    /**
+     * Click listener which enables developer options on release builds
+     * if the user clicks it a minimum number of times
+     */
+    private class DevOptionsSecretClickListener(val fragmentManager: FragmentManager) : View.OnClickListener {
+        private var clickCount = 0
+        private val clickLimit = 6
+
+        override fun onClick(view: View) {
+            if (DevOptionsFragment.isEnabled(view.context)) {
+                return
+            }
+            clickCount += 1
+            if (clickCount == clickLimit) {
+                DevOptionsFragment.setDevOptionsEnabledByUser(view.context, true)
+
+                val message = view.context.getString(R.string.dev_options_enabled_msg)
+                UIUtils.showThemedToast(view.context, message, true)
+
+                // Make developer options visible on headers fragment if it is open
+                val headersFragment = fragmentManager.findFragmentByTag(Preferences.HeaderFragment::class.java.name)
+                if (headersFragment is Preferences.HeaderFragment) {
+                    headersFragment.setDevOptionsVisibility(true)
+                }
+                return
+            }
         }
     }
 }

@@ -1229,6 +1229,26 @@ class Preferences : AnkiActivity() {
         override fun initSubscreen() {
             addPreferencesFromResource(preferenceResource)
 
+            val enableDevOptionsPref = requirePreference<SwitchPreference>(R.string.dev_options_enabled_by_user_key)
+            // If it is a DEBUG build, hide the preference to disable developer options
+            // If it is a RELEASE build, configure the preference to disable dev options
+            if (BuildConfig.DEBUG) {
+                enableDevOptionsPref.isVisible = false
+            } else {
+                enableDevOptionsPref.setOnPreferenceChangeListener { _, _ ->
+                    MaterialDialog(requireContext()).show {
+                        title(R.string.disable_dev_options)
+                        positiveButton(R.string.dialog_ok) {
+                            val fragment = parentFragmentManager.findFragmentByTag(HeaderFragment::class.java.name) as HeaderFragment
+                            fragment.setDevOptionsVisibility(false)
+                            parentFragmentManager.popBackStack()
+                            setDevOptionsEnabledByUser(requireContext(), false)
+                        }
+                        negativeButton(R.string.dialog_cancel) { dismiss() }
+                    }
+                    false
+                }
+            }
             // Make it possible to test crash reporting
             requirePreference<Preference>(getString(R.string.pref_trigger_crash_key)).setOnPreferenceClickListener {
                 Timber.w("Crash triggered on purpose from advanced preferences in debug mode")
@@ -1272,6 +1292,27 @@ class Preferences : AnkiActivity() {
                     AnkiDroidApp.TESTING_SCOPED_STORAGE = true
                     (requireActivity() as Preferences).restartWithNewDeckPicker()
                     true
+                }
+            }
+        }
+
+        companion object {
+            /**
+             * @return whether developer options should be shown to the user.
+             * True in case [BuildConfig.DEBUG] is true
+             * or if the user has enabled it with the secret on [com.ichi2.anki.preferences.AboutFragment]
+             */
+            fun isEnabled(context: Context): Boolean {
+                if (BuildConfig.DEBUG) {
+                    return true
+                }
+                return AnkiDroidApp.getSharedPrefs(context)
+                    .getBoolean(context.getString(R.string.dev_options_enabled_by_user_key), false)
+            }
+
+            fun setDevOptionsEnabledByUser(context: Context, isEnabled: Boolean) {
+                AnkiDroidApp.getSharedPrefs(context).edit {
+                    putBoolean(context.getString(R.string.dev_options_enabled_by_user_key), isEnabled)
                 }
             }
         }
