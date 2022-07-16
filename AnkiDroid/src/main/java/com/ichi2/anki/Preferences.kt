@@ -229,7 +229,6 @@ class Preferences : AnkiActivity() {
                 try {
                     when (pref.key) {
                         AUTOMATIC_ANSWER_ACTION -> (pref as ListPreference).setValueIndex(col.get_config(AutomaticAnswerAction.CONFIG_KEY, 0.toInt())!!)
-                        NEW_SPREAD -> (pref as ListPreference).setValueIndex(col.get_config_int("newSpread"))
                         DAY_OFFSET -> (pref as SeekBarPreferenceCompat).value = getDayOffset(col)
                     }
                 } catch (e: NumberFormatException) {
@@ -438,10 +437,6 @@ class Preferences : AnkiActivity() {
                         keepScreenOn!!.isChecked = (pref as SwitchPreference).isChecked
                     }
                     LANGUAGE -> preferencesActivity.closePreferences()
-                    NEW_SPREAD -> {
-                        preferencesActivity.col.set_config("newSpread", (pref as ListPreference).value.toInt())
-                        preferencesActivity.col.setMod()
-                    }
                     AUTOMATIC_ANSWER_ACTION -> {
                         preferencesActivity.col.set_config(AutomaticAnswerAction.CONFIG_KEY, (pref as ListPreference).value.toInt())
                         preferencesActivity.col.setMod()
@@ -631,6 +626,16 @@ class Preferences : AnkiActivity() {
         override fun initSubscreen() {
             addPreferencesFromResource(R.xml.preferences_reviewing)
             val col = col!!
+
+            // New cards position
+            requirePreference<ListPreference>(R.string.new_spread_preference).apply {
+                setValueIndex(col.get_config_int("newSpread"))
+                setOnPreferenceChangeListener { _, newValue ->
+                    col.set_config("newSpread", ((newValue as String).toInt()))
+                    col.setMod()
+                    true
+                }
+            }
 
             // Learn ahead limit
             requirePreference<NumberRangePreferenceCompat>(R.string.learn_cutoff_preference).apply {
@@ -1362,12 +1367,6 @@ class Preferences : AnkiActivity() {
         const val PENDING_NOTIFICATIONS_ONLY = 1000000
 
         /**
-         * Represents in Android preferences the collections configuration "newSpread": i.e.
-         * whether the new cards are added at the end of the queue or randomly in it.
-         */
-        private const val NEW_SPREAD = "newSpread"
-
-        /**
          * Represents in Android preference the collection's configuration "rollover"
          * in sched v2, and crt in sched v1. I.e. at which time of the day does the scheduler reset
          */
@@ -1396,7 +1395,7 @@ class Preferences : AnkiActivity() {
          */
         const val MINIMUM_CARDS_DUE_FOR_NOTIFICATION = "minimumCardsDueForNotification"
         private val sCollectionPreferences = arrayOf(
-            NEW_SPREAD, DAY_OFFSET, AUTOMATIC_ANSWER_ACTION
+            DAY_OFFSET, AUTOMATIC_ANSWER_ACTION
         )
         const val INITIAL_FRAGMENT_EXTRA = "initial_fragment"
 
