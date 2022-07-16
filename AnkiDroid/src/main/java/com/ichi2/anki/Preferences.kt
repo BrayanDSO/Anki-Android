@@ -367,10 +367,6 @@ class Preferences : AnkiActivity() {
                 when (key) {
                     CustomSyncServer.PREFERENCE_CUSTOM_MEDIA_SYNC_URL, CustomSyncServer.PREFERENCE_CUSTOM_SYNC_BASE, CustomSyncServer.PREFERENCE_ENABLE_CUSTOM_SYNC_SERVER -> // This may be a tad hasty - performed before "back" is pressed.
                         handleSyncServerPreferenceChange(preferencesActivity.baseContext)
-                    "timeoutAnswer" -> {
-                        val keepScreenOn = screen.findPreference<SwitchPreference>("keepScreenOn")
-                        keepScreenOn!!.isChecked = (pref as SwitchPreference).isChecked
-                    }
                     CrashReportService.FEEDBACK_REPORT_KEY -> {
                         val value = prefs!!.getString(CrashReportService.FEEDBACK_REPORT_KEY, "")
                         CrashReportService.onPreferenceChanged(preferencesActivity, value!!)
@@ -568,6 +564,15 @@ class Preferences : AnkiActivity() {
                     true
                 }
             }
+            // Automatic display answer
+            requirePreference<SwitchPreference>(R.string.timeout_answer_preference).setOnPreferenceChangeListener { _, newValue ->
+                // Enable `Keep screen on` along with the automatic display answer preference
+                if (newValue == true) {
+                    requirePreference<SwitchPreference>(R.string.keep_screen_on_preference).isChecked = true
+                }
+                true
+            }
+
             // Timeout answer
             requirePreference<ListPreference>(R.string.automatic_answer_action_preference).apply {
                 setValueIndex(col.get_config(AutomaticAnswerAction.CONFIG_KEY, 0.toInt())!!)
