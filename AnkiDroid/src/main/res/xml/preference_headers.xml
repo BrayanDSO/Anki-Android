@@ -49,7 +49,7 @@
         android:fragment="com.ichi2.anki.preferences.NotificationsSettingsFragment"
         android:key="@string/pref_notifications_screen_key"
         android:title="@string/notification_pref"
-        android:icon="@drawable/ic_notifications">
+        android:icon="@drawable/ic_notifications">\
     </Preference>
 
     <!-- Appearance Preferences  -->
