@@ -93,8 +93,10 @@
     <string name="gestures_corner_tap_bottom_right" maxLength="41">Touch bottom right</string>
     <string name="more_scrolling_buttons" maxLength="41">eReader</string>
     <string name="more_scrolling_buttons_summ">Also use kanji/katakana, emoji/kao-moji buttons for scrolling</string>
-    <string name="card_browser_enable_external_context_menu">‘%s’ Menu</string>
-    <string name="card_browser_enable_external_context_menu_summary">Enables the ‘%s’ context menu globally</string>
+    <string name="card_browser_context_menu_title" maxLength="41">Show ‘Card Browser’ context menu</string>
+    <string name="card_browser_context_menu_summary">Enables the ‘Card Browser’ option globally. With it, you can search any selected text on the card browser</string>
+    <string name="anki_card_context_menu_title" maxLength="41">Show ‘Anki Card’ context menu</string>
+    <string name="anki_card_context_menu_summary">Enables the ‘Anki Card’ option globally. With it, you can send any selected words to the note editor to quickly create new notes</string>
     <string name="double_scrolling_gap" maxLength="41">Double scrolling</string>
     <string name="double_scrolling_gap_summ">Double the scroll gap with eReader</string>
     <string name="swipe_sensitivity" maxLength="41">Swipe sensitivity</string>
