@@ -347,4 +347,5 @@ this formatter is used if the bind only applies to both the question and the ans
     <string name="dev_options_warning">
         Please be sure before enabling developer options. These options are dangerous and could break the app or corrupt your collection.\n\nNote that these options are not suited for most users and therefore are not translated, so they are in English.
     </string>
+    <string name="related_settings">Looking for something else?</string>
 </resources>

@@ -33,6 +33,17 @@
         <item name="android:textStyle">bold</item>
     </style>
 
+    <style name="relatedSettings">
+        <item name="android:layout">@layout/related_settings_layout</item>
+    </style>
+
+    <style name="relatedSettingsItem">
+        <item name="android:textColor">?attr/colorAccent</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:paddingTop">7dp</item>
+        <item name="android:paddingBottom">5dp</item>
+    </style>
+
     <!--  Material Design-style persistent footer button -->
     <style name="FooterButtonBase">
         <item name="android:layout_height">48dp</item>

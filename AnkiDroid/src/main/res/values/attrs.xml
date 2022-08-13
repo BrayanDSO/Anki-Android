@@ -47,6 +47,16 @@
         <attr name="summaryEntries" format="reference"/>
     </declare-styleable>
 
+    <declare-styleable name="RelatedSettings">
+        <attr name="relatedSettingsStyle" format="reference"/>
+        <attr name="entriesNames" format="reference"/>
+        <attr name="entriesFragments" format="reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="RelatedSettingsItem">
+        <attr name="relatedSettingsItemStyle" format="reference"/>
+    </declare-styleable>
+
     <!-- App buttons -->
     <attr name="largeButtonBackgroundColor" format="color"/>
     <attr name="largeButtonBackgroundColorFocused" format="color"/>

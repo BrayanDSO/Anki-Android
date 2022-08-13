@@ -59,4 +59,7 @@
         app:interval="10"
         app:min="10"
         app1:summaryFormat="@string/pref_summary_percentage"/>
+    <com.ichi2.preferences.RelatedSettings
+        app1:entriesNames="@array/advanced_summary_entries">
+    </com.ichi2.preferences.RelatedSettings>
 </PreferenceScreen>

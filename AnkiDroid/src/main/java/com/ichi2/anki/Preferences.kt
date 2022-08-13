@@ -87,11 +87,7 @@ class Preferences : AnkiActivity() {
         val initialFragment = if (fragmentClassName == null) {
             HeaderFragment()
         } else {
-            try {
-                Class.forName(fragmentClassName).newInstance() as Fragment
-            } catch (e: Exception) {
-                throw RuntimeException("Failed to load $fragmentClassName", e)
-            }
+            getClassInstanceFromName<Fragment>(fragmentClassName)
         }
         supportFragmentManager.commit {
             replace(R.id.settings_container, initialFragment, initialFragment::class.java.name)
@@ -220,5 +216,13 @@ class Preferences : AnkiActivity() {
         /** Whether the user is logged on to AnkiWeb  */
         fun hasAnkiWebAccount(preferences: SharedPreferences): Boolean =
             preferences.getString("username", "")!!.isNotEmpty()
+
+        inline fun <reified T : Any> getClassInstanceFromName(className: String): T {
+            return try {
+                Class.forName(className).newInstance() as T
+            } catch (e: Exception) {
+                throw RuntimeException("Failed to load $className", e)
+            }
+        }
     }
 }

@@ -15,11 +15,13 @@
         <item name="colorPrimary">@color/theme_dark_primary</item>
         <item name="colorPrimaryDark">@color/theme_dark_primary_dark</item>
         <item name="colorAccent">@color/theme_dark_accent</item>
+        <!--        -->
         <item name="android:textColor">@color/theme_dark_primary_text</item>
         <item name="android:textColorPrimary">@color/theme_dark_primary_text</item>
         <item name="android:textColorSecondary">@color/theme_dark_secondary_text</item>
         <item name="android:colorBackground">@color/material_theme_grey</item>
         <item name="android:windowBackground">@color/material_theme_grey</item>
+        <item name="colorSurface">#021F38</item>
         <!-- Navigation drawer -->
         <item name="navDrawerItemColor">@color/drawer_item_text_dark</item>
         <item name="navDrawerItemBackgroundColor">@drawable/drawer_item_background_dark</item>

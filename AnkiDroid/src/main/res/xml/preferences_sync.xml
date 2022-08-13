@@ -49,4 +49,8 @@
         android:key="@string/custom_sync_server_key"
         android:title="@string/custom_sync_server_title"
         android:fragment="com.ichi2.anki.preferences.CustomSyncServerSettingsFragment" />
+    <Preference
+        android:key="a"
+        android:layout="@layout/related_settings_layout">
+    </Preference>
 </PreferenceScreen>

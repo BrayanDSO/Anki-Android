@@ -23,10 +23,12 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.ichi2.anki.CollectionHelper
 import com.ichi2.anki.Preferences
+import com.ichi2.anki.R
 import com.ichi2.anki.analytics.UsageAnalytics
 import com.ichi2.libanki.Collection
 import com.ichi2.preferences.IncrementerNumberRangePreferenceCompat
 import com.ichi2.preferences.NumberRangePreferenceCompat
+import com.ichi2.preferences.RelatedSettings
 import com.ichi2.preferences.SeekBarPreferenceCompat
 
 abstract class SettingsFragment : PreferenceFragmentCompat() {
@@ -54,6 +56,10 @@ abstract class SettingsFragment : PreferenceFragmentCompat() {
         UsageAnalytics.sendAnalyticsScreenView(analyticsScreenNameConstant)
         addPreferencesFromResource(preferenceResource)
         initSubscreen()
+
+        findPreference<RelatedSettings>(getString(R.string.related_settings_key))?.apply {
+            activity = requireActivity() as Preferences
+        }
     }
 
     protected abstract val analyticsScreenNameConstant: String

@@ -294,6 +294,13 @@
         <item>@string/pref_cat_plugins</item>
     </string-array>
 
+    <!-- Related settings-->
+    <string-array name="general_rel_settings_fragments">
+        <item>com.ichi2.anki.preferences.AdvancedSettingsFragment</item>
+        <item>com.ichi2.anki.preferences.AdvancedSettingsFragment</item>
+        <item>com.ichi2.anki.preferences.AdvancedSettingsFragment</item>
+    </string-array>
+
 
     <string name="answer_buttons_position_preference" translatable="false">answerButtonPosition</string>
     <string-array name="answer_buttons_position" translatable="false">
