@@ -50,6 +50,15 @@
     <issue id="ObsoleteLayoutParam" severity="fatal" />
     <issue id="ObsoleteSdkInt" severity="fatal" />
     <issue id="MergeRootFrame" severity="fatal" />
+    <!-- Timber -->
+    <issue id="BinaryOperationInTimber" severity="fatal"/>
+    <issue id="LogNotTimber" severity="fatal"/>
+    <issue id="StringFormatInTimber" severity="fatal"/>
+    <issue id="ThrowableNotAtBeginning" severity="fatal"/>
+    <issue id="TimberArgCount" severity="fatal"/>
+    <issue id="TimberArgTypes" severity="fatal"/>
+    <issue id="TimberTagLength" severity="fatal"/>
+    <issue id="TimberExceptionLogging" severity="fatal"/>
 
     <!--           RTL Rules               -->
     <issue id="RtlCompat" severity="fatal" />
