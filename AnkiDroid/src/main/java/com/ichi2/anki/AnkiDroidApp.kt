@@ -44,8 +44,6 @@ import com.ichi2.compat.CompatHelper
 import com.ichi2.libanki.Utils
 import com.ichi2.themes.Themes
 import com.ichi2.utils.*
-import com.ichi2.utils.LanguageUtil.getCurrentLanguage
-import com.ichi2.utils.LanguageUtil.getLanguage
 import net.ankiweb.rsdroid.BackendFactory
 import timber.log.Timber
 import timber.log.Timber.DebugTree
@@ -372,7 +370,7 @@ open class AnkiDroidApp : Application() {
         val feedbackUrl: String
             get() = // TODO actually this can be done by translating "link_help" string for each language when the App is
                 // properly translated
-                when (getSharedPrefs(instance).getCurrentLanguage()) {
+                when (LanguageUtil.getCurrentLocaleTag()) {
                     "ja" -> appResources.getString(R.string.link_help_ja)
                     "zh" -> appResources.getString(R.string.link_help_zh)
                     "ar" -> appResources.getString(R.string.link_help_ar)
@@ -386,7 +384,7 @@ open class AnkiDroidApp : Application() {
         val manualUrl: String
             get() = // TODO actually this can be done by translating "link_manual" string for each language when the App is
                 // properly translated
-                when (getSharedPrefs(instance).getCurrentLanguage()) {
+                when (LanguageUtil.getCurrentLocaleTag()) {
                     "ja" -> appResources.getString(R.string.link_manual_ja)
                     "zh" -> appResources.getString(R.string.link_manual_zh)
                     "ar" -> appResources.getString(R.string.link_manual_ar)
