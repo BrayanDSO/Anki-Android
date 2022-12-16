@@ -28,6 +28,7 @@ import com.ichi2.anki.servicelayer.RemovedPreferences
 import com.ichi2.anki.web.CustomSyncServer
 import com.ichi2.libanki.Consts
 import com.ichi2.utils.HashUtil
+import com.ichi2.utils.LanguageUtil
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.lessThan
@@ -35,6 +36,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.*
+import kotlin.test.assertNotNull
 
 @RunWith(AndroidJUnit4::class)
 class PreferenceUpgradeServiceTest : RobolectricTest() {
@@ -197,5 +200,36 @@ class PreferenceUpgradeServiceTest : RobolectricTest() {
         assertThat(mPrefs.getBoolean(CustomSyncServer.PREFERENCE_CUSTOM_MEDIA_SYNC_SERVER_ENABLED, false), equalTo(false))
         assertThat(CustomSyncServer.getCollectionSyncUrlIfSetAndEnabledOrNull(mPrefs), equalTo("http://foo/sync/"))
         assertThat(CustomSyncServer.getMediaSyncUrlIfSetAndEnabledOrNull(mPrefs), equalTo(null))
+    }
+
+    // ############################
+    // ##### UpgradeAppLocale #####
+    // ############################
+    @Test
+    fun `Language preference value is updated to use language tags`() {
+        val upgradeAppLocale = PreferenceUpgrade.UpgradeAppLocale()
+        for (languageTag in LanguageUtil.APP_LANGUAGES) {
+            mPrefs.edit {
+                putString("language", Locale.forLanguageTag(languageTag).toString())
+            }
+            upgradeAppLocale.performUpgrade(mPrefs)
+            val correctLanguage = mPrefs.getString("language", null)
+            assertThat(languageTag, equalTo(correctLanguage))
+        }
+    }
+
+    @Test
+    fun `Language preference value is set to system default correctly if it hasn't been set`() {
+        PreferenceUpgrade.UpgradeAppLocale().performUpgrade(mPrefs)
+
+        assertNotNull(mPrefs.getString("language", null))
+    }
+
+    @Test
+    fun `Language preference value is set to system default correctly`() {
+        mPrefs.edit { putString("language", "") }
+        PreferenceUpgrade.UpgradeAppLocale().performUpgrade(mPrefs)
+
+        assertThat(mPrefs.getString("language", null), equalTo(""))
     }
 }
