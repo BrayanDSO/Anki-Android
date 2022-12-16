@@ -287,9 +287,6 @@ class Preferences : AnkiActivity(), SearchPreferenceResultListener {
     }
 
     companion object {
-        /** Key of the language preference  */
-        const val LANGUAGE = "language"
-
         /* Only enable AnkiDroid notifications unrelated to due reminders */
         const val PENDING_NOTIFICATIONS_ONLY = 1000000
 
