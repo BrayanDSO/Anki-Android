@@ -15,16 +15,20 @@
  */
 package com.ichi2.anki.preferences
 
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.preference.ListPreference
+import androidx.preference.Preference
 import androidx.preference.SwitchPreference
-import com.ichi2.anki.CollectionManager
-import com.ichi2.anki.CrashReportService
-import com.ichi2.anki.R
+import com.ichi2.anki.*
 import com.ichi2.anki.contextmenu.AnkiCardContextMenu
 import com.ichi2.anki.contextmenu.CardBrowserContextMenu
-import com.ichi2.annotations.NeedsTest
 import com.ichi2.utils.LanguageUtil
-import com.ichi2.utils.LanguageUtil.getSystemLocale
 import kotlinx.coroutines.runBlocking
 import java.util.*
 
@@ -34,10 +38,14 @@ class GeneralSettingsFragment : SettingsFragment() {
     override val analyticsScreenNameConstant: String
         get() = "prefs.general"
 
+    private val onLanguageChangeLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        // TODO (performance): Don't reset the backend if the language hasn't changed
+        resetBackendLanguage()
+    }
+
     override fun initSubscreen() {
         val col = col!!
-        // Build languages
-        initializeLanguageDialog()
+        initializeLanguagePreference()
 
         // Deck for new cards
         // Represents in the collections pref "addToCur": i.e.
@@ -80,35 +88,57 @@ class GeneralSettingsFragment : SettingsFragment() {
         }
     }
 
-    @NeedsTest("")
-    private fun initializeLanguageDialog() {
-        val languageSelection = requirePreference<ListPreference>(R.string.pref_language_key)
+    private fun initializeLanguagePreference() {
+        val languagePref = requirePreference<ListPreference>(R.string.pref_language_key)
 
-        val items: MutableMap<String, String> = TreeMap(java.lang.String.CASE_INSENSITIVE_ORDER)
-        for (localeCode in LanguageUtil.APP_LANGUAGES) {
-            val loc = LanguageUtil.getLocale(localeCode)
-            items[loc.getDisplayName(loc)] = loc.toString()
+        /* Starting at API 33, app language can be configured at the app's system settings.
+        * So, the app language ListPreference is converted
+        * to a Preference that leads to the new configuration place */
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val newLanguagePref = Preference(requireContext()).apply {
+                key = languagePref.key
+                title = languagePref.title
+                summary = LanguageUtil.getCurrentLocale()?.displayName
+                    ?: getString(R.string.language_system)
+
+                setOnPreferenceClickListener {
+                    val intent = Intent(Settings.ACTION_APP_LOCALE_SETTINGS).apply {
+                        data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
+                    }
+                    onLanguageChangeLauncher.launch(intent)
+                    true
+                }
+            }
+            preferenceScreen.removePreference(languagePref)
+            preferenceScreen.addPreference(newLanguagePref)
+            newLanguagePref.order = languagePref.order
+        } else {
+            val items: MutableMap<String, String> = TreeMap(java.lang.String.CASE_INSENSITIVE_ORDER)
+            for (languageTag in LanguageUtil.APP_LANGUAGES) {
+                val locale = Locale.forLanguageTag(languageTag)
+                items[locale.getDisplayName(locale)] = languageTag
+            }
+
+            languagePref.apply {
+                entries = arrayOf(resources.getString(R.string.language_system), *items.keys.toTypedArray())
+                entryValues = arrayOf(LanguageUtil.DEFAULT_LANGUAGE_TAG, *items.values.toTypedArray())
+                value = LanguageUtil.getCurrentLocaleTag()
+                setOnPreferenceChangeListener { selectedLanguage ->
+                    resetBackendLanguage(selectedLanguage as String)
+                    val localeCode = if (selectedLanguage != LanguageUtil.DEFAULT_LANGUAGE_TAG) {
+                        selectedLanguage
+                    } else {
+                        null
+                    }
+                    val localeList = LocaleListCompat.forLanguageTags(localeCode)
+                    AppCompatDelegate.setApplicationLocales(localeList)
+                }
+            }
         }
-        val languageDialogLabels = arrayOfNulls<CharSequence>(items.size + 1)
-        val languageDialogValues = arrayOfNulls<CharSequence>(items.size + 1)
-        languageDialogLabels[0] = resources.getString(R.string.language_system)
-        languageDialogValues[0] = "${getSystemLocale()}"
-        val itemsList = items.toList()
-        for (i in 1..itemsList.size) {
-            languageDialogLabels[i] = itemsList[i - 1].first
-            languageDialogValues[i] = itemsList[i - 1].second
-        }
+    }
 
-        languageSelection.entries = languageDialogLabels
-        languageSelection.entryValues = languageDialogValues
-
-        // It's only possible to change the language by recreating the activity,
-        // so do it if the language has changed.
-        languageSelection.setOnPreferenceChangeListener { newValue ->
-            LanguageUtil.setDefaultBackendLanguages(newValue as String)
-            runBlocking { CollectionManager.discardBackend() }
-
-            requireActivity().recreate()
-        }
+    private fun resetBackendLanguage(languageTag: String = LanguageUtil.DEFAULT_LANGUAGE_TAG) {
+        LanguageUtil.setDefaultBackendLanguages(languageTag)
+        runBlocking { CollectionManager.discardBackend() }
     }
 }
