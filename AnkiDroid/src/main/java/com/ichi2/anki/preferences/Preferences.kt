@@ -19,7 +19,6 @@
  ****************************************************************************************/
 package com.ichi2.anki.preferences
 
-import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
@@ -287,15 +286,7 @@ class Preferences : AnkiActivity(), SearchPreferenceResultListener {
         result.highlight(fragmentToHighlight as PreferenceFragmentCompat)
     }
 
-    @VisibleForTesting(otherwise = VisibleForTesting.NONE)
-    public override fun attachBaseContext(base: Context) {
-        super.attachBaseContext(base)
-    }
-
     companion object {
-        /** Key of the language preference  */
-        const val LANGUAGE = "language"
-
         /* Only enable AnkiDroid notifications unrelated to due reminders */
         const val PENDING_NOTIFICATIONS_ONLY = 1000000
 

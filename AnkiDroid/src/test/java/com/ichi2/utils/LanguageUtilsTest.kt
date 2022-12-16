@@ -15,10 +15,8 @@
  */
 package com.ichi2.utils
 
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.collect.Sets
-import com.ichi2.anki.AnkiDroidApp
 import com.ichi2.testutils.EmptyApplication
 import com.ichi2.utils.LanguageUtil.getLocale
 import org.hamcrest.MatcherAssert.assertThat
@@ -102,11 +100,6 @@ class LanguageUtilsTest {
             getLocale("yue_TW").displayName,
             oneOf("yue (Taiwan)", "Cantonese (Taiwan)")
         )
-    }
-
-    private fun getLocale(localeCode: String): Locale {
-        val prefs = AnkiDroidApp.getSharedPrefs(ApplicationProvider.getApplicationContext())
-        return getLocale(localeCode, prefs)
     }
 
     companion object {

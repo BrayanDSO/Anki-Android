@@ -15,12 +15,9 @@
 */
 package com.ichi2.utils
 
-import android.content.SharedPreferences
 import android.content.res.Resources
-import android.text.TextUtils
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.ConfigurationCompat
-import com.ichi2.anki.AnkiDroidApp
-import com.ichi2.anki.preferences.Preferences
 import net.ankiweb.rsdroid.BackendFactory
 import timber.log.Timber
 import java.text.DateFormat
@@ -30,6 +27,8 @@ import java.util.*
  * Utility call for proving language related functionality.
  */
 object LanguageUtil {
+    /** Custom locale value to be used as system default */
+    const val DEFAULT_LOCALE_CODE = ""
     /** A list of all languages supported by AnkiDroid
      * Please modify LanguageUtilsTest if changing
      * Please note 'yue' is special, it is 'yu' on CrowdIn, and mapped in import specially to 'yue' */
@@ -189,71 +188,46 @@ object LanguageUtil {
     )
 
     /**
-     * Returns the [Locale] for the given code or the default locale, if no code or preferences are given.
-     *
-     * @return The [Locale] for the given code
-     */
-    val locale: Locale
-        get() = getLocale("")
-
-    /**
-     * Returns the [Locale] for the given code or the default locale, if no preferences are given.
-     *
-     * @return The [Locale] for the given code
-     */
-    fun getLocale(localeCode: String?): Locale {
-        val prefs = AnkiDroidApp.getSharedPrefs(AnkiDroidApp.instance.baseContext)
-        return getLocale(localeCode, prefs)
-    }
-
-    /**
      * Returns the [Locale] for the given code or the default locale, if no code is given.
      *
      * @param localeCode The locale code of the language
      * @return The [Locale] for the given code
      */
-    fun getLocale(localeCode: String?, prefs: SharedPreferences): Locale {
-        var tempLocaleCode = localeCode
-        if (tempLocaleCode == null || TextUtils.isEmpty(tempLocaleCode)) {
-            tempLocaleCode = prefs.getLanguage()
-            // If no code provided use the app language.
-        }
-        if (TextUtils.isEmpty(tempLocaleCode)) {
-            // Fall back to (system) default only if that fails.
-            tempLocaleCode = Locale.getDefault().toString()
+    fun getLocale(localeCode: String): Locale {
+        if (localeCode == DEFAULT_LOCALE_CODE) {
+            return Locale.getDefault()
         }
         // Language separators are '_' or '-' at different times in display/resource fetch
-        val locale: Locale = if (tempLocaleCode != null && (tempLocaleCode.contains("_") || tempLocaleCode.contains("-"))) {
+        val locale: Locale = if (localeCode.contains("_") || localeCode.contains("-")) {
             try {
-                val localeParts = tempLocaleCode.split("[_-]".toRegex(), 2).toTypedArray()
+                val localeParts = localeCode.split("[_-]".toRegex(), 2)
                 Locale(localeParts[0], localeParts[1])
             } catch (e: ArrayIndexOutOfBoundsException) {
                 Timber.w(e, "LanguageUtil::getLocale variant split fail, using code '%s' raw.", localeCode)
-                Locale(tempLocaleCode)
+                Locale(localeCode)
             }
         } else {
-            Locale(tempLocaleCode!!) // guaranteed to be non null
+            Locale(localeCode)
         }
         return locale
     }
 
     fun getShortDateFormatFromMs(ms: Long): String {
-        return DateFormat.getDateInstance(DateFormat.SHORT, locale).format(Date(ms))
+        return DateFormat.getDateInstance(DateFormat.SHORT, Locale.getDefault()).format(Date(ms))
     }
 
     fun getShortDateFormatFromS(s: Long): String {
-        return DateFormat.getDateInstance(DateFormat.SHORT, locale).format(Date(s * 1000L))
+        return DateFormat.getDateInstance(DateFormat.SHORT, Locale.getDefault()).format(Date(s * 1000L))
     }
 
     fun getLocaleCompat(resources: Resources): Locale? {
         return ConfigurationCompat.getLocales(resources.configuration)[0]
     }
 
-    @JvmStatic
     fun getSystemLocale(): Locale = getLocaleCompat(Resources.getSystem())!!
 
     /** If locale is not provided, the current locale will be used. */
-    fun setDefaultBackendLanguages(locale: String = "") {
+    fun setDefaultBackendLanguages(locale: String = DEFAULT_LOCALE_CODE) {
         BackendFactory.defaultLanguages = listOf(localeToBackendCode(getLocale(locale)))
     }
 
@@ -268,12 +242,11 @@ object LanguageUtil {
         }
     }
 
-    /**
-     * @return the language defined by the preferences, or the empty string.
-     */
-    fun SharedPreferences.getLanguage() = getString(Preferences.LANGUAGE, "")
-    /**
-     * @return the language defined by the preferences, or otherwise the default locale
-     */
-    fun SharedPreferences.getCurrentLanguage(): String = getString(Preferences.LANGUAGE, null) ?: Locale.getDefault().language
+    fun getCurrentLocaleCode(): String {
+        return AppCompatDelegate.getApplicationLocales().toLanguageTags()
+    }
+
+    fun getCurrentLocale(): Locale {
+        return getLocale(getCurrentLocaleCode())
+    }
 }

@@ -19,8 +19,10 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.view.KeyEvent
 import androidx.annotation.VisibleForTesting
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.edit
 import androidx.core.net.toUri
+import androidx.core.os.LocaleListCompat
 import com.ichi2.anki.AnkiDroidApp
 import com.ichi2.anki.cardviewer.Gesture
 import com.ichi2.anki.cardviewer.ViewerCommand
@@ -34,6 +36,7 @@ import com.ichi2.anki.web.CustomSyncServer
 import com.ichi2.libanki.Consts
 import com.ichi2.themes.Themes
 import com.ichi2.utils.HashUtil.HashSetInit
+import com.ichi2.utils.LanguageUtil
 import timber.log.Timber
 
 private typealias VersionIdentifier = Int
@@ -88,6 +91,7 @@ object PreferenceUpgradeService {
                 yield(UpgradeDayAndNightThemes())
                 yield(UpgradeCustomCollectionSyncUrl())
                 yield(UpgradeCustomSyncServerEnabled())
+                yield(UpgradeAppLocale())
             }
 
             /** Returns a list of preference upgrade classes which have not been applied */
@@ -408,6 +412,22 @@ object PreferenceUpgradeService {
                         customSyncServerEnabled && !customMediaSyncUrl.isNullOrEmpty()
                     )
                 }
+            }
+        }
+
+        internal class UpgradeAppLocale : PreferenceUpgrade(9) {
+            override fun upgrade(preferences: SharedPreferences) {
+                // 1. upgrade from `locale.toString()` to `locale.language`,
+                // so the values are the same as the ones at LanguageUtils.APP_LANGUAGES
+                val currentLanguage = preferences.getString("language", "")!!
+                val correctLanguage = LanguageUtil.getLocale(currentLanguage).language
+                preferences.edit {
+                    putString("language", correctLanguage)
+                }
+
+                // 2. Set the locale with the new AndroidX API
+                val localeList = LocaleListCompat.forLanguageTags(correctLanguage)
+                AppCompatDelegate.setApplicationLocales(localeList)
             }
         }
     }
