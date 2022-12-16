@@ -25,9 +25,7 @@ import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.net.Uri
-import android.os.Build
 import android.os.Environment
-import android.os.LocaleList
 import android.system.Os
 import android.util.Log
 import android.webkit.CookieManager
@@ -51,7 +49,6 @@ import net.ankiweb.rsdroid.BackendFactory
 import timber.log.Timber
 import timber.log.Timber.DebugTree
 import java.io.InputStream
-import java.util.*
 import java.util.regex.Pattern
 
 /**
@@ -63,18 +60,7 @@ open class AnkiDroidApp : Application() {
     /** An exception if the WebView subsystem fails to load  */
     private var mWebViewError: Throwable? = null
     private val mNotifications = MutableLiveData<Void?>()
-    @KotlinCleanup("can move analytics here now")
-    override fun attachBaseContext(base: Context) {
-        // update base context with preferred app language before attach
-        // possible since API 17, only supported way since API 25
-        // for API < 17 we update the configuration directly
-        super.attachBaseContext(updateContextWithLanguage(base))
-
-        // DO NOT INIT A WEBVIEW HERE (Moving Analytics to this method)
-        // Crashes only on a Physical API 19 Device - #7135
-        // After we move past API 19, we're good to go.
-    }
-
+    @KotlinCleanup("analytics can be moved to attachBaseContext()")
     /**
      * On application creation.
      */
