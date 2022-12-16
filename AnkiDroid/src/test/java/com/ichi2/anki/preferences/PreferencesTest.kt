@@ -15,6 +15,8 @@
  */
 package com.ichi2.anki.preferences
 
+import android.content.Context
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.commitNow
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -23,6 +25,7 @@ import com.ichi2.anki.RobolectricTest
 import com.ichi2.anki.exception.ConfirmModSchemaException
 import com.ichi2.anki.preferences.Preferences.Companion.getDayOffset
 import com.ichi2.preferences.HeaderPreference
+import com.ichi2.testutils.getJavaMethodAsAccessible
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.equalTo
 import org.junit.Before
@@ -38,7 +41,12 @@ class PreferencesTest : RobolectricTest() {
     override fun setUp() {
         super.setUp()
         preferences = Preferences()
-        preferences.attachBaseContext(targetContext)
+        val attachBaseContext = getJavaMethodAsAccessible(
+            AppCompatActivity::class.java,
+            "attachBaseContext",
+            Context::class.java
+        )
+        attachBaseContext.invoke(preferences, targetContext)
     }
 
     @Test

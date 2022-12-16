@@ -19,7 +19,6 @@
  ****************************************************************************************/
 package com.ichi2.anki.preferences
 
-import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
@@ -283,11 +282,6 @@ class Preferences : AnkiActivity(), SearchPreferenceResultListener {
 
         Timber.i("Highlighting key '%s' on %s", result.key, fragmentToHighlight)
         result.highlight(fragmentToHighlight as PreferenceFragmentCompat)
-    }
-
-    @VisibleForTesting(otherwise = VisibleForTesting.NONE)
-    public override fun attachBaseContext(base: Context) {
-        super.attachBaseContext(base)
     }
 
     companion object {
