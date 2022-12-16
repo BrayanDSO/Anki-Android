@@ -43,8 +43,7 @@ import com.ichi2.anki.services.NotificationService
 import com.ichi2.compat.CompatHelper
 import com.ichi2.themes.Themes
 import com.ichi2.utils.*
-import com.ichi2.utils.LanguageUtil.getCurrentLanguage
-import com.ichi2.utils.LanguageUtil.getLanguage
+import com.ichi2.utils.LanguageUtil.getCurrentLocaleCode
 import net.ankiweb.rsdroid.BackendFactory
 import timber.log.Timber
 import timber.log.Timber.DebugTree
@@ -353,66 +352,6 @@ open class AnkiDroidApp : Application() {
         val isSdCardMounted: Boolean
             get() = Environment.MEDIA_MOUNTED == Environment.getExternalStorageState()
 
-        /**
-         * Returns a Context with the correct, saved language, to be attached using attachBase().
-         * For old APIs directly sets language using deprecated functions
-         *
-         * @param remoteContext The base context offered by attachBase() to be passed to super.attachBase().
-         * Can be modified here to set correct GUI language.
-         */
-        fun updateContextWithLanguage(remoteContext: Context): Context {
-            return try {
-                // sInstance (returned by getInstance() ) set during application OnCreate()
-                // if getInstance() is null, the method is called during applications attachBaseContext()
-                // and preferences need mBase directly (is provided by remoteContext during attachBaseContext())
-                val preferences = if (isInitialized) {
-                    getSharedPrefs(instance.baseContext)
-                } else {
-                    getSharedPrefs(remoteContext)
-                }
-                val langConfig =
-                    getLanguageConfig(remoteContext.resources.configuration, preferences)
-                remoteContext.createConfigurationContext(langConfig)
-            } catch (e: Exception) {
-                Timber.e(e, "failed to update context with new language")
-                // during AnkiDroidApp.attachBaseContext() ACRA is not initialized, so the exception report will not be sent
-                sendExceptionReport(e, "AnkiDroidApp.updateContextWithLanguage")
-                remoteContext
-            }
-        }
-
-        /**
-         * Creates and returns a new configuration with the chosen GUI language that is saved in the preferences
-         *
-         * @param remoteConfig The configuration of the remote context to set the language for
-         * @param prefs
-         */
-        private fun getLanguageConfig(
-            remoteConfig: Configuration,
-            prefs: SharedPreferences
-        ): Configuration {
-            val newConfig = Configuration(remoteConfig)
-            val newLocale = LanguageUtil.getLocale(prefs.getLanguage(), prefs)
-            Timber.d("AnkiDroidApp::getLanguageConfig - setting locale to %s", newLocale)
-            // API level >=24
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                // Build list of locale strings, separated by commas: newLocale as first element
-                var strLocaleList = newLocale.toLanguageTag()
-                // if Anki locale from settings is no equal to system default, add system default as second item
-                // LocaleList must not contain language tags twice, will crash otherwise!
-                if (!strLocaleList.contains(Locale.getDefault().toLanguageTag())) {
-                    strLocaleList = strLocaleList + "," + Locale.getDefault().toLanguageTag()
-                }
-                val newLocaleList = LocaleList.forLanguageTags(strLocaleList)
-                // first element of setLocales() is automatically setLocal()
-                newConfig.setLocales(newLocaleList)
-            } else {
-                // API level >=17 but <24
-                newConfig.setLocale(newLocale)
-            }
-            return newConfig
-        }
-
         fun getMarketIntent(context: Context): Intent {
             val uri =
                 context.getString(if (CompatHelper.isKindle) R.string.link_market_kindle else R.string.link_market)
@@ -427,7 +366,7 @@ open class AnkiDroidApp : Application() {
         val feedbackUrl: String
             get() = // TODO actually this can be done by translating "link_help" string for each language when the App is
                 // properly translated
-                when (getSharedPrefs(instance).getCurrentLanguage()) {
+                when (getCurrentLocaleCode()) {
                     "ja" -> appResources.getString(R.string.link_help_ja)
                     "zh" -> appResources.getString(R.string.link_help_zh)
                     "ar" -> appResources.getString(R.string.link_help_ar)
@@ -441,7 +380,7 @@ open class AnkiDroidApp : Application() {
         val manualUrl: String
             get() = // TODO actually this can be done by translating "link_manual" string for each language when the App is
                 // properly translated
-                when (getSharedPrefs(instance).getCurrentLanguage()) {
+                when (getCurrentLocaleCode()) {
                     "ja" -> appResources.getString(R.string.link_manual_ja)
                     "zh" -> appResources.getString(R.string.link_manual_zh)
                     "ar" -> appResources.getString(R.string.link_manual_ar)
