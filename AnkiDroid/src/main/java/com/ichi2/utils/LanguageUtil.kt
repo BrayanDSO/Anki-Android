@@ -30,6 +30,8 @@ import java.util.*
  * Utility call for proving language related functionality.
  */
 object LanguageUtil {
+    /** locale value of the currently selected locale of the app */
+    const val DEFAULT_LOCALE_CODE = ""
     /** A list of all languages supported by AnkiDroid
      * Please modify LanguageUtilsTest if changing
      * Please note 'yue' is special, it is 'yu' on CrowdIn, and mapped in import specially to 'yue' */
@@ -253,7 +255,7 @@ object LanguageUtil {
     fun getSystemLocale(): Locale = getLocaleCompat(Resources.getSystem())!!
 
     /** If locale is not provided, the current locale will be used. */
-    fun setDefaultBackendLanguages(locale: String = "") {
+    fun setDefaultBackendLanguages(locale: String = DEFAULT_LOCALE_CODE) {
         BackendFactory.defaultLanguages = listOf(localeToBackendCode(getLocale(locale)))
     }
 
