@@ -31,6 +31,8 @@ import com.ichi2.anki.snackbar.showSnackbar
 import com.ichi2.libanki.Utils
 import com.ichi2.themes.Theme
 import com.ichi2.themes.Themes
+import com.ichi2.themes.Themes.systemIsInNightMode
+import com.ichi2.themes.Themes.updateCurrentTheme
 import timber.log.Timber
 import java.io.File
 import java.io.FileInputStream
@@ -125,7 +127,7 @@ class AppearanceSettingsFragment : SettingsFragment() {
             if (newValue != appThemePref.value) {
                 val previousThemeId = Themes.currentTheme.id
                 appThemePref.value = newValue.toString()
-                Themes.updateCurrentTheme()
+                updateCurrentTheme(requireContext())
 
                 if (previousThemeId != Themes.currentTheme.id) {
                     requireActivity().recreate()
@@ -134,17 +136,13 @@ class AppearanceSettingsFragment : SettingsFragment() {
         }
 
         dayThemePref.setOnPreferenceChangeListener { newValue ->
-            if (newValue != dayThemePref.value && !Themes.systemIsInNightMode && newValue != Themes.currentTheme.id) {
-                dayThemePref.value = newValue.toString()
-                Themes.updateCurrentTheme()
+            if (newValue != dayThemePref.value && !systemIsInNightMode(requireContext()) && newValue != Themes.currentTheme.id) {
                 requireActivity().recreate()
             }
         }
 
         nightThemePref.setOnPreferenceChangeListener { newValue ->
-            if (newValue != nightThemePref.value && Themes.systemIsInNightMode && newValue != Themes.currentTheme.id) {
-                nightThemePref.value = newValue.toString()
-                Themes.updateCurrentTheme()
+            if (newValue != nightThemePref.value && systemIsInNightMode(requireContext()) && newValue != Themes.currentTheme.id) {
                 requireActivity().recreate()
             }
         }
