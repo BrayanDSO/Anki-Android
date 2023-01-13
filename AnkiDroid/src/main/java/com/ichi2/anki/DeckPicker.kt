@@ -85,6 +85,7 @@ import com.ichi2.anki.pages.CsvImporter
 import com.ichi2.anki.preferences.AdvancedSettingsFragment
 import com.ichi2.anki.receiver.SdCardReceiver
 import com.ichi2.anki.servicelayer.DeckService
+import com.ichi2.anki.servicelayer.MigrationForegroundService
 import com.ichi2.anki.servicelayer.SchedulerService.NextCard
 import com.ichi2.anki.servicelayer.ScopedStorageService.getBestDefaultRootDirectory
 import com.ichi2.anki.servicelayer.ScopedStorageService.isLegacyStorage
@@ -2781,7 +2782,8 @@ open class DeckPicker :
      * Start migrating the user data. Assumes that
      */
     fun startMigrateUserDataService() {
-        // TODO
+        val intent = Intent(this, MigrationForegroundService::class.java)
+        ContextCompat.startForegroundService(this, intent)
     }
 
     /**

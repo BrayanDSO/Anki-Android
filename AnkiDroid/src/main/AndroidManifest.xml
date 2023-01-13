@@ -422,7 +422,9 @@
 
         <!-- Service to perform web API queries -->
         <service android:name="com.ichi2.widget.AnkiDroidWidgetSmall$UpdateService" />
-
+        <service
+            android:name=".servicelayer.MigrationForegroundService"
+            android:exported="false" />
         <!-- small widget -->
         <receiver
             android:name="com.ichi2.widget.AnkiDroidWidgetSmall"
