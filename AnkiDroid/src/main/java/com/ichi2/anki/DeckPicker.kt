@@ -1547,9 +1547,10 @@ open class DeckPicker :
     }
 
     override fun loginToSyncServer() {
-        val myAccount = Intent(this, MyAccount::class.java)
-        myAccount.putExtra("notLoggedIn", true)
-        startActivityForResultWithAnimation(myAccount, LOG_IN_FOR_SYNC, FADE)
+        val intent = Intent(this, LoginActivity::class.java).apply {
+            putExtra("notLoggedIn", true)
+        }
+        startActivityForResultWithAnimation(intent, LOG_IN_FOR_SYNC, FADE)
     }
 
     // Callback to import a file -- adding it to existing collection
