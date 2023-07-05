@@ -22,6 +22,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ichi2.anki.R
 import com.ichi2.anki.RobolectricTest
+import com.ichi2.anki.analytics.UsageAnalytics
 import com.ichi2.anki.exception.ConfirmModSchemaException
 import com.ichi2.anki.preferences.Preferences.Companion.getDayOffset
 import com.ichi2.anki.preferences.Preferences.Companion.setDayOffset
@@ -34,6 +35,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import kotlin.test.assertNull
 
 @RunWith(AndroidJUnit4::class)
 class PreferencesTest : RobolectricTest() {
@@ -77,9 +79,8 @@ class PreferencesTest : RobolectricTest() {
     @Test
     fun fragmentsDoNotThrowOnCreation() {
         val activityScenario = ActivityScenario.launch(Preferences::class.java)
-
         activityScenario.onActivity { activity ->
-            PreferenceTestUtils.getAllPreferencesFragments(activity).forEach {
+            PreferenceTestUtils.getAllFragmentsInThePreferencesActivity(activity).forEach {
                 activity.supportFragmentManager.commitNow {
                     add(R.id.settings_container, it)
                 }
@@ -101,5 +102,61 @@ class PreferencesTest : RobolectricTest() {
         assertThat("Default offset should be 4", offset, equalTo(4))
         runBlocking { setDayOffset(preferences, 2) }
         assertThat("rollover config should be set to new value", col.get_config("rollover", 4.toInt()), equalTo(2))
+    }
+
+//    Analytics
+    val excludedPrefs = setOf(
+        "defaultFont",
+        "overrideFontBehavior",
+        "browserEditorFont",
+        "language",
+        // dev options
+        "devOptionsKey",
+        "devOptionsEnabledByUser",
+        "html_javascript_debugging",
+        "trigger_crash_preference",
+        "analytics_debug_preference",
+        "debug_lock_database",
+        "showOnboarding",
+        "resetOnboarding",
+        "fillCollectionNumberFile",
+        "fillCollectionSizeFile"
+
+    )
+
+    @Test
+    fun `Dev options must not be reported`() {
+        PreferenceTestUtils.getKeysFromXml(targetContext, R.xml.preferences_dev_options).forEach { key ->
+            assertThat(
+                "dev option key $key is in the `excludedPrefs` list",
+                key in excludedPrefs
+            )
+        }
+    }
+
+    @Test
+    fun `The include and excluded prefs lists don't share elements`() {
+        val intersection = UsageAnalytics.preferencesWhoseValuesShouldBeReported.intersect(excludedPrefs)
+        assertThat(
+            "The include and exclude prefs list shouldn't share elements: $intersection",
+            intersection.isEmpty()
+        )
+    }
+
+    @Test
+    fun `All preferences are either included or excluded in the report list`() {
+        PreferenceTestUtils.getAllPreferenceKeysInThePreferencesActivity(targetContext).forEach { key ->
+            assertThat(
+                "key '$key' should in included in either the" +
+                    " `preferencesWhoseValuesShouldBeReported` or the `excludedPrefs` list",
+                key in excludedPrefs || key in UsageAnalytics.preferencesWhoseValuesShouldBeReported
+            )
+        }
+    }
+
+    @Test
+    fun `getPreferenceReportableValue - String`() {
+        assertThat(SettingsFragment.getPreferenceReportableValue("3"), equalTo(3))
+        assertNull(SettingsFragment.getPreferenceReportableValue("foo"))
     }
 }

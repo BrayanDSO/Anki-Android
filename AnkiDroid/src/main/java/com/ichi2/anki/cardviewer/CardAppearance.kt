@@ -19,6 +19,7 @@ import android.content.SharedPreferences
 import androidx.annotation.CheckResult
 import com.ichi2.anki.reviewer.ReviewerCustomFonts
 import com.ichi2.libanki.Card
+import com.ichi2.preferences.Prefs
 import com.ichi2.themes.Theme
 import com.ichi2.themes.Themes.currentTheme
 
@@ -76,8 +77,8 @@ class CardAppearance(private val customFonts: ReviewerCustomFonts, private val c
         private val nightModeClassRegex = Regex("\\.night(?:_m|M)ode\\b")
 
         fun create(customFonts: ReviewerCustomFonts, preferences: SharedPreferences): CardAppearance {
-            val cardZoom = preferences.getInt("cardZoom", 100)
-            val imageZoom = preferences.getInt("imageZoom", 100)
+            val cardZoom = Prefs.cardZoom
+            val imageZoom = Prefs.imageZoom
             val centerVertically = preferences.getBoolean("centerVertically", false)
             return CardAppearance(customFonts, cardZoom, imageZoom, centerVertically)
         }
