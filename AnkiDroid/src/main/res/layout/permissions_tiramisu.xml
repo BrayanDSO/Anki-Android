@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".ui.windows.permissions.TiramisuPermissionsFragment">
+
+    <com.ichi2.anki.ui.windows.permissions.PermissionItem
+        android:id="@+id/all_files_permission"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:permissionNumber="1"
+        app:permissionTitle="@string/all_files_access_title"
+        app:permissionSummary="@string/storage_access_summary"
+        app:permissionButtonText="@string/grant_access"
+        app:permissionIcon="@drawable/ic_save_white"
+        />
+
+    <com.ichi2.anki.ui.windows.permissions.PermissionItem
+        android:id="@+id/media_permission"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:permissionNumber="2"
+        app:permissionTitle="@string/media_access_title"
+        app:permissionSummary="@string/media_access_summary"
+        app:permissionButtonText="@string/grant_access"
+        app:permissionIcon="@drawable/ic_popup_menu_item_image"
+        />
+</LinearLayout>
