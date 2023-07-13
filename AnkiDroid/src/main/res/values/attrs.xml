@@ -56,6 +56,22 @@
         <attr name="displayValue" format="boolean"/>
     </declare-styleable>
 
+    <declare-styleable name="PermissionItem">
+        <!-- Title of the permission -->
+        <attr name="permissionTitle" format="string"/>
+        <!-- Brief description of the permission. It can be used to explain to the user
+         why the permission should be granted -->
+        <attr name="permissionSummary" format="string"/>
+        <!-- Text inside the permission button.
+        Normally it should be something like `Grant access` -->
+        <attr name="permissionButtonText" format="string"/>
+        <!-- Number to be displayed at the layout's side.
+        Normally, it should be the PermissionItem position among others in a screen -->
+        <attr name="permissionNumber" format="string"/>
+        <!-- Icon to be shown at the side of the button -->
+        <attr name="permissionIcon" format="reference"/>
+    </declare-styleable>
+
     <attr name="widgetColorActivated" format="color"/>
     <!-- App buttons -->
     <attr name="largeButtonBackgroundColor" format="color"/>
