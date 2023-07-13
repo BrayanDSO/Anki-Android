@@ -328,4 +328,11 @@
     <string name="create_new_collection">Create a new collection</string>
 
     <string name="new_unsafe_collection">The new collection will be deleted from your phone if you uninstall AnkiDroid</string>
+
+    <!-- Permissions screen -->
+    <string name="grant_access" comment="Refers to granting access to an Android permission"
+        >Grant access</string>
+
+    <string name="storage_access_title">Storage access</string>
+    <string name="storage_access_summary">Saves your collection in a safe place that will not be deleted if the app is uninstalled</string>
 </resources>
