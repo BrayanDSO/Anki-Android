@@ -331,6 +331,12 @@
     <string name="new_unsafe_collection">The new collection will be deleted from your phone if you uninstall AnkiDroid</string>
 
     <!-- Permissions screen -->
+    <string name="permissions_screen_headline">AnkiDroid needs some permissions to work</string>
+    <string name="permissions_continue_button_text"
+        comment="Text used at the permissions screen continue button, enabled after all
+necessary permissions are given."
+        >Let\'s go!</string>
+
     <string name="grant_access" comment="Refers to granting access to an Android permission"
         >Grant access</string>
 
