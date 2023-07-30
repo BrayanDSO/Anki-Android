@@ -35,8 +35,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
+/** Should only have tests that require a [Preferences] instance */
 @RunWith(AndroidJUnit4::class)
-class PreferencesTest : RobolectricTest() {
+class PreferencesActivityTest : RobolectricTest() {
     private lateinit var preferences: Preferences
 
     @Before
