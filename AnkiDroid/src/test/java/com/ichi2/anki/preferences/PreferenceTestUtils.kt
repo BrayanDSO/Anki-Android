@@ -19,6 +19,7 @@ import android.content.Context
 import androidx.annotation.XmlRes
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
+import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.test.core.app.ActivityScenario
@@ -94,19 +95,23 @@ fun getAllPreferenceKeys(context: Context): Set<String> {
         .union(getControlPreferencesKeys())
 }
 
-fun PreferenceFragmentCompat.allKeys(): HashSet<String> {
-    val allKeys = HashSet<String>()
+fun PreferenceFragmentCompat.allPreferences(): List<Preference> {
+    val allKeys = mutableListOf<Preference>()
     for (i in 0 until preferenceScreen.preferenceCount) {
         val pref = preferenceScreen.getPreference(i)
         if (pref is PreferenceCategory) {
             for (j in 0 until pref.preferenceCount) {
-                allKeys.add(pref.getPreference(j).key)
+                allKeys.add(pref.getPreference(j))
             }
         } else {
-            allKeys.add(pref.key)
+            allKeys.add(pref)
         }
     }
-    return allKeys
+    return allKeys.toList()
+}
+
+fun PreferenceFragmentCompat.allKeys(): HashSet<String> {
+    return allPreferences().map { it.key }.toHashSet()
 }
 
 fun getAllCustomButtonKeys(context: Context): Set<String> {
