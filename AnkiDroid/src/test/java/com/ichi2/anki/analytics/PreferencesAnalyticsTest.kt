@@ -19,8 +19,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ichi2.anki.R
 import com.ichi2.anki.RobolectricTest
 import com.ichi2.anki.analytics.UsageAnalytics.preferencesWhoseChangesShouldBeReported
-import com.ichi2.anki.preferences.PreferenceTestUtils
 import com.ichi2.anki.preferences.SettingsFragment
+import com.ichi2.anki.preferences.getAllPreferenceKeys
+import com.ichi2.anki.preferences.getKeysFromXml
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers
 import org.junit.Test
@@ -95,7 +96,7 @@ class PreferencesAnalyticsTest : RobolectricTest() {
 
     @Test
     fun `All preferences are either included or excluded in the report list`() {
-        val keysNotInAList = PreferenceTestUtils.getAllPreferenceKeys(targetContext)
+        val keysNotInAList = getAllPreferenceKeys(targetContext)
             .subtract(excludedPrefs)
             .subtract(preferencesWhoseChangesShouldBeReported)
 
@@ -109,7 +110,7 @@ class PreferencesAnalyticsTest : RobolectricTest() {
 
     @Test
     fun `Dev options changes must not be reported`() {
-        val devOptionsKeys = PreferenceTestUtils.getKeysFromXml(targetContext, R.xml.preferences_dev_options)
+        val devOptionsKeys = getKeysFromXml(targetContext, R.xml.preferences_dev_options)
         val devOptionsAtReportList = preferencesWhoseChangesShouldBeReported.intersect(devOptionsKeys.toSet())
 
         assertThat(

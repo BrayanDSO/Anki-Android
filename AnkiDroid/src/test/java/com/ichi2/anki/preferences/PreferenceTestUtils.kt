@@ -27,85 +27,83 @@ import com.ichi2.utils.getInstanceFromClassName
 import org.xmlpull.v1.XmlPullParser
 import java.util.concurrent.atomic.AtomicReference
 
-object PreferenceTestUtils {
-    private fun getAttrFromXml(context: Context, @XmlRes xml: Int, attrName: String, namespace: String = AnkiDroidApp.ANDROID_NAMESPACE): List<String> {
-        val occurrences = mutableListOf<String>()
+private fun getAttrFromXml(context: Context, @XmlRes xml: Int, attrName: String, namespace: String = AnkiDroidApp.ANDROID_NAMESPACE): List<String> {
+    val occurrences = mutableListOf<String>()
 
-        val xrp = context.resources.getXml(xml).apply {
-            setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true)
-            setFeature(XmlPullParser.FEATURE_REPORT_NAMESPACE_ATTRIBUTES, true)
-        }
-
-        while (xrp.eventType != XmlPullParser.END_DOCUMENT) {
-            if (xrp.eventType == XmlPullParser.START_TAG) {
-                val attr = xrp.getAttributeValue(namespace, attrName)
-                if (attr != null) {
-                    occurrences.add(attr)
-                }
-            }
-            xrp.next()
-        }
-        return occurrences.toList()
+    val xrp = context.resources.getXml(xml).apply {
+        setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true)
+        setFeature(XmlPullParser.FEATURE_REPORT_NAMESPACE_ATTRIBUTES, true)
     }
 
-    /** @return fragments found on [xml] */
-    private fun getFragmentsFromXml(context: Context, @XmlRes xml: Int): List<Fragment> {
-        return getAttrFromXml(context, xml, "fragment").map { getInstanceFromClassName(it) }
-    }
-
-    /** @return recursively fragments found on [xml] and on their children **/
-    private fun getFragmentsFromXmlRecursively(context: Context, @XmlRes xml: Int): List<Fragment> {
-        val fragments = getFragmentsFromXml(context, xml).toMutableList()
-        for (fragment in fragments.filterIsInstance<SettingsFragment>()) {
-            fragments.addAll(getFragmentsFromXmlRecursively(context, fragment.preferenceResource))
-        }
-        return fragments.toList()
-    }
-
-    /** @return [List] of all the distinct preferences fragments **/
-    fun getAllPreferencesFragments(context: Context): List<Fragment> {
-        val fragments = getFragmentsFromXmlRecursively(context, R.xml.preference_headers) + HeaderFragment()
-        return fragments.distinctBy { it::class } // and remove any repeated fragments
-    }
-
-    private fun attrValueToString(value: String, context: Context): String {
-        return if (value.startsWith("@")) {
-            context.getString(value.substring(1).toInt())
-        } else {
-            value
-        }
-    }
-
-    fun getKeysFromXml(context: Context, @XmlRes xml: Int): List<String> {
-        return getAttrFromXml(context, xml, "key").map { attrValueToString(it, context) }
-    }
-
-    private fun getControlPreferencesKeys(): List<String> {
-        // control preferences are built dynamically instead of statically in a XML
-        return ViewerCommand.values().map { it.preferenceKey }
-    }
-
-    fun getAllPreferenceKeys(context: Context): Set<String> {
-        return getAllPreferencesFragments(context)
-            .filterIsInstance<SettingsFragment>()
-            .map { it.preferenceResource }
-            .flatMap { getKeysFromXml(context, it) }
-            .union(getControlPreferencesKeys())
-    }
-
-    fun getAllCustomButtonKeys(context: Context): Set<String> {
-        val ret = AtomicReference<Set<String>>()
-        val i = CustomButtonsSettingsFragment.getSubscreenIntent(context)
-        ActivityScenario.launch<Preferences>(i).use { scenario ->
-            scenario.moveToState(Lifecycle.State.STARTED)
-            scenario.onActivity { a: Preferences ->
-                val customButtonsFragment = a.supportFragmentManager
-                    .findFragmentByTag(CustomButtonsSettingsFragment::class.java.name) as CustomButtonsSettingsFragment
-                ret.set(customButtonsFragment.allKeys())
+    while (xrp.eventType != XmlPullParser.END_DOCUMENT) {
+        if (xrp.eventType == XmlPullParser.START_TAG) {
+            val attr = xrp.getAttributeValue(namespace, attrName)
+            if (attr != null) {
+                occurrences.add(attr)
             }
         }
-        val preferenceKeys = ret.get()?.toMutableSet() ?: throw IllegalStateException("no keys were set")
-        preferenceKeys.remove("reset_custom_buttons")
-        return preferenceKeys
+        xrp.next()
     }
+    return occurrences.toList()
+}
+
+/** @return fragments found on [xml] */
+private fun getFragmentsFromXml(context: Context, @XmlRes xml: Int): List<Fragment> {
+    return getAttrFromXml(context, xml, "fragment").map { getInstanceFromClassName(it) }
+}
+
+/** @return recursively fragments found on [xml] and on their children **/
+private fun getFragmentsFromXmlRecursively(context: Context, @XmlRes xml: Int): List<Fragment> {
+    val fragments = getFragmentsFromXml(context, xml).toMutableList()
+    for (fragment in fragments.filterIsInstance<SettingsFragment>()) {
+        fragments.addAll(getFragmentsFromXmlRecursively(context, fragment.preferenceResource))
+    }
+    return fragments.toList()
+}
+
+/** @return [List] of all the distinct preferences fragments **/
+fun getAllPreferencesFragments(context: Context): List<Fragment> {
+    val fragments = getFragmentsFromXmlRecursively(context, R.xml.preference_headers) + HeaderFragment()
+    return fragments.distinctBy { it::class } // and remove any repeated fragments
+}
+
+private fun attrValueToString(value: String, context: Context): String {
+    return if (value.startsWith("@")) {
+        context.getString(value.substring(1).toInt())
+    } else {
+        value
+    }
+}
+
+fun getKeysFromXml(context: Context, @XmlRes xml: Int): List<String> {
+    return getAttrFromXml(context, xml, "key").map { attrValueToString(it, context) }
+}
+
+private fun getControlPreferencesKeys(): List<String> {
+    // control preferences are built dynamically instead of statically in a XML
+    return ViewerCommand.values().map { it.preferenceKey }
+}
+
+fun getAllPreferenceKeys(context: Context): Set<String> {
+    return getAllPreferencesFragments(context)
+        .filterIsInstance<SettingsFragment>()
+        .map { it.preferenceResource }
+        .flatMap { getKeysFromXml(context, it) }
+        .union(getControlPreferencesKeys())
+}
+
+fun getAllCustomButtonKeys(context: Context): Set<String> {
+    val ret = AtomicReference<Set<String>>()
+    val i = CustomButtonsSettingsFragment.getSubscreenIntent(context)
+    ActivityScenario.launch<Preferences>(i).use { scenario ->
+        scenario.moveToState(Lifecycle.State.STARTED)
+        scenario.onActivity { a: Preferences ->
+            val customButtonsFragment = a.supportFragmentManager
+                .findFragmentByTag(CustomButtonsSettingsFragment::class.java.name) as CustomButtonsSettingsFragment
+            ret.set(customButtonsFragment.allKeys())
+        }
+    }
+    val preferenceKeys = ret.get()?.toMutableSet() ?: throw IllegalStateException("no keys were set")
+    preferenceKeys.remove("reset_custom_buttons")
+    return preferenceKeys
 }

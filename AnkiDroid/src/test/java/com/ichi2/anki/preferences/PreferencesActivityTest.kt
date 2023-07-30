@@ -80,7 +80,7 @@ class PreferencesActivityTest : RobolectricTest() {
         val activityScenario = ActivityScenario.launch(Preferences::class.java)
 
         activityScenario.onActivity { activity ->
-            PreferenceTestUtils.getAllPreferencesFragments(activity).forEach {
+            getAllPreferencesFragments(activity).forEach {
                 activity.supportFragmentManager.commitNow {
                     add(R.id.settings_container, it)
                 }
