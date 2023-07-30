@@ -15,18 +15,31 @@
  */
 package com.ichi2.preferences
 
+import android.content.Context
 import android.content.SharedPreferences
 import androidx.annotation.StringRes
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import com.ichi2.anki.AnkiDroidApp
 import com.ichi2.anki.R
+import com.ichi2.preferences.PrefUtils.getString
 import com.ichi2.preferences.PrefUtils.prefs
 import kotlin.reflect.KProperty
 
 interface EnumSetting {
     val value: String
 }
+val currentProfile: String
+    get() = globalPrefs.getString("currentProfile", "")!!
+
+val globalPrefs: SharedPreferences
+    get() = PreferenceManager.getDefaultSharedPreferences(AnkiDroidApp.instance)
+
+val profilePrefs: SharedPreferences
+    get() = AnkiDroidApp.instance.getSharedPreferences(currentProfile, Context.MODE_PRIVATE)
+
+fun SharedPreferences.getInt(@StringRes resId: Int, defaultValue: Int) =
+    prefs.getInt(PrefUtils.getKey(resId), defaultValue)
 
 interface GenericDelegate<T> {
     fun get(): T
@@ -49,30 +62,34 @@ inline fun <reified E> enumSetting(keyResId: Int): GenericDelegate<E> where E : 
 }
 
 object Prefs {
-    // fazer constantes dos default values
     // TODO como testar se fica pareado isso daqui com os defaultValues?
-    val automaticSync by BooleanSetting(R.string.automatic_sync_choice_key, false)
+    //  eu poderia fazer constantes para os defaultValues e conferir se bate com aqui
+    //  ou não fazer constante e só testar mesmo se bate
+//    val automaticSync by BooleanSetting(R.string.automatic_sync_choice_key, false)
     val meteredSync by enumSetting<FetchMediaOptions>(R.string.sync_fetch_media_key)
-    val imageZoom by IntSetting(R.string.image_zoom_preference, 100)
-    val cardZoom by IntSetting(R.string.card_zoom_preference, 100)
+//    val imageZoom by IntSetting(R.string.image_zoom_preference, 100)
+//    val cardZoom by IntSetting(R.string.card_zoom_preference, 100)
 
-    class BooleanSetting(@StringRes val keyResId: Int, val defaultValue: Boolean) {
-        operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean =
-            getBoolean(keyResId, defaultValue)
+    val cardZoom: Int
+        get() = profilePrefs.getInt(R.string.card_zoom_preference, 100)
 
-        operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) {
-            putBoolean(keyResId, value)
-        }
-    }
+//    class BooleanSetting(@StringRes val keyResId: Int, val defaultValue: Boolean) {
+//        operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean =
+//            getBoolean(keyResId, defaultValue)
+//
+//        operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) {
+//            putBoolean(keyResId, value)
+//        }
+//    }
 
-    class IntSetting(@StringRes val keyResId: Int, val defaultValue: Int) {
-        operator fun getValue(thisRef: Any?, property: KProperty<*>): Int =
-            getInt(keyResId, defaultValue)
-
-        operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Int) {
-            putInt(keyResId, value)
-        }
-    }
+//    class IntSetting(@StringRes val keyResId: Int, val defaultValue: Int) {
+//        operator fun getValue(thisRef: Any?, property: KProperty<*>): Int =
+//            getInt(keyResId, defaultValue)
+//
+//        operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Int) {
+//            putInt(keyResId, value)
+//        }
+//    }
 
     // TODO teste para garantir que os valores são iguais às prefs
     // TODO teste para garantir que a ordem tá igual a array original. Ou não, tipo
@@ -89,9 +106,6 @@ object Prefs {
 
     fun getBoolean(@StringRes resId: Int, defaultValue: Boolean) =
         prefs.getBoolean(PrefUtils.getKey(resId), defaultValue)
-
-    fun getInt(@StringRes resId: Int, defaultValue: Int) =
-        prefs.getInt(PrefUtils.getKey(resId), defaultValue)
 
     fun getFloat(@StringRes resId: Int, defaultValue: Float) =
         prefs.getFloat(PrefUtils.getKey(resId), defaultValue)
