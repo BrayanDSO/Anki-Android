@@ -17,11 +17,9 @@ package com.ichi2.anki.preferences
 
 import android.content.Context
 import android.content.Intent
-import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.edit
 import androidx.preference.Preference
-import androidx.preference.PreferenceCategory
 import com.ichi2.anki.R
 import com.ichi2.utils.*
 
@@ -68,22 +66,6 @@ class CustomButtonsSettingsFragment : SettingsFragment() {
             }
             true
         }
-    }
-
-    @VisibleForTesting(otherwise = VisibleForTesting.NONE)
-    fun allKeys(): HashSet<String> {
-        val allKeys = HashSet<String>()
-        for (i in 0 until preferenceScreen.preferenceCount) {
-            val pref = preferenceScreen.getPreference(i)
-            if (pref is PreferenceCategory) {
-                for (j in 0 until pref.preferenceCount) {
-                    allKeys.add(pref.getPreference(j).key)
-                }
-            } else {
-                allKeys.add(pref.key)
-            }
-        }
-        return allKeys
     }
 
     companion object {
