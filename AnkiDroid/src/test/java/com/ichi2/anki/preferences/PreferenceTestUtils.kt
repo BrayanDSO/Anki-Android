@@ -50,6 +50,35 @@ private fun getAttrFromXml(context: Context, @XmlRes xml: Int, attrName: String,
     return occurrences.toList()
 }
 
+// TODO possivelmente criar uma classe XMLparser
+//  é pra ela poder filtrar por título (e.g. ListPreference, SwitchPreferenceCompat)
+//  e tags associadas
+
+private fun getAttrsFromXml(
+    context: Context,
+    @XmlRes xml: Int,
+    attrName: String,
+    namespace: String = AnkiDroidApp.ANDROID_NAMESPACE
+): List<Map<String, String>> {
+    val occurrences = mutableListOf<Map<String, String>>()
+
+    val xrp = context.resources.getXml(xml).apply {
+        setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true)
+        setFeature(XmlPullParser.FEATURE_REPORT_NAMESPACE_ATTRIBUTES, true)
+    }
+
+    while (xrp.eventType != XmlPullParser.END_DOCUMENT) {
+        if (xrp.eventType == XmlPullParser.START_TAG) {
+            val attr = xrp.getAttributeValue(namespace, attrName)
+            if (attr != null) {
+                occurrences.add(attr)
+            }
+        }
+        xrp.next()
+    }
+    return occurrences.toList()
+}
+
 /** @return fragments found on [xml] */
 private fun getFragmentsFromXml(context: Context, @XmlRes xml: Int): List<Fragment> {
     return getAttrFromXml(context, xml, "fragment").map { getInstanceFromClassName(it) }
@@ -87,10 +116,14 @@ private fun getControlPreferencesKeys(): List<String> {
     return ViewerCommand.values().map { it.preferenceKey }
 }
 
-fun getAllPreferenceKeys(context: Context): Set<String> {
+fun getAllSettingsFragmentsXMLs(context: Context): List<Int> {
     return getAllPreferencesFragments(context)
         .filterIsInstance<SettingsFragment>()
         .map { it.preferenceResource }
+}
+
+fun getAllPreferenceKeys(context: Context): Set<String> {
+    return getAllSettingsFragmentsXMLs(context)
         .flatMap { getKeysFromXml(context, it) }
         .union(getControlPreferencesKeys())
 }

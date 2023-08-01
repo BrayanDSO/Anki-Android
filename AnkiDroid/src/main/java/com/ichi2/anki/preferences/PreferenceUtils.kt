@@ -34,6 +34,7 @@ fun SharedPreferences.get(key: String): Any? {
  */
 fun Preference.setOnPreferenceChangeListener(onPreferenceChangeListener: (newValue: Any) -> Unit) {
     this.setOnPreferenceChangeListener { _, newValue ->
+        Preference
         onPreferenceChangeListener(newValue)
         true
     }
