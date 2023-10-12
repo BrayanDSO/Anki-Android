@@ -80,6 +80,7 @@
             android:contentDescription="@string/insert_horizontal_line"
             android:tooltipText="@string/insert_horizontal_line"
             android:tag="r"
+            android:visibility="gone"
             style="@style/note_editor_toolbar_button" />
 
         <androidx.appcompat.widget.AppCompatImageButton
@@ -88,6 +89,7 @@
             android:contentDescription="@string/insert_heading"
             android:tooltipText="@string/insert_heading"
             android:tag="h"
+            android:visibility="gone"
             style="@style/note_editor_toolbar_button" />
 
         <androidx.appcompat.widget.AppCompatImageButton
@@ -96,6 +98,7 @@
             android:tooltipText="@string/format_font_size"
             app:srcCompat="@drawable/ic_format_font_size_24dp"
             android:tag="f"
+            android:visibility="gone"
             style="@style/note_editor_toolbar_button" />
 
 
