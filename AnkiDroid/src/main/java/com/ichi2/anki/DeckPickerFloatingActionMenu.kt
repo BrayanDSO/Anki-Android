@@ -82,14 +82,9 @@ class DeckPickerFloatingActionMenu(
                     mFabMain.backgroundTintList = ColorStateList.valueOf(fabNormalColor)
                 }
                 duration = 90
-                // Rise FAB animation
-                scaleX(1.3f)
-                scaleY(1.3f)
                 withEndAction {
                     // At the end the Image is changed to Add Note Icon
                     mFabMain.setImageResource(addNoteIcon)
-                    // Shrink back FAB
-                    mFabMain.animate().setDuration(70).scaleX(1f).scaleY(1f).start()
                 }.start()
             }
 
@@ -148,15 +143,9 @@ class DeckPickerFloatingActionMenu(
                 // Close with animation
                 mFabMain.animate().apply {
                     duration = 90
-                    // Rise FAB animation
-                    scaleX(1.3f)
-                    scaleY(1.3f)
                     withEndAction {
                         // At the end the image is changed to Add White Icon
                         mFabMain.setImageResource(addWhiteIcon)
-                        // Shrink back FAB
-                        mFabMain.animate().setDuration(60).scaleX(1f).scaleY(1f)
-                            .start()
                     }.start()
                 }
 
