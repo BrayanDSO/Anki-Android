@@ -97,8 +97,12 @@
 
             </FrameLayout>
         </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
-    </LinearLayout>
 
+    </LinearLayout>
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:menu="@menu/bottom_bar"/>
     <include layout="@layout/anki_progress"/>
     <include layout="@layout/floating_add_button"/>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
