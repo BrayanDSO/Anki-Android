@@ -107,7 +107,7 @@ import kotlin.math.ceil
 // The class is only 'open' due to testing
 @KotlinCleanup("scan through this class and add attributes - in process")
 open class CardBrowser :
-    NavigationDrawerActivity(),
+    AnkiActivity(),
     SubtitleListener,
     DeckSelectionListener,
     TagsDialogListener,
@@ -364,7 +364,6 @@ open class CardBrowser :
         }
         launchOptions = intent?.toCardBrowserLaunchOptions() // must be called after super.onCreate()
         setContentView(R.layout.card_browser)
-        initNavigationDrawer(findViewById(android.R.id.content))
         // initialize the lateinit variables
         // Load reference to action bar title
         mActionBarTitle = findViewById(R.id.toolbar_title)
@@ -694,8 +693,9 @@ open class CardBrowser :
     }
 
     override fun onBackPressed() {
+        @Suppress("DEPRECATION")
+        super.onBackPressed()
         when {
-            isDrawerOpen -> super.onBackPressed()
             viewModel.isInMultiSelectMode -> viewModel.endMultiSelectMode()
             else -> {
                 Timber.i("Back key pressed")
@@ -719,7 +719,6 @@ open class CardBrowser :
 
     override fun onResume() {
         super.onResume()
-        selectNavigationItem(R.id.nav_browser)
     }
 
     @KotlinCleanup("Add a few variables to get rid of the !!")
@@ -727,8 +726,6 @@ open class CardBrowser :
         Timber.d("onCreateOptionsMenu()")
         mActionBarMenu = menu
         if (!viewModel.isInMultiSelectMode) {
-            // restore drawer click listener and icon
-            restoreDrawerIcon()
             menuInflater.inflate(R.menu.card_browser, menu)
             mSaveSearchItem = menu.findItem(R.id.action_save_search)
             mSaveSearchItem?.isVisible = false // the searchview's query always starts empty.
@@ -783,7 +780,6 @@ open class CardBrowser :
         } else {
             // multi-select mode
             menuInflater.inflate(R.menu.card_browser_multiselect, menu)
-            showBackIcon()
             increaseHorizontalPaddingOfOverflowMenuIcons(menu)
         }
         mActionBarMenu?.findItem(R.id.action_undo)?.run {
@@ -803,14 +799,6 @@ open class CardBrowser :
         onSelectionChanged()
         updatePreviewMenuItem()
         return super.onCreateOptionsMenu(menu)
-    }
-
-    override fun onNavigationPressed() {
-        if (viewModel.isInMultiSelectMode) {
-            viewModel.endMultiSelectMode()
-        } else {
-            super.onNavigationPressed()
-        }
     }
 
     private fun displayDeckPickerForPermissionsDialog() {
@@ -913,8 +901,6 @@ open class CardBrowser :
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when {
-            drawerToggle.onOptionsItemSelected(item) -> return true
-
             // dismiss undo-snackbar if shown to avoid race condition
             // (when another operation will be performed on the model, it will undo the latest operation)
             mUndoSnackbar != null && mUndoSnackbar!!.isShown -> mUndoSnackbar!!.dismiss()
