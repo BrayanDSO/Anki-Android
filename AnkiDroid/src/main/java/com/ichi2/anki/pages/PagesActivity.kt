@@ -32,7 +32,7 @@ import kotlin.reflect.jvm.jvmName
  * * Host an [AnkiServer] to intercept any requests made by an Anki page and resolve them
  * * Operate UI requests by the [AnkiServer]
  */
-class PagesActivity : AnkiActivity() {
+open class PagesActivity : AnkiActivity() {
     private lateinit var ankiServer: AnkiServer
 
     fun baseUrl(): String {

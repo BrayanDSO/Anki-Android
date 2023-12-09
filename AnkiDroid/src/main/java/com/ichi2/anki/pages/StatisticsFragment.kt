@@ -33,10 +33,15 @@ import com.ichi2.anki.R
 import com.ichi2.anki.utils.getTimestamp
 import com.ichi2.libanki.utils.TimeManager
 
-class Statistics : PageFragment() {
+class StatisticsActivity : PagesActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+    }
+}
+
+class StatisticsFragment : PageFragment() {
     override val title: String
         get() = resources.getString(R.string.statistics)
-
     override val pageName = "graphs"
     override var webViewClient = PageWebViewClient()
     override var webChromeClient = PageChromeClient()
@@ -68,9 +73,11 @@ class Statistics : PageFragment() {
         )
     }
 
-    /**Prepares and initiates a printing task for the content(stats) displayed in the WebView.
+    /**
+     * Prepares and initiates a printing task for the content displayed in the WebView.
      * It uses the Android PrintManager service to create a print job, based on the content of the WebView.
-     * The resulting output is a PDF document. **/
+     * The resulting output is a PDF document.
+     **/
     fun exportWebViewContentAsPDF() {
         val printManager = getSystemService(requireContext(), PrintManager::class.java)
         val currentDateTime = getTimestamp(TimeManager.time)
@@ -85,7 +92,7 @@ class Statistics : PageFragment() {
 
     companion object {
         fun getIntent(context: Context): Intent {
-            return PagesActivity.getIntent(context, Statistics::class)
+            return PagesActivity.getIntent(context, StatisticsFragment::class)
         }
     }
 }
