@@ -14,6 +14,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import anki.config.ConfigKey
 import com.ichi2.anim.ActivityTransitionAnimation
+import com.ichi2.anki.AbstractFlashcardViewer.Companion.EXTRA_STARTED_WITH_SHORTCUT
 import com.ichi2.anki.AbstractFlashcardViewer.WebViewSignalParserUtils.ANSWER_ORDINAL_1
 import com.ichi2.anki.AbstractFlashcardViewer.WebViewSignalParserUtils.ANSWER_ORDINAL_2
 import com.ichi2.anki.AbstractFlashcardViewer.WebViewSignalParserUtils.ANSWER_ORDINAL_3
@@ -353,7 +354,7 @@ class AbstractFlashcardViewerTest : RobolectricTest() {
         }
         val intent = Intent()
         if (startedWithShortcut) {
-            intent.putExtra(NavigationDrawerActivity.EXTRA_STARTED_WITH_SHORTCUT, true)
+            intent.putExtra(EXTRA_STARTED_WITH_SHORTCUT, true)
         }
         val multimediaController = Robolectric.buildActivity(NonAbstractFlashcardViewer::class.java, intent)
             .create().start().resume().visible()
