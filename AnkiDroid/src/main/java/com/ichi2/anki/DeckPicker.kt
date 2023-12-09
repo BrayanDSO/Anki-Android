@@ -167,7 +167,7 @@ const val OLDEST_WORKING_WEBVIEW_VERSION = 77
 @NeedsTest("If the collection has been created, the app intro is not displayed")
 @NeedsTest("If the user selects 'Sync Profile' in the app intro, a sync starts immediately")
 open class DeckPicker :
-    NavigationDrawerActivity(),
+    AnkiActivity(),
     StudyOptionsListener,
     SyncErrorDialogListener,
     ImportDialogListener,
@@ -198,6 +198,7 @@ open class DeckPicker :
     private lateinit var mNoDecksPlaceholder: LinearLayout
     lateinit var mPullToSyncWrapper: SwipeRefreshLayout
         private set
+    private var fragmented = false
 
     private lateinit var mReviewSummaryTextView: TextView
 
@@ -392,7 +393,6 @@ open class DeckPicker :
 
         setContentView(R.layout.homescreen)
         handleStartup()
-        val mainView = findViewById<View>(android.R.id.content)
 
         // check, if tablet layout
         mStudyoptionsFrame = findViewById(R.id.studyoptions_fragment)
@@ -405,8 +405,6 @@ open class DeckPicker :
         }
         registerExternalStorageListener()
 
-        // create inherited navigation drawer layout here so that it can be used by parent class
-        initNavigationDrawer(mainView)
         title = resources.getString(R.string.app_name)
 
         mDeckPickerContent = findViewById(R.id.deck_picker_content)
@@ -891,9 +889,6 @@ open class DeckPicker :
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (drawerToggle.onOptionsItemSelected(item)) {
-            return true
-        }
         when (item.itemId) {
             R.id.action_undo -> {
                 Timber.i("DeckPicker:: Undo button pressed")
@@ -1000,9 +995,6 @@ open class DeckPicker :
         // As `loadDeckCounts` is cancelled in `migrate()`
         val message = dialogHandler.popMessage()
         super.onResume()
-        if (navDrawerIsReady()) {
-            refreshState()
-        }
         message?.let { dialogHandler.sendStoredMessage(it) }
     }
 
@@ -1013,7 +1005,6 @@ open class DeckPicker :
             sync()
             mSyncOnResume = false
         } else {
-            selectNavigationItem(R.id.nav_decks)
             updateDeckList()
             title = resources.getString(R.string.app_name)
         }
@@ -1091,28 +1082,25 @@ open class DeckPicker :
     @Suppress("DEPRECATION") // onBackPressed
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
+        super.onBackPressed()
         val preferences = baseContext.sharedPrefs()
-        if (isDrawerOpen) {
-            super.onBackPressed()
+        Timber.i("Back key pressed")
+        if (mFloatingActionMenu.isFABOpen) {
+            mFloatingActionMenu.closeFloatingActionMenu(applyRiseAndShrinkAnimation = true)
         } else {
-            Timber.i("Back key pressed")
-            if (mFloatingActionMenu.isFABOpen) {
-                mFloatingActionMenu.closeFloatingActionMenu(applyRiseAndShrinkAnimation = true)
+            if (!preferences.getBoolean(
+                    "exitViaDoubleTapBack",
+                    false
+                ) || mBackButtonPressedToExit
+            ) {
+                automaticSync()
+                finish()
             } else {
-                if (!preferences.getBoolean(
-                        "exitViaDoubleTapBack",
-                        false
-                    ) || mBackButtonPressedToExit
-                ) {
-                    automaticSync()
-                    finish()
-                } else {
-                    showSnackbar(R.string.back_pressed_once, Snackbar.LENGTH_SHORT)
-                }
-                mBackButtonPressedToExit = true
-                HandlerUtils.executeFunctionWithDelay(Consts.SHORT_TOAST_DURATION) {
-                    mBackButtonPressedToExit = false
-                }
+                showSnackbar(R.string.back_pressed_once, Snackbar.LENGTH_SHORT)
+            }
+            mBackButtonPressedToExit = true
+            HandlerUtils.executeFunctionWithDelay(Consts.SHORT_TOAST_DURATION) {
+                mBackButtonPressedToExit = false
             }
         }
     }
@@ -1129,7 +1117,7 @@ open class DeckPicker :
             }
             KeyEvent.KEYCODE_B -> {
                 Timber.i("Open Browser from keypress")
-                openCardBrowser()
+                startActivity(Intent(this, CardBrowser::class.java))
             }
             KeyEvent.KEYCODE_Y -> {
                 Timber.i("Sync from keypress")
@@ -1721,7 +1709,6 @@ open class DeckPicker :
             }
             negativeButton(R.string.dialog_cancel)
             if (AdaptionUtil.hasWebBrowser(this@DeckPicker)) {
-                @Suppress("DEPRECATION")
                 neutralButton(text = getColUnsafe.tr.schedulingUpdateMoreInfoButton()) {
                     this@DeckPicker.openUrl(Uri.parse("https://faqs.ankiweb.net/the-anki-2.1-scheduler.html#updating"))
                 }
@@ -2305,7 +2292,7 @@ open class DeckPicker :
         }
 
         var userCheckedDoNotShowAgain = false
-        var dialog = AlertDialog.Builder(this)
+        val dialog = AlertDialog.Builder(this)
             .setTitle(R.string.scoped_storage_title)
             .setMessage(message)
             .setPositiveButton(
