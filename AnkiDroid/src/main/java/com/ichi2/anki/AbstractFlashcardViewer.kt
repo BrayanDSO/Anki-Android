@@ -523,6 +523,7 @@ abstract class AbstractFlashcardViewer :
         this.setTheme(R.style.ThemeOverlay_DisableKeyboardHighlight)
 
         setContentView(getContentViewAttr(fullscreenMode))
+        enableToolbar()
 
         server = ReviewerServer(this@AbstractFlashcardViewer).apply { start() }
 

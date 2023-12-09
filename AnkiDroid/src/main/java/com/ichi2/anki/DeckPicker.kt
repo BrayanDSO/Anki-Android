@@ -392,6 +392,7 @@ open class DeckPicker :
         }
 
         setContentView(R.layout.homescreen)
+        enableToolbar()
         handleStartup()
 
         // check, if tablet layout
@@ -995,6 +996,7 @@ open class DeckPicker :
         // As `loadDeckCounts` is cancelled in `migrate()`
         val message = dialogHandler.popMessage()
         super.onResume()
+        refreshState()
         message?.let { dialogHandler.sendStoredMessage(it) }
     }
 

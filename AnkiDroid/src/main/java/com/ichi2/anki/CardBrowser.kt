@@ -364,6 +364,7 @@ open class CardBrowser :
         }
         launchOptions = intent?.toCardBrowserLaunchOptions() // must be called after super.onCreate()
         setContentView(R.layout.card_browser)
+        enableToolbar()
         // initialize the lateinit variables
         // Load reference to action bar title
         mActionBarTitle = findViewById(R.id.toolbar_title)

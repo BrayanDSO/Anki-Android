@@ -16,7 +16,16 @@
         android:layout_height="match_parent"
         android:orientation="vertical" >
 
-        <include layout="@layout/toolbar" />
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:title="@string/app_name"
+            android:background="?attr/appBarColor"
+            android:theme="@style/ActionBarStyle"
+            app:menu="@menu/deck_picker"
+            />
+
 
         <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
             android:id="@+id/pull_to_sync_wrapper"
