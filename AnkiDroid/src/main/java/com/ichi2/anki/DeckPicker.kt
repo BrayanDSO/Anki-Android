@@ -167,7 +167,7 @@ const val OLDEST_WORKING_WEBVIEW_VERSION = 77
 @NeedsTest("If the collection has been created, the app intro is not displayed")
 @NeedsTest("If the user selects 'Sync Profile' in the app intro, a sync starts immediately")
 open class DeckPicker :
-    AnkiActivity(),
+    NavigationBarActivity(),
     StudyOptionsListener,
     SyncErrorDialogListener,
     ImportDialogListener,

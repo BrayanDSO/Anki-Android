@@ -107,7 +107,7 @@ import kotlin.math.ceil
 // The class is only 'open' due to testing
 @KotlinCleanup("scan through this class and add attributes - in process")
 open class CardBrowser :
-    AnkiActivity(),
+    NavigationBarActivity(),
     SubtitleListener,
     DeckSelectionListener,
     TagsDialogListener,
