@@ -36,7 +36,7 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/main_drawer_talk_container"
+        android:id="@+id/help_container"
         android:layout_width="match_parent"
         android:layout_height="?attr/listPreferredItemHeight"
         android:paddingStart="16dp"
@@ -49,7 +49,7 @@
         <ImageView
             android:layout_width="24dp"
             android:layout_height="24dp"
-            app:srcCompat="@drawable/ic_accessibility_24"
+            app:srcCompat="@drawable/ic_help_24"
             />
 
         <TextView
@@ -58,6 +58,32 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
             android:layout_weight="1"
-            android:text="@string/navigation" />
+            android:text="@string/help" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/support_container"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/listPreferredItemHeight"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        >
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            app:srcCompat="@drawable/ic_support_ankidroid"
+            />
+
+        <TextView
+            style="@style/TextAppearance.Material3.BodyLarge"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_weight="1"
+            android:text="@string/help_title_support_ankidroid" />
     </LinearLayout>
 </LinearLayout>

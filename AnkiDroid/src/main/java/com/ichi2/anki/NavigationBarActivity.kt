@@ -16,30 +16,45 @@
 package com.ichi2.anki
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.LinearLayout
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.google.android.material.navigation.NavigationView
+import com.google.android.material.navigation.NavigationBarView
+import com.ichi2.anki.dialogs.HelpDialog
 import com.ichi2.anki.pages.StatisticsActivity
 import com.ichi2.anki.preferences.Preferences
+import com.ichi2.anki.snackbar.BaseSnackbarBuilderProvider
+import com.ichi2.anki.snackbar.SnackbarBuilder
 import kotlin.reflect.KClass
 
-open class NavigationBarActivity : AnkiActivity(), NavigationView.OnNavigationItemSelectedListener {
+open class NavigationBarActivity :
+    AnkiActivity(),
+    NavigationBarView.OnItemSelectedListener,
+    BaseSnackbarBuilderProvider {
 
-    override fun onCreateView(name: String, context: Context, attrs: AttributeSet): View? {
-        val view =
-            findViewById<NavigationView>(R.id.navigation_bar)
-                ?.setNavigationItemSelectedListener(this)
-        return super.onCreateView(name, context, attrs)
+    override val baseSnackbarBuilder: SnackbarBuilder
+        get() = { anchorView = findViewById(R.id.navigation_bar) }
+
+    override fun onStart() {
+        super.onStart()
+        findViewById<NavigationBarView>(R.id.navigation_bar)?.let {
+            it.setOnItemSelectedListener(this)
+            it.selectedItemId = when (this) {
+                is DeckPicker -> R.id.nav_decks
+                is CardBrowser -> R.id.nav_browser
+//                is StatisticsActivity -> R.id.nav_stats
+                else -> R.id.nav_stats
+            }
+        }
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
@@ -54,7 +69,10 @@ open class NavigationBarActivity : AnkiActivity(), NavigationView.OnNavigationIt
             R.id.nav_decks -> openActivity(DeckPicker::class)
             R.id.nav_browser -> openActivity(CardBrowser::class)
             R.id.nav_stats -> openActivity(StatisticsActivity::class)
-            R.id.nav_more -> MoreNavigationDialog().show(supportFragmentManager, null)
+            R.id.nav_more -> {
+                MoreNavigationDialog().show(supportFragmentManager, null)
+                return false
+            }
             else -> return false
         }
         return true
@@ -62,6 +80,12 @@ open class NavigationBarActivity : AnkiActivity(), NavigationView.OnNavigationIt
 }
 
 class MoreNavigationDialog : BottomSheetDialogFragment() {
+
+    private val settingsLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            ActivityCompat.recreate(requireActivity())
+        }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -69,12 +93,24 @@ class MoreNavigationDialog : BottomSheetDialogFragment() {
     ): View? {
         val view = inflater.inflate(R.layout.more_nav_drawer, container, false)
 
+        // Settings
         view.findViewById<LinearLayout>(R.id.drawer_settings_container).setOnClickListener {
-            requireActivity().run {
-                startActivity(Intent(this, Preferences::class.java))
-            }
+            settingsLauncher.launch(Intent(requireContext(), Preferences::class.java))
+            dialog?.dismiss()
+        }
+        // Help
+        view.findViewById<LinearLayout>(R.id.help_container).setOnClickListener {
+            HelpDialog.createInstance().show(parentFragmentManager, null)
+            dialog?.dismiss()
+        }
+        // Support AnkiDroid
+        view.findViewById<LinearLayout>(R.id.support_container).setOnClickListener {
+            HelpDialog.createInstanceForSupportAnkiDroid(requireContext())
+                .show(parentFragmentManager, null)
+            dialog?.dismiss()
         }
 
+        // Start the dialog expanded
         dialog?.let { dialog ->
             dialog.setOnShowListener {
                 val sheet = dialog.findViewById<FrameLayout>(com.google.android.material.R.id.design_bottom_sheet)
