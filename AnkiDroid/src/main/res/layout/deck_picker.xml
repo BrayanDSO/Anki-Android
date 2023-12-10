@@ -39,11 +39,9 @@
             android:paddingBottom="72dp"
             android:scrollbars="vertical" />
 
-        <com.google.android.material.bottomnavigation.BottomNavigationView
-            android:id="@+id/navigation_bar"
-            android:layout_width="match_parent"
+        <include layout="@layout/bottom_bar"
             android:layout_height="wrap_content"
-            app:menu="@menu/bottom_bar"
+            android:layout_width="match_parent"
             app:layout_constraintBottom_toBottomOf="parent"
             />
 

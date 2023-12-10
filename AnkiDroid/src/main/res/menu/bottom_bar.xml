@@ -14,6 +14,6 @@
         android:title="@string/statistics"/>
     <item
         android:id="@+id/nav_more"
-        android:icon="@android:drawable/menu"
-        android:title="@string/statistics"/>
+        android:icon="@drawable/ic_menu_24"
+        android:title="@string/more_options"/>
 </menu>
