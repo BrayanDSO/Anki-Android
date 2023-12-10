@@ -200,8 +200,6 @@ open class DeckPicker :
         private set
     private var fragmented = false
 
-    private lateinit var mReviewSummaryTextView: TextView
-
     @KotlinCleanup("make lateinit, but needs more changes")
     private var mUnmountReceiver: BroadcastReceiver? = null
     private lateinit var mFloatingActionMenu: DeckPickerFloatingActionMenu
@@ -463,8 +461,6 @@ open class DeckPicker :
         }
         // Setup the FloatingActionButtons, should work everywhere with min API >= 15
         mFloatingActionMenu = DeckPickerFloatingActionMenu(this, view, this)
-
-        mReviewSummaryTextView = findViewById(R.id.today_stats_text_view)
 
         mShortAnimDuration = resources.getInteger(android.R.integer.config_shortAnimTime)
 
@@ -1811,20 +1807,12 @@ open class DeckPicker :
 
     private fun onDecksLoaded(result: DeckNode, collectionIsEmpty: Boolean) {
         Timber.i("Updating deck list UI")
-        hideProgressBar()
         // Make sure the fragment is visible
         if (fragmented) {
             mStudyoptionsFrame!!.visibility = View.VISIBLE
         }
         dueTree = result
         launchCatchingTask { renderPage(collectionIsEmpty) }
-        // Update the mini statistics bar as well
-        mReviewSummaryTextView.setSingleLine()
-        launchCatchingTask {
-            mReviewSummaryTextView.text = withCol {
-                sched.studiedToday()
-            }
-        }
         Timber.d("Startup - Deck List UI Completed")
     }
 
