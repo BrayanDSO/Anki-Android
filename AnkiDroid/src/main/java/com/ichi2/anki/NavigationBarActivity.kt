@@ -25,7 +25,6 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.app.ActivityCompat
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.navigation.NavigationBarView
@@ -39,21 +38,30 @@ import kotlin.reflect.KClass
 open class NavigationBarActivity :
     AnkiActivity(),
     NavigationBarView.OnItemSelectedListener,
+    NavigationBarView.OnItemReselectedListener,
     BaseSnackbarBuilderProvider {
 
-    override val baseSnackbarBuilder: SnackbarBuilder
-        get() = { anchorView = findViewById(R.id.navigation_bar) }
+    val settingsLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        val intent = intent
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+        finish()
+        startActivity(intent)
+    }
+
+    override val baseSnackbarBuilder: SnackbarBuilder =
+        { anchorView = findViewById(R.id.navigation_bar) }
 
     override fun onStart() {
         super.onStart()
         findViewById<NavigationBarView>(R.id.navigation_bar)?.let {
-            it.setOnItemSelectedListener(this)
             it.selectedItemId = when (this) {
                 is DeckPicker -> R.id.nav_decks
                 is CardBrowser -> R.id.nav_browser
-//                is StatisticsActivity -> R.id.nav_stats
-                else -> R.id.nav_stats
+                is StatisticsActivity -> R.id.nav_stats
+                else -> TODO("Unhandled class")
             }
+            it.setOnItemReselectedListener(this)
+            it.setOnItemSelectedListener(this)
         }
     }
 
@@ -77,15 +85,13 @@ open class NavigationBarActivity :
         }
         return true
     }
+
+    override fun onNavigationItemReselected(item: MenuItem) {
+        // do nothing
+    }
 }
 
 class MoreNavigationDialog : BottomSheetDialogFragment() {
-
-    private val settingsLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            ActivityCompat.recreate(requireActivity())
-        }
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -95,7 +101,7 @@ class MoreNavigationDialog : BottomSheetDialogFragment() {
 
         // Settings
         view.findViewById<LinearLayout>(R.id.drawer_settings_container).setOnClickListener {
-            settingsLauncher.launch(Intent(requireContext(), Preferences::class.java))
+            (requireActivity() as NavigationBarActivity).settingsLauncher.launch(Intent(requireContext(), Preferences::class.java))
             dialog?.dismiss()
         }
         // Help

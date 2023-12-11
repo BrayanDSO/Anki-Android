@@ -368,6 +368,11 @@
             >
         </activity>
         <activity
+            android:name=".pages.StatisticsActivity"
+            android:label="@string/statistics"
+            android:exported="false"
+            />
+        <activity
             android:name=".CardTemplateBrowserAppearanceEditor"
             android:label="@string/card_template_browser_appearance_title"
             android:exported="false"

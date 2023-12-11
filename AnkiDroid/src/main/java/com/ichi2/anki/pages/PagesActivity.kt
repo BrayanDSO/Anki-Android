@@ -18,7 +18,6 @@ package com.ichi2.anki.pages
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.webkit.WebView
 import androidx.fragment.app.commit
 import com.ichi2.anki.*
 import com.ichi2.utils.getInstanceFromClassName
@@ -32,10 +31,10 @@ import kotlin.reflect.jvm.jvmName
  * * Host an [AnkiServer] to intercept any requests made by an Anki page and resolve them
  * * Operate UI requests by the [AnkiServer]
  */
-open class PagesActivity : AnkiActivity() {
+open class PagesActivity : AnkiActivity(), ServerProvider {
     private lateinit var ankiServer: AnkiServer
 
-    fun baseUrl(): String {
+    override fun baseUrl(): String {
         return ankiServer.baseUrl()
     }
 
@@ -46,9 +45,6 @@ open class PagesActivity : AnkiActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.page_activity)
         enableToolbar()
-
-        // Enable debugging on DEBUG builds
-        WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
 
         // Load server
         ankiServer = AnkiServer(this)

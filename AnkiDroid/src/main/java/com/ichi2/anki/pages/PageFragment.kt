@@ -21,6 +21,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebView
 import androidx.fragment.app.Fragment
+import com.ichi2.anki.BuildConfig
 import com.ichi2.anki.R
 import com.ichi2.themes.Themes
 import timber.log.Timber
@@ -45,13 +46,16 @@ abstract class PageFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.page_fragment, container, false)
 
+        // Enable debugging on DEBUG builds
+        WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
+
         webView = view.findViewById<WebView>(R.id.pagesWebview).apply {
             settings.javaScriptEnabled = true
             webViewClient = this@PageFragment.webViewClient
             webChromeClient = this@PageFragment.webChromeClient
         }
         val nightMode = if (Themes.currentTheme.isNightMode) "#night" else ""
-        val url = (requireActivity() as PagesActivity).baseUrl() + "$pageName.html$nightMode"
+        val url = (requireActivity() as ServerProvider).baseUrl() + "$pageName.html$nightMode"
 
         Timber.i("Loading $url")
         webView.loadUrl(url)
