@@ -133,6 +133,7 @@ android {
             splits.abi.universalApk = universalApkEnabled // Build universal APK for release with `-Duniversal-apk=true`
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
+            applicationIdSuffix ".dso"
 
             // syntax: assembleRelease -PcustomSuffix="suffix" -PcustomName="New name"
             if (project.hasProperty("customSuffix")) {
@@ -140,7 +141,7 @@ android {
                 applicationIdSuffix project.property("customSuffix").replaceFirst(/^\.*/, ".")
                 resValue "string", "applicationId", "${defaultConfig.applicationId}${applicationIdSuffix}"
             } else {
-                resValue "string", "applicationId", defaultConfig.applicationId
+                resValue "string", "applicationId", "${defaultConfig.applicationId}${applicationIdSuffix}"
             }
             if (project.hasProperty("customName")) {
                 resValue "string", "app_name", project.property("customName")
