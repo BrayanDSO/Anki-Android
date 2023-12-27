@@ -300,13 +300,6 @@ open class CardBrowser :
         }
     }
 
-    private fun onSearch() {
-        if (viewModel.searchTerms.isEmpty()) {
-            searchView!!.queryHint = resources.getString(R.string.deck_conf_cram_search)
-        }
-        searchCards(searchView!!.query.toString())
-    }
-
     private val selectedRowIds: List<CardId>
         get() = viewModel.selectedRowIds
 
@@ -746,6 +739,7 @@ open class CardBrowser :
                 }
             })
             searchView = searchItem!!.actionView as CardBrowserSearchView
+            searchView!!.queryHint = resources.getString(R.string.deck_conf_cram_search)
             searchView!!.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
                 override fun onQueryTextChange(newText: String): Boolean {
                     if (searchView!!.shouldIgnoreValueChange()) {
@@ -756,7 +750,7 @@ open class CardBrowser :
                 }
 
                 override fun onQueryTextSubmit(query: String): Boolean {
-                    onSearch()
+                    searchCards(searchView!!.query.toString())
                     searchView!!.clearFocus()
                     return true
                 }
