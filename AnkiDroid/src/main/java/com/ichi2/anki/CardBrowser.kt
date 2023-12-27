@@ -1379,17 +1379,11 @@ open class CardBrowser :
             searchView!!.setQuery(viewModel.searchTerms, false)
             searchItem!!.expandActionView()
         }
-        val searchText: String? = if (viewModel.searchTerms.contains("deck:")) {
-            "($viewModel.searchTerms)"
-        } else {
-            if ("" != viewModel.searchTerms) "${viewModel.restrictOnDeck}(${viewModel.searchTerms})" else viewModel.restrictOnDeck
-        }
         // clear the existing card list
         cards.reset()
         cardsAdapter.notifyDataSetChanged()
-        val query = searchText!!
         launchCatchingTask {
-            val cards = withProgress { viewModel.searchForCards(query, numCardsToRender()) }
+            val cards = withProgress { viewModel.searchForCards(numCardsToRender()) }
             redrawAfterSearch(cards)
         }
     }
