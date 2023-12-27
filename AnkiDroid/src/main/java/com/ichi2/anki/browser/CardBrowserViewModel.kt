@@ -548,8 +548,15 @@ class CardBrowserViewModel(
     fun setSearchTerms(searchQuery: String) = flowOfSearchTerms.update { searchQuery }
 
     /** @see com.ichi2.anki.searchForCards */
-    suspend fun searchForCards(query: String): MutableList<CardBrowser.CardCache> {
-        return com.ichi2.anki.searchForCards(query, order.toSortOrder(), cardsOrNotes)
+    suspend fun searchForCards(query: String, numCardsToRender: Int): MutableList<CardBrowser.CardCache> {
+        Timber.d("performing search")
+        val cards = com.ichi2.anki.searchForCards(query, order.toSortOrder(), cardsOrNotes)
+        Timber.d("Search returned %d cards", cards.size)
+        // Render the first few items
+        for (i in 0 until Math.min(numCardsToRender, cards.size)) {
+            cards[i].load(false, column1Index, column2Index)
+        }
+        return cards
     }
 
     companion object {

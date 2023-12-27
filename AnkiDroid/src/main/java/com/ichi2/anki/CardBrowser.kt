@@ -1389,13 +1389,7 @@ open class CardBrowser :
         cardsAdapter.notifyDataSetChanged()
         val query = searchText!!
         launchCatchingTask {
-            Timber.d("performing search")
-            val cards = withProgress { viewModel.searchForCards(query) }
-            Timber.d("Search returned %d cards", cards.size)
-            // Render the first few items
-            for (i in 0 until Math.min(numCardsToRender(), cards.size)) {
-                cards[i].load(false, viewModel.column1Index, viewModel.column2Index)
-            }
+            val cards = withProgress { viewModel.searchForCards(query, numCardsToRender()) }
             redrawAfterSearch(cards)
         }
     }
