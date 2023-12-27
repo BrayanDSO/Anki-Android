@@ -262,10 +262,9 @@ open class CardBrowser :
             launchCatchingTask {
                 viewModel.savedSearches()[searchName]?.apply {
                     Timber.d("OnSelection using search terms: %s", this)
-                    searchTerms = this
                     searchView!!.setQuery(this, false)
                     searchItem!!.expandActionView()
-                    searchCards()
+                    searchCards(this)
                 }
             }
         }
@@ -307,11 +306,10 @@ open class CardBrowser :
     }
 
     private fun onSearch() {
-        searchTerms = searchView!!.query.toString()
         if (searchTerms.isEmpty()) {
             searchView!!.queryHint = resources.getString(R.string.deck_conf_cram_search)
         }
-        searchCards()
+        searchCards(searchView!!.query.toString())
     }
 
     private val selectedRowIds: List<CardId>
@@ -395,15 +393,13 @@ open class CardBrowser :
 
         when (val options = launchOptions) {
             is CardBrowserLaunchOptions.DeepLink -> {
-                searchTerms = options.search
-                searchCards()
+                searchCards(options.search)
             }
             is CardBrowserLaunchOptions.SearchQueryJs -> {
-                searchTerms = options.search
                 if (options.allDecks) {
                     onDeckSelected(SelectableDeck(ALL_DECKS_ID, getString(R.string.card_browser_all_decks)))
                 }
-                searchCards()
+                searchCards(options.search)
             }
             else -> {} // Context Menu handled in onCreateOptionsMenu
         }
@@ -449,9 +445,8 @@ open class CardBrowser :
         viewModel.flowOfFilterQuery
             .launchCollectionInLifecycleScope { filterQuery ->
                 searchView!!.setQuery("", false)
-                searchTerms = filterQuery
-                searchView!!.setQuery(searchTerms, true)
-                searchCards()
+                searchView!!.setQuery(filterQuery, true)
+                searchCards(filterQuery)
             }
 
         viewModel.flowOfDeckId
@@ -746,9 +741,8 @@ open class CardBrowser :
                 override fun onMenuItemActionCollapse(item: MenuItem): Boolean {
                     viewModel.setSearchQueryExpanded(false)
                     // SearchView doesn't support empty queries so we always reset the search when collapsing
-                    searchTerms = ""
-                    searchView!!.setQuery(searchTerms, false)
-                    searchCards()
+                    searchView!!.setQuery("", false)
+                    searchCards("")
                     return true
                 }
             })
@@ -1353,13 +1347,12 @@ open class CardBrowser :
 
     public override fun onRestoreInstanceState(savedInstanceState: Bundle) {
         super.onRestoreInstanceState(savedInstanceState)
-        searchTerms = savedInstanceState.getString("mSearchTerms", "")
         oldCardId = savedInstanceState.getLong("mOldCardId")
         oldCardTopOffset = savedInstanceState.getInt("mOldCardTopOffset")
         shouldRestoreScroll = savedInstanceState.getBoolean("mShouldRestoreScroll")
         postAutoScroll = savedInstanceState.getBoolean("mPostAutoScroll")
         lastSelectedPosition = savedInstanceState.getInt("mLastSelectedPosition")
-        searchCards()
+        searchCards(savedInstanceState.getString("mSearchTerms", ""))
     }
 
     private fun invalidate() {
@@ -1368,9 +1361,10 @@ open class CardBrowser :
 
     private fun forceRefreshSearch(useSearchTextValue: Boolean = false) {
         if (useSearchTextValue && searchView != null) {
-            searchTerms = searchView!!.query.toString()
+            searchCards(searchView!!.query.toString())
+        } else {
+            searchCards()
         }
-        searchCards()
     }
 
     @RustCleanup("remove card cache; switch to RecyclerView and browserRowForId (#11889)")
