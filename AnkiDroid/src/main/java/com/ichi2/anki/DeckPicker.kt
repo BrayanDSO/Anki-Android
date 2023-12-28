@@ -129,6 +129,8 @@ import org.json.JSONException
 import timber.log.Timber
 import java.io.File
 import java.lang.Runnable
+import java.util.Optional
+import kotlin.jvm.optionals.getOrNull
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
@@ -795,7 +797,6 @@ open class DeckPicker :
     private fun updateMenuFromState(menu: Menu) {
         menu.setGroupVisible(R.id.allItems, optionsMenuState != null)
         optionsMenuState?.run {
-            menu.findItem(R.id.deck_picker_action_filter).isVisible = searchIcon
             updateUndoLabelFromState(menu.findItem(R.id.action_undo), undoLabel)
             updateSyncIconFromState(menu.findItem(R.id.action_sync), this)
             menu.findItem(R.id.action_scoped_storage_migrate).isVisible = shouldShowStartMigrationButton
@@ -850,15 +851,13 @@ open class DeckPicker :
     @VisibleForTesting
     suspend fun updateMenuState() {
         optionsMenuState = withOpenColOrNull {
-            val searchIcon = decks.count() >= 10
-            val undoLabel = undoLabel()
-            Pair(searchIcon, undoLabel)
-        }?.let { (searchIcon, undoLabel) ->
+            Optional.ofNullable(undoLabel())
+        }?.let { undoLabel ->
             val syncIcon = fetchSyncStatus()
             val mediaMigrationState = getMediaMigrationState()
             val shouldShowStartMigrationButton = shouldOfferToMigrate() ||
                 mediaMigrationState is MediaMigrationState.Ongoing.PausedDueToError
-            OptionsMenuState(searchIcon, undoLabel, syncIcon, shouldShowStartMigrationButton, mediaMigrationState)
+            OptionsMenuState(undoLabel.getOrNull(), syncIcon, shouldShowStartMigrationButton, mediaMigrationState)
         }
     }
 
@@ -2423,7 +2422,6 @@ open class DeckPicker :
  * the current state is stored in the deck picker so that we can redraw the
  * menu immediately. */
 data class OptionsMenuState(
-    val searchIcon: Boolean,
     /** If undo is available, a string describing the action. */
     val undoLabel: String?,
     val syncIcon: SyncIconState,
