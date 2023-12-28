@@ -285,10 +285,6 @@ open class AnkiDroidJsAPI(private val activity: AbstractFlashcardViewer) {
                 activity.webView!!.isVerticalScrollBarEnabled = apiParams.toBoolean()
                 convertToByteArray(apiContract, true)
             }
-            "showNavigationDrawer" -> {
-                activity.onNavigationPressed()
-                convertToByteArray(apiContract, true)
-            }
             "showOptionsMenu" -> {
                 activity.openOptionsMenu()
                 convertToByteArray(apiContract, true)

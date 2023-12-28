@@ -694,7 +694,7 @@ abstract class AbstractFlashcardViewer :
         return super.onKeyUp(keyCode, event)
     }
 
-    val currentCardId: CardId? get() = currentCard?.id
+    open val currentCardId: CardId? get() = currentCard?.id
 
     private fun processHardwareButtonScroll(keyCode: Int, card: WebView?): Boolean {
         if (keyCode == KeyEvent.KEYCODE_PAGE_UP) {
