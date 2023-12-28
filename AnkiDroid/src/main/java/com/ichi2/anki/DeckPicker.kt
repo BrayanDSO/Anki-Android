@@ -1870,23 +1870,6 @@ open class DeckPicker :
         }
         mDeckListAdapter.buildDeckList(tree, currentFilter)
 
-        // Set the "x due" subtitle
-        try {
-            val due = mDeckListAdapter.due
-            val res = resources
-
-            if (due != null && supportActionBar != null) {
-                val cardCount = withCol { cardCount() }
-                val subTitle: String = if (due == 0) {
-                    res.getQuantityString(R.plurals.deckpicker_title_zero_due, cardCount, cardCount)
-                } else {
-                    res.getQuantityString(R.plurals.widget_cards_due, due, due)
-                }
-                supportActionBar!!.subtitle = subTitle
-            }
-        } catch (e: RuntimeException) {
-            Timber.e(e, "RuntimeException setting time remaining")
-        }
         val current = withCol { decks.current().optLong("id") }
         if (mFocusedDeck != current) {
             scrollDecklistToDeck(current)
