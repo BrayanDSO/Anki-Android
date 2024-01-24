@@ -95,7 +95,6 @@ open class Reviewer :
     ReviewerUi {
     var queueState: CurrentQueueState? = null
     val customSchedulingKey = TimeManager.time.intTimeMS().toString()
-    private var mHasDrawerSwipeConflicts = false
     private var mShowWhiteboard = true
     private var mPrefFullscreenReview = false
     private lateinit var mColorPalette: LinearLayout
@@ -291,10 +290,6 @@ open class Reviewer :
         }
     }
 
-    public override fun fitsSystemWindows(): Boolean {
-        return !fullscreenMode.isFullScreenReview()
-    }
-
     override fun onCollectionLoaded(col: Collection) {
         super.onCollectionLoaded(col)
         if (Intent.ACTION_VIEW == intent.action) {
@@ -317,7 +312,6 @@ open class Reviewer :
             withCol { startTimebox() }
             updateCardAndRedraw()
         }
-        disableDrawerSwipeOnConflicts()
 
         // Set full screen/immersive mode if needed
         if (mPrefFullscreenReview) {
@@ -333,9 +327,6 @@ open class Reviewer :
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         // 100ms was not enough on my device (Honor 9 Lite -  Android Pie)
         delayedHide(1000)
-        if (drawerToggle.onOptionsItemSelected(item)) {
-            return true
-        }
         when (item.itemId) {
             android.R.id.home -> {
                 Timber.i("Reviewer:: Home button pressed")
@@ -1384,23 +1375,12 @@ open class Reviewer :
         MetaDB.storeWhiteboardVisibility(this, parentDid, state)
         if (state) {
             whiteboard!!.visibility = View.VISIBLE
-            disableDrawerSwipe()
         } else {
             whiteboard!!.visibility = View.GONE
-            if (!mHasDrawerSwipeConflicts) {
-                enableDrawerSwipe()
-            }
         }
     }
 
-    private fun disableDrawerSwipeOnConflicts() {
-        if (mGestureProcessor.isBound(Gesture.SWIPE_UP, Gesture.SWIPE_DOWN, Gesture.SWIPE_RIGHT)) {
-            mHasDrawerSwipeConflicts = true
-            super.disableDrawerSwipe()
-        }
-    }
-
-    override val currentCardId: CardId?
+    override val currentCardId: CardId
         get() = currentCard!!.id
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -1443,11 +1423,6 @@ open class Reviewer :
             ) == 1
         }
         // Whether there exists a sibling which is neither suspended nor buried
-    }
-
-    @VisibleForTesting(otherwise = VisibleForTesting.NONE)
-    fun hasDrawerSwipeConflicts(): Boolean {
-        return mHasDrawerSwipeConflicts
     }
 
     /**

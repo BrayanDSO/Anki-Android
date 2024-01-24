@@ -15,28 +15,15 @@
  */
 package com.ichi2.anki
 
-import android.content.Intent
 import android.graphics.Color
 import androidx.annotation.CheckResult
-import androidx.core.content.edit
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.ichi2.anki.cardviewer.Gesture
-import com.ichi2.anki.cardviewer.Gesture.SWIPE_DOWN
-import com.ichi2.anki.cardviewer.Gesture.SWIPE_RIGHT
-import com.ichi2.anki.cardviewer.Gesture.SWIPE_UP
-import com.ichi2.anki.cardviewer.GestureProcessor
-import com.ichi2.anki.cardviewer.ViewerCommand
 import com.ichi2.anki.model.WhiteboardPenColor
 import com.ichi2.anki.preferences.sharedPrefs
-import com.ichi2.anki.reviewer.Binding
 import com.ichi2.anki.reviewer.FullScreenMode
 import com.ichi2.anki.reviewer.FullScreenMode.Companion.setPreference
-import com.ichi2.anki.reviewer.MappableBinding
-import com.ichi2.anki.reviewer.MappableBinding.Screen
 import com.ichi2.libanki.Consts
 import com.ichi2.libanki.DeckId
-import com.ichi2.testutils.Flaky
-import com.ichi2.testutils.OS
 import com.ichi2.themes.Theme
 import com.ichi2.themes.Themes.currentTheme
 import org.hamcrest.MatcherAssert.assertThat
@@ -44,7 +31,6 @@ import org.hamcrest.Matchers.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.Robolectric
 
 /** A non-parameterized ReviewerTest - we should probably rename ReviewerTest in future  */
 @RunWith(AndroidJUnit4::class)
@@ -165,146 +151,6 @@ class ReviewerNoParamTest : RobolectricTest() {
         advanceRobolectricLooperWithSleep()
 
         assertThat("Hide should be called after answering a card", reviewer.delayedHideCount, greaterThan(hideCount))
-    }
-
-    @Test
-    @Flaky(OS.ALL, "hasDrawerSwipeConflicts was false")
-    @RunInBackground
-    fun defaultDrawerConflictIsTrueIfGesturesEnabled() {
-        enableGestureSetting()
-        enableGesture(SWIPE_RIGHT)
-        val reviewer = startReviewerFullScreen()
-
-        assertThat(reviewer.hasDrawerSwipeConflicts(), equalTo(true))
-    }
-
-    @Test
-    fun noDrawerConflictsBeforeOnCreate() {
-        enableGestureSetting()
-        val controller = Robolectric.buildActivity(Reviewer::class.java, Intent())
-        try {
-            assertThat("no conflicts before onCreate", controller.get().hasDrawerSwipeConflicts(), equalTo(false))
-        } finally {
-            try {
-                enableGesture(SWIPE_UP)
-            } catch (e: Exception) {
-                // ignore
-            }
-        }
-    }
-
-    @Test
-    fun noDrawerConflictsIfGesturesDisabled() {
-        disableGestureSetting()
-        enableGesture(SWIPE_UP)
-        val reviewer = startReviewerFullScreen()
-        assertThat("gestures should be disabled", gestureProcessor.isEnabled, equalTo(false))
-        assertThat(reviewer.hasDrawerSwipeConflicts(), equalTo(false))
-    }
-
-    @Test
-    fun noDrawerConflictsIfNoGestures() {
-        enableGestureSetting()
-        disableConflictGestures()
-        val reviewer = startReviewerFullScreen()
-        assertThat("gestures should be enabled", gestureProcessor.isEnabled, equalTo(true))
-        assertThat("no conflicts, so no conflicts detected", reviewer.hasDrawerSwipeConflicts(), equalTo(false))
-    }
-
-    @Test
-    @RunInBackground
-    @Flaky(os = OS.ALL, "final assertion is false")
-    fun drawerConflictsIfUp() {
-        enableGestureSetting()
-        disableConflictGestures()
-        enableGesture(SWIPE_UP)
-        val reviewer = startReviewerFullScreen()
-        assertThat("gestures should be enabled", gestureProcessor.isEnabled, equalTo(true))
-        assertThat(reviewer.hasDrawerSwipeConflicts(), equalTo(true))
-    }
-
-    @Test
-    @RunInBackground
-    @Flaky(os = OS.ALL, "final assertion is false")
-    fun drawerConflictsIfDown() {
-        enableGestureSetting()
-        disableConflictGestures()
-        enableGesture(SWIPE_DOWN)
-        val reviewer = startReviewerFullScreen()
-        assertThat("gestures should be enabled", gestureProcessor.isEnabled, equalTo(true))
-        assertThat(reviewer.hasDrawerSwipeConflicts(), equalTo(true))
-    }
-
-    @Test
-    @RunInBackground
-    @Flaky(os = OS.ALL, "final assertion is false")
-    fun drawerConflictsIfRight() {
-        enableGestureSetting()
-        disableConflictGestures()
-        enableGesture(SWIPE_RIGHT)
-        val reviewer = startReviewerFullScreen()
-        assertThat("gestures should be enabled", gestureProcessor.isEnabled, equalTo(true))
-        assertThat(reviewer.hasDrawerSwipeConflicts(), equalTo(true))
-    }
-
-    @Test
-    fun normalReviewerFitsSystemWindows() {
-        val reviewer = startReviewer()
-        assertThat(reviewer.fitsSystemWindows(), equalTo(true))
-    }
-
-    @Test
-    fun fullscreenDoesNotFitSystemWindow() {
-        val reviewer = startReviewerFullScreen()
-        assertThat(reviewer.fitsSystemWindows(), equalTo(false))
-    }
-
-    private val gestureProcessor: GestureProcessor
-        get() {
-            val gestureProcessor = GestureProcessor(null)
-            gestureProcessor.init(targetContext.sharedPrefs())
-            return gestureProcessor
-        }
-
-    private fun disableConflictGestures() {
-        disableGestures(SWIPE_UP, SWIPE_DOWN, SWIPE_RIGHT)
-    }
-
-    private fun enableGestureSetting() {
-        setGestureSetting(true)
-    }
-
-    private fun disableGestureSetting() {
-        setGestureSetting(false)
-    }
-
-    private fun setGestureSetting(value: Boolean) {
-        targetContext.sharedPrefs().edit {
-            putBoolean(GestureProcessor.PREF_KEY, value)
-        }
-    }
-
-    private fun disableGestures(vararg gestures: Gesture) {
-        val prefs = targetContext.sharedPrefs()
-        for (command in ViewerCommand.entries) {
-            for (mappableBinding in MappableBinding.fromPreference(prefs, command)) {
-                val gestureBinding = mappableBinding.binding as? Binding.GestureInput? ?: continue
-                if (gestureBinding.gesture in gestures) {
-                    command.removeBinding(prefs, mappableBinding)
-                }
-            }
-        }
-    }
-
-    /** Enables a gesture (without changing the overall setting of whether gestures are allowed)  */
-    private fun enableGesture(gesture: Gesture) {
-        val prefs = targetContext.sharedPrefs()
-        ViewerCommand.FLIP_OR_ANSWER_EASE1.addBinding(
-            prefs,
-            MappableBinding.fromGesture(gesture) {
-                Screen.Reviewer(it)
-            }
-        )
     }
 
     private fun startReviewerFullScreen(): ReviewerExt {

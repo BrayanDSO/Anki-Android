@@ -113,7 +113,7 @@ import kotlin.math.abs
 
 @KotlinCleanup("lots to deal with")
 abstract class AbstractFlashcardViewer :
-    NavigationDrawerActivity(),
+    AnkiActivity(),
     ViewerCommand.CommandProcessor,
     TagsDialogListener,
     WhiteboardMultiTouchMethods,
@@ -528,8 +528,6 @@ abstract class AbstractFlashcardViewer :
 
         // Make ACTION_PROCESS_TEXT for in-app searching possible on > Android 4.0
         delegate.isHandleNativeActionModesEnabled = true
-        val mainView = findViewById<View>(android.R.id.content)
-        initNavigationDrawer(mainView)
         mPreviousAnswerIndicator = PreviousAnswerIndicator(findViewById(R.id.chosen_answer))
         shortAnimDuration = resources.getInteger(android.R.integer.config_shortAnimTime)
         mGestureDetectorImpl = LinkDetectingGestureDetector()
@@ -602,7 +600,6 @@ abstract class AbstractFlashcardViewer :
         mGestureDetectorImpl.startShakeDetector()
         // Reset the activity title
         updateActionBar()
-        selectNavigationItem(-1)
         refreshIfRequired(isResuming = true)
     }
 
@@ -646,20 +643,19 @@ abstract class AbstractFlashcardViewer :
         destroyWebView(webView) // OK to do without a lock
     }
 
+    @Deprecated("Deprecated in Java")
+    @Suppress("DEPRECATION")
     override fun onBackPressed() {
-        if (isDrawerOpen) {
-            super.onBackPressed()
+        super.onBackPressed()
+        Timber.i("Back key pressed")
+        if (!mExitViaDoubleTapBack || mBackButtonPressedToReturn) {
+            closeReviewer(RESULT_DEFAULT)
         } else {
-            Timber.i("Back key pressed")
-            if (!mExitViaDoubleTapBack || mBackButtonPressedToReturn) {
-                closeReviewer(RESULT_DEFAULT)
-            } else {
-                showSnackbar(R.string.back_pressed_once_reviewer, Snackbar.LENGTH_SHORT)
-            }
-            mBackButtonPressedToReturn = true
-            executeFunctionWithDelay(Consts.SHORT_TOAST_DURATION) {
-                mBackButtonPressedToReturn = false
-            }
+            showSnackbar(R.string.back_pressed_once_reviewer, Snackbar.LENGTH_SHORT)
+        }
+        mBackButtonPressedToReturn = true
+        executeFunctionWithDelay(Consts.SHORT_TOAST_DURATION) {
+            mBackButtonPressedToReturn = false
         }
     }
 
@@ -697,7 +693,7 @@ abstract class AbstractFlashcardViewer :
         return super.onKeyUp(keyCode, event)
     }
 
-    public override val currentCardId: CardId? get() = currentCard?.id
+    val currentCardId: CardId? get() = currentCard?.id
 
     private fun processHardwareButtonScroll(keyCode: Int, card: WebView?): Boolean {
         if (keyCode == KeyEvent.KEYCODE_PAGE_UP) {
@@ -2566,6 +2562,8 @@ abstract class AbstractFlashcardViewer :
     }
 
     companion object {
+        const val EXTRA_STARTED_WITH_SHORTCUT = "com.ichi2.anki.StartedWithShortcut"
+
         /**
          * Result codes that are returned when this activity finishes.
          */

@@ -70,9 +70,6 @@ class Previewer : AbstractFlashcardViewer() {
             finish()
             return
         }
-        showBackIcon()
-        // Ensure navigation drawer can't be opened. Various actions in the drawer cause crashes.
-        disableDrawerSwipe()
         startLoadingCollection()
         initPreviewProgress()
         setOkResult()
@@ -123,7 +120,6 @@ class Previewer : AbstractFlashcardViewer() {
         if (mShowingAnswer) {
             displayCardAnswer()
         }
-        showBackIcon()
     }
 
     /** Given a new collection of card Ids, find the 'best' valid card given the current collection
@@ -160,11 +156,6 @@ class Previewer : AbstractFlashcardViewer() {
             return true
         }
         return super.onOptionsItemSelected(item)
-    }
-
-    override fun onNavigationPressed() {
-        setOkResult()
-        super.onNavigationPressed()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

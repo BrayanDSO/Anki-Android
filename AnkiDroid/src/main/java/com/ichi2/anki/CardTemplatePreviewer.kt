@@ -98,9 +98,6 @@ open class CardTemplatePreviewer : AbstractFlashcardViewer() {
                 closeCardTemplatePreviewer()
             }
         }
-        showBackIcon()
-        // Ensure navigation drawer can't be opened. Various actions in the drawer cause crashes.
-        disableDrawerSwipe()
         startLoadingCollection()
     }
 
@@ -130,11 +127,6 @@ open class CardTemplatePreviewer : AbstractFlashcardViewer() {
     override fun performReload() {
         // This should not happen.
         finish()
-    }
-
-    override fun onNavigationPressed() {
-        Timber.i("CardTemplatePreviewer:: Navigation button pressed")
-        closeCardTemplatePreviewer()
     }
 
     override fun initLayout() {
@@ -268,7 +260,6 @@ open class CardTemplatePreviewer : AbstractFlashcardViewer() {
         if (mShowingAnswer) {
             displayCardAnswer()
         }
-        showBackIcon()
     }
 
     protected fun getCard(col: Collection, cardListIndex: Long): Card {
