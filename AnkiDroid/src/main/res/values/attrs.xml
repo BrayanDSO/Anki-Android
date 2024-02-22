@@ -37,6 +37,12 @@
         <attr name="summaryFormat" format="string"/>
     </declare-styleable>
 
+    <declare-styleable name="ExtendedPreferenceCategory">
+        <attr name="isSingleLineSummary" format="boolean"/>
+        <attr name="summaryReplacements" format="reference"/>
+        <attr name="parseSummaryAsHtml" format="boolean"/>
+    </declare-styleable>
+
     <declare-styleable name="HtmlHelpPreference">
         <attr name="substitution1" format="string" />
         <attr name="substitution2" format="string" />

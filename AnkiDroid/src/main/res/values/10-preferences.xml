@@ -205,6 +205,7 @@
         If not set, the default AnkiWeb server will be used instead.
         <a href="%s">Learn more</a>
         ]]></string>
+    <string name="user_action_summary"><![CDATA[Triggers JavaScript from the review screen. <a href="%s">Learn more</a>]]></string>
     <string name="custom_sync_server_base_url_title" maxLength="41">Sync url</string>
     <!-- Key Bindings -->
     <string name="keyboard">Keyboard</string>
