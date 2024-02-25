@@ -2213,7 +2213,6 @@ open class CardBrowser :
 
         // Values related to persistent state data
         private const val ALL_DECKS_ID = 0L
-        const val CARD_NOT_AVAILABLE = -1
 
         fun clearLastDeckId() = SharedPreferencesLastDeckIdRepository.clearLastDeckId()
 
