@@ -117,6 +117,7 @@ import com.ichi2.anki.snackbar.BaseSnackbarBuilderProvider
 import com.ichi2.anki.snackbar.SnackbarBuilder
 import com.ichi2.anki.snackbar.showSnackbar
 import com.ichi2.anki.ui.dialogs.storageMigrationFailedDialogIsShownOrPending
+import com.ichi2.anki.ui.windows.reviewer.ReviewerFragment
 import com.ichi2.anki.utils.SECONDS_PER_DAY
 import com.ichi2.anki.widgets.DeckAdapter
 import com.ichi2.anki.worker.SyncMediaWorker
@@ -2292,8 +2293,12 @@ open class DeckPicker :
     }
 
     private fun openReviewer() {
-        val reviewer = Intent(this, Reviewer::class.java)
-        reviewLauncher.launch(reviewer)
+        val intent = if (sharedPrefs().getBoolean("newReviewer", true)) {
+            ReviewerFragment.getIntent(this)
+        } else {
+            Intent(this, Reviewer::class.java)
+        }
+        reviewLauncher.launch(intent)
     }
 
     override fun onCreateCustomStudySession() {
