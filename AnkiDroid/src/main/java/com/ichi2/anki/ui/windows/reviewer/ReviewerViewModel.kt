@@ -21,6 +21,7 @@ import androidx.core.text.inSpans
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import anki.frontend.SetSchedulingStatesRequest
 import com.ichi2.anki.AGAIN
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.EASY
@@ -30,17 +31,23 @@ import com.ichi2.anki.HARD
 import com.ichi2.anki.asyncIO
 import com.ichi2.anki.cardviewer.SoundPlayer
 import com.ichi2.anki.launchCatchingIO
+import com.ichi2.anki.pages.AnkiServer
+import com.ichi2.anki.pages.PostRequestHandler
 import com.ichi2.anki.previewer.CardViewerViewModel
 import com.ichi2.anki.reviewer.CardSide
 import com.ichi2.libanki.sched.CurrentQueueState
 import com.ichi2.libanki.undoableOp
+import com.ichi2.libanki.utils.TimeManager
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 
-class ReviewerViewModel(soundPlayer: SoundPlayer) : CardViewerViewModel(soundPlayer) {
+class ReviewerViewModel(soundPlayer: SoundPlayer) :
+    CardViewerViewModel(soundPlayer),
+    PostRequestHandler {
 
     private var queueState: CurrentQueueState? = null
+    private val stateMutationKey = TimeManager.time.intTimeMS().toString()
     var isQueueFinishedFlow = MutableSharedFlow<Boolean>()
 
     val againNextTime: MutableStateFlow<String?> = MutableStateFlow(null)
@@ -51,6 +58,24 @@ class ReviewerViewModel(soundPlayer: SoundPlayer) : CardViewerViewModel(soundPla
     private val shouldShowNextTimes: Deferred<Boolean> = asyncIO {
         withCol { config.get("estTimes") ?: true }
     }
+
+    private val server = AnkiServer(this).also { it.start() }
+    val statesMutationEval = MutableSharedFlow<String>()
+
+    /**
+     * A flag that determines if the SchedulingStates in CurrentQueueState are
+     * safe to persist in the database when answering a card. This is used to
+     * ensure that the custom JS scheduler has persisted its SchedulingStates
+     * back to the Reviewer before we save it to the database. If the custom
+     * scheduler has not been configured, then it is safe to immediately set
+     * this to true.
+     *
+     * This flag should be set to false when we show the front of the card
+     * and only set to true once we know the custom scheduler has finished its
+     * execution, or set to true immediately if the custom scheduler has not
+     * been configured.
+     */
+    private var statesMutated = true
 
     /* *********************************************************************************************
     ************************ Public methods: meant to be used by the View **************************
@@ -68,6 +93,8 @@ class ReviewerViewModel(soundPlayer: SoundPlayer) : CardViewerViewModel(soundPla
         }
     }
 
+    fun baseUrl() = server.baseUrl()
+
     fun showAnswer() {
         launchCatchingIO {
             showAnswerInternal()
@@ -80,6 +107,18 @@ class ReviewerViewModel(soundPlayer: SoundPlayer) : CardViewerViewModel(soundPla
     fun answerHard() = answerCard(HARD)
     fun answerGood() = answerCard(GOOD)
     fun answerEasy() = answerCard(EASY)
+
+    fun onStateMutationCallback(result: String?) {
+        // eval failed, usually a syntax error
+        // Note, we get "null" (string) and not null
+        if (result == "null") {
+            statesMutated = true
+        }
+    }
+
+    fun onStateMutationError() {
+        statesMutated = true
+    }
 
     /* *********************************************************************************************
     *************************************** Internal methods ***************************************
@@ -97,6 +136,11 @@ class ReviewerViewModel(soundPlayer: SoundPlayer) : CardViewerViewModel(soundPla
     private suspend fun loadAndPlaySounds(side: CardSide) {
         soundPlayer.loadCardSounds(currentCard)
         soundPlayer.playAllSoundsForSide(side)
+    }
+
+    override suspend fun showQuestion() {
+        super.showQuestion()
+        runStateMutationHook()
     }
 
     private suspend fun updateCurrentCard() {
@@ -125,6 +169,54 @@ class ReviewerViewModel(soundPlayer: SoundPlayer) : CardViewerViewModel(soundPla
         hardNextTime.emit(hard)
         goodNextTime.emit(good)
         easyNextTime.emit(easy)
+    }
+
+    override suspend fun handlePostRequest(uri: String, bytes: ByteArray): ByteArray {
+        return if (uri.startsWith(AnkiServer.ANKI_PREFIX)) {
+            when (uri.substring(AnkiServer.ANKI_PREFIX.length)) {
+                "getSchedulingStatesWithContext" -> getSchedulingStatesWithContext()
+                "setSchedulingStates" -> setSchedulingStates(bytes)
+                else -> byteArrayOf()
+            }
+        } else {
+            byteArrayOf()
+        }
+    }
+
+    private suspend fun runStateMutationHook() {
+        val state = queueState ?: return
+        val js = state.customSchedulingJs
+        if (js.isEmpty()) {
+            statesMutated = true
+            return
+        }
+        statesMutated = false
+        statesMutationEval.emit(
+            """anki.mutateNextCardStates('$stateMutationKey', async (states, customData, ctx) => {{ $js }})
+            .catch(err => console.log(err));"""
+        )
+    }
+
+    private fun getSchedulingStatesWithContext(): ByteArray {
+        val state = queueState ?: return ByteArray(0)
+        return state.schedulingStatesWithContext().toBuilder()
+            .mergeStates(
+                state.states.toBuilder().mergeCurrent(
+                    state.states.current.toBuilder()
+                        .setCustomData(state.topCard.toBackendCard().customData).build()
+                ).build()
+            )
+            .build()
+            .toByteArray()
+    }
+
+    private fun setSchedulingStates(bytes: ByteArray): ByteArray {
+        val state = queueState ?: return ByteArray(0)
+        val req = SetSchedulingStatesRequest.parseFrom(bytes)
+        if (req.key == stateMutationKey) {
+            state.states = req.states
+        }
+        return ByteArray(0)
     }
 
     companion object {

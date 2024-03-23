@@ -20,6 +20,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import androidx.annotation.StringRes
 import androidx.appcompat.view.menu.MenuBuilder
@@ -54,6 +55,8 @@ class ReviewerFragment :
 
     override val webView: WebView
         get() = requireView().findViewById(R.id.webview)
+    override val baseUrl: String
+        get() = viewModel.baseUrl()
 
     override val baseSnackbarBuilder: SnackbarBuilder = {
         anchorView = this@ReviewerFragment.view?.findViewById(R.id.buttons_area)
@@ -86,6 +89,12 @@ class ReviewerFragment :
                     setResult(RESULT_NO_MORE_CARDS)
                     finish()
                 }
+            }
+        }
+
+        viewModel.statesMutationEval.launchCollect(lifecycleScope) { eval ->
+            webView.evaluateJavascript(eval) { result ->
+                viewModel.onStateMutationCallback(result)
             }
         }
     }
@@ -169,6 +178,17 @@ class ReviewerFragment :
                         .start()
                 }
                 .start()
+        }
+    }
+
+    override fun shouldOverrideUrlLoading(request: WebResourceRequest): Boolean {
+        return if (super.shouldOverrideUrlLoading(request)) {
+            true
+        } else if (request.url.toString().startsWith("state-mutation-error:")) {
+            viewModel.onStateMutationError()
+            true
+        } else {
+            false
         }
     }
 

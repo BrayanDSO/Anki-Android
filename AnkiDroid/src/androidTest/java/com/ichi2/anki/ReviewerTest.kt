@@ -58,7 +58,7 @@ class ReviewerTest : InstrumentedTest() {
 
     @Test
     @Flaky(os = OS.ALL, "Fails on CI with timing issues frequently")
-    fun testCustomSchedulerWithCustomData() {
+    fun testCustomSchedulerWithCustomData() { // replicar
         col.cardStateCustomizer =
             """
             states.good.normal.review.easeFactor = 3.0;

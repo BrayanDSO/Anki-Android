@@ -20,6 +20,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.webkit.CookieManager
+import android.webkit.JsResult
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -49,6 +50,7 @@ import timber.log.Timber
 abstract class CardViewerFragment(@LayoutRes layout: Int) : Fragment(layout) {
     protected abstract val viewModel: CardViewerViewModel
     protected abstract val webView: WebView
+    protected open val baseUrl = "http://${AnkiServer.LOCALHOST}/"
 
     @CallSuper
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -83,7 +85,7 @@ abstract class CardViewerFragment(@LayoutRes layout: Int) : Fragment(layout) {
                 domStorageEnabled = true
             }
             loadDataWithBaseURL(
-                "http://${AnkiServer.LOCALHOST}/",
+                baseUrl,
                 stdHtml(requireContext(), Themes.currentTheme.isNightMode),
                 "text/html",
                 null,
@@ -133,22 +135,7 @@ abstract class CardViewerFragment(@LayoutRes layout: Int) : Fragment(layout) {
             }
 
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                val urlString = request.url.toString()
-                if (urlString.startsWith("playsound:")) {
-                    viewModel.playSoundFromUrl(urlString)
-                    return true
-                }
-                if (urlString.startsWith("tts-voices:")) {
-                    TtsVoicesDialogFragment().show(childFragmentManager, null)
-                    return true
-                }
-                try {
-                    openUrl(request.url)
-                    return true
-                } catch (_: Exception) {
-                    Timber.w("Could not open url")
-                }
-                return false
+                return this@CardViewerFragment.shouldOverrideUrlLoading(request)
             }
 
             override fun onReceivedError(
@@ -163,8 +150,38 @@ abstract class CardViewerFragment(@LayoutRes layout: Int) : Fragment(layout) {
         }
     }
 
+    protected open fun shouldOverrideUrlLoading(request: WebResourceRequest): Boolean {
+        val urlString = request.url.toString()
+        if (urlString.startsWith("playsound:")) {
+            viewModel.playSoundFromUrl(urlString)
+            return true
+        }
+        if (urlString.startsWith("tts-voices:")) {
+            TtsVoicesDialogFragment().show(childFragmentManager, null)
+            return true
+        }
+        try {
+            openUrl(request.url)
+            return true
+        } catch (_: Exception) {
+            Timber.w("Could not open url")
+        }
+        return false
+    }
+
     private fun onCreateWebChromeClient(): WebChromeClient {
         return object : WebChromeClient() {
+
+            override fun onJsAlert(
+                view: WebView?,
+                url: String?,
+                message: String?,
+                result: JsResult?
+            ): Boolean {
+                requireActivity().showSnackbar(message!!)
+                return super.onJsAlert(view, url, message, result)
+            }
+
             private lateinit var customView: View
 
             // used for displaying `<video>` in fullscreen.
