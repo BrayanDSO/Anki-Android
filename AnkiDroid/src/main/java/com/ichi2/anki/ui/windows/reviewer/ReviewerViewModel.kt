@@ -15,12 +15,16 @@
  */
 package com.ichi2.anki.ui.windows.reviewer
 
+import android.text.style.RelativeSizeSpan
+import androidx.core.text.buildSpannedString
+import androidx.core.text.inSpans
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import anki.frontend.SetSchedulingStatesRequest
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.Ease
+import com.ichi2.anki.asyncIO
 import com.ichi2.anki.cardviewer.SoundPlayer
 import com.ichi2.anki.launchCatchingIO
 import com.ichi2.anki.pages.AnkiServer
@@ -35,6 +39,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 
 class ReviewerViewModel(soundPlayer: SoundPlayer) :
     CardViewerViewModel(soundPlayer),
@@ -101,6 +106,7 @@ class ReviewerViewModel(soundPlayer: SoundPlayer) :
             }
             showAnswerInternal()
             loadAndPlaySounds(CardSide.ANSWER)
+            updateNextTimes()
         }
     }
 
@@ -221,6 +227,20 @@ class ReviewerViewModel(soundPlayer: SoundPlayer) :
                 initializer {
                     ReviewerViewModel(soundPlayer)
                 }
+            }
+        }
+
+        fun getAnswerButtonText(title: String, nextTime: String?): CharSequence {
+            return if (nextTime != null) {
+                buildSpannedString {
+                    inSpans(RelativeSizeSpan(0.8F)) {
+                        append(nextTime)
+                    }
+                    append("\n")
+                    append(title)
+                }
+            } else {
+                title
             }
         }
     }

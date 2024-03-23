@@ -21,6 +21,7 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import android.webkit.WebView
+import androidx.annotation.StringRes
 import androidx.appcompat.view.menu.MenuBuilder
 import androidx.appcompat.widget.ThemeUtils
 import androidx.appcompat.widget.Toolbar
@@ -38,10 +39,9 @@ import com.ichi2.anki.snackbar.BaseSnackbarBuilderProvider
 import com.ichi2.anki.snackbar.SnackbarBuilder
 import com.ichi2.anki.snackbar.showSnackbar
 import com.ichi2.anki.utils.ext.collectIn
+import com.ichi2.anki.utils.ext.collectLatestIn
 import com.ichi2.anki.utils.navBarNeedsScrim
 import com.ichi2.utils.increaseHorizontalPaddingOfOverflowMenuIcons
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 
 class ReviewerFragment :
     CardViewerFragment(R.layout.reviewer2),
@@ -65,6 +65,8 @@ class ReviewerFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        setupAnswerButtons(view)
+
         view.findViewById<MaterialToolbar>(R.id.toolbar).apply {
             setOnMenuItemClickListener(this@ReviewerFragment)
             setNavigationOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
@@ -73,55 +75,6 @@ class ReviewerFragment :
                 requireContext().increaseHorizontalPaddingOfOverflowMenuIcons(it)
             }
         }
-
-        val showAnswerButton = view.findViewById<MaterialButton>(R.id.show_answer).apply {
-            setOnClickListener {
-                viewModel.showAnswer()
-            }
-        }
-        val answerButtonsLayout = view.findViewById<ConstraintLayout>(R.id.answer_buttons)
-
-        view.findViewById<MaterialButton>(R.id.again_button)
-            .setOnClickListener {
-                viewModel.answerAgain()
-            }
-
-        view.findViewById<MaterialButton>(R.id.hard_button)
-            .setOnClickListener {
-                viewModel.answerHard()
-            }
-
-        view.findViewById<MaterialButton>(R.id.good_button)
-            .setOnClickListener {
-                viewModel.answerGood()
-            }
-
-        view.findViewById<MaterialButton>(R.id.easy_button)
-            .setOnClickListener {
-                viewModel.answerEasy()
-            }
-
-        viewModel.showingAnswer.onEach { shouldShowAnswer ->
-            val (toShow, toHide) = if (shouldShowAnswer) {
-                answerButtonsLayout to showAnswerButton
-            } else {
-                showAnswerButton to answerButtonsLayout
-            }
-            val animationDuration = 60L
-            toHide.animate()
-                .setDuration(animationDuration)
-                .alpha(0F)
-                .withEndAction {
-                    toHide.visibility = View.GONE
-                    toShow.alpha = 0F
-                    toShow.visibility = View.VISIBLE
-                    toShow.animate()
-                        .setDuration(animationDuration)
-                        .alpha(1F)
-                        .start()
-                }
-                .start()
-        }.launchIn(lifecycleScope)
 
         with(requireActivity()) {
             if (!navBarNeedsScrim) {
@@ -150,6 +103,82 @@ class ReviewerFragment :
     override fun onMenuItemClick(item: MenuItem?): Boolean {
         showSnackbar("Not yet implemented")
         return true
+    }
+
+    private fun setupAnswerButtons(view: View) {
+        fun MaterialButton.setAnswerButtonNextTime(@StringRes title: Int, nextTime: String?) {
+            val titleString = context.getString(title)
+            text = ReviewerViewModel.getAnswerButtonText(titleString, nextTime)
+        }
+
+        // Again button
+        view.findViewById<MaterialButton>(R.id.again_button).apply {
+            setOnClickListener {
+                viewModel.answerAgain()
+            }
+            viewModel.againNextTime.collectLatestIn(lifecycleScope) { nextTime ->
+                setAnswerButtonNextTime(R.string.ease_button_again, nextTime)
+            }
+        }
+
+        // Hard button
+        view.findViewById<MaterialButton>(R.id.hard_button).apply {
+            setOnClickListener {
+                viewModel.answerHard()
+            }
+            viewModel.hardNextTime.collectLatestIn(lifecycleScope) { nextTime ->
+                setAnswerButtonNextTime(R.string.ease_button_hard, nextTime)
+            }
+        }
+
+        // Good button
+        view.findViewById<MaterialButton>(R.id.good_button).apply {
+            setOnClickListener {
+                viewModel.answerGood()
+            }
+            viewModel.goodNextTime.collectLatestIn(lifecycleScope) { nextTime ->
+                setAnswerButtonNextTime(R.string.ease_button_good, nextTime)
+            }
+        }
+
+        // Easy button
+        view.findViewById<MaterialButton>(R.id.easy_button).apply {
+            setOnClickListener {
+                viewModel.answerEasy()
+            }
+            viewModel.easyNextTime.collectLatestIn(lifecycleScope) { nextTime ->
+                setAnswerButtonNextTime(R.string.ease_button_easy, nextTime)
+            }
+        }
+
+        val showAnswerButton = view.findViewById<MaterialButton>(R.id.show_answer).apply {
+            setOnClickListener {
+                viewModel.showAnswer()
+            }
+        }
+        val answerButtonsLayout = view.findViewById<ConstraintLayout>(R.id.answer_buttons)
+
+        viewModel.showingAnswer.collectLatestIn(lifecycleScope) { shouldShowAnswer ->
+            val (toShow, toHide) = if (shouldShowAnswer) {
+                answerButtonsLayout to showAnswerButton
+            } else {
+                showAnswerButton to answerButtonsLayout
+            }
+            val duration = 60L
+            toHide.animate()
+                .setDuration(duration)
+                .alpha(0F)
+                .withEndAction {
+                    toHide.visibility = View.GONE
+                    toShow.alpha = 0F
+                    toShow.visibility = View.VISIBLE
+                    toShow.animate()
+                        .setDuration(duration)
+                        .alpha(1F)
+                        .start()
+                }
+                .start()
+        }
     }
 
     companion object {
