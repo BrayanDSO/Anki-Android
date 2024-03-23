@@ -15,6 +15,9 @@
  */
 package com.ichi2.anki.ui.windows.reviewer
 
+import android.text.style.RelativeSizeSpan
+import androidx.core.text.buildSpannedString
+import androidx.core.text.inSpans
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -24,18 +27,30 @@ import com.ichi2.anki.EASY
 import com.ichi2.anki.Ease
 import com.ichi2.anki.GOOD
 import com.ichi2.anki.HARD
+import com.ichi2.anki.asyncIO
 import com.ichi2.anki.cardviewer.SoundPlayer
 import com.ichi2.anki.launchCatchingIO
 import com.ichi2.anki.previewer.CardViewerViewModel
 import com.ichi2.anki.reviewer.CardSide
 import com.ichi2.libanki.sched.CurrentQueueState
 import com.ichi2.libanki.undoableOp
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 
 class ReviewerViewModel(soundPlayer: SoundPlayer) : CardViewerViewModel(soundPlayer) {
 
     private var queueState: CurrentQueueState? = null
     var isQueueFinishedFlow = MutableSharedFlow<Boolean>()
+
+    val againNextTime: MutableStateFlow<String?> = MutableStateFlow(null)
+    val hardNextTime: MutableStateFlow<String?> = MutableStateFlow(null)
+    val goodNextTime: MutableStateFlow<String?> = MutableStateFlow(null)
+    val easyNextTime: MutableStateFlow<String?> = MutableStateFlow(null)
+
+    private val shouldShowNextTimes: Deferred<Boolean> = asyncIO {
+        withCol { config.get("estTimes") ?: true }
+    }
 
     /* *********************************************************************************************
     ************************ Public methods: meant to be used by the View **************************
@@ -57,6 +72,7 @@ class ReviewerViewModel(soundPlayer: SoundPlayer) : CardViewerViewModel(soundPla
         launchCatchingIO {
             showAnswerInternal()
             loadAndPlaySounds(CardSide.ANSWER)
+            updateNextTimes()
         }
     }
 
@@ -99,12 +115,38 @@ class ReviewerViewModel(soundPlayer: SoundPlayer) : CardViewerViewModel(soundPla
         return text
     }
 
+    private suspend fun updateNextTimes() {
+        val state = queueState
+        if (!shouldShowNextTimes.await() || state == null) return
+
+        val (again, hard, good, easy) = withCol { sched.describeNextStates(state.states) }
+
+        againNextTime.emit(again)
+        hardNextTime.emit(hard)
+        goodNextTime.emit(good)
+        easyNextTime.emit(easy)
+    }
+
     companion object {
         fun factory(soundPlayer: SoundPlayer): ViewModelProvider.Factory {
             return viewModelFactory {
                 initializer {
                     ReviewerViewModel(soundPlayer)
                 }
+            }
+        }
+
+        fun getAnswerButtonText(title: String, nextTime: String?): CharSequence {
+            return if (nextTime != null) {
+                buildSpannedString {
+                    inSpans(RelativeSizeSpan(0.8F)) {
+                        append(nextTime)
+                    }
+                    append("\n")
+                    append(title)
+                }
+            } else {
+                title
             }
         }
     }
