@@ -37,7 +37,7 @@ import com.ichi2.anki.previewer.CardViewerFragment
 import com.ichi2.anki.snackbar.BaseSnackbarBuilderProvider
 import com.ichi2.anki.snackbar.SnackbarBuilder
 import com.ichi2.anki.snackbar.showSnackbar
-import com.ichi2.anki.utils.ext.launchCollect
+import com.ichi2.anki.utils.ext.collectIn
 import com.ichi2.anki.utils.navBarNeedsScrim
 import com.ichi2.utils.increaseHorizontalPaddingOfOverflowMenuIcons
 import kotlinx.coroutines.flow.launchIn
@@ -54,6 +54,9 @@ class ReviewerFragment :
 
     override val webView: WebView
         get() = requireView().findViewById(R.id.webview)
+
+    override val baseUrl: String
+        get() = viewModel.baseUrl()
 
     override val baseSnackbarBuilder: SnackbarBuilder = {
         anchorView = this@ReviewerFragment.view?.findViewById(R.id.buttons_area)
@@ -127,12 +130,18 @@ class ReviewerFragment :
             }
         }
 
-        viewModel.isQueueFinishedFlow.launchCollect(lifecycleScope) { isQueueFinished ->
+        viewModel.isQueueFinishedFlow.collectIn(lifecycleScope) { isQueueFinished ->
             if (isQueueFinished) {
                 requireActivity().run {
                     setResult(RESULT_NO_MORE_CARDS)
                     finish()
                 }
+            }
+        }
+
+        viewModel.statesMutationEval.collectIn(lifecycleScope) { eval ->
+            webView.evaluateJavascript(eval) { _ ->
+                viewModel.onStateMutationCallback()
             }
         }
     }
