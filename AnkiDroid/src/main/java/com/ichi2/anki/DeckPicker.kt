@@ -1203,6 +1203,7 @@ open class DeckPicker :
         }
     }
 
+    @NeedsTest("lastSyncTime is set after syncing in the foreground or in the background")
     private suspend fun automaticSync(runInBackground: Boolean = false) {
         /**
          * @return whether there are collection changes to be sync.
@@ -1248,6 +1249,7 @@ open class DeckPicker :
                     val auth = syncAuth() ?: return
                     SyncMediaWorker.start(this, auth)
                 }
+                setLastSyncTimeToNow()
             }
             else -> {
                 if (runInBackground) {

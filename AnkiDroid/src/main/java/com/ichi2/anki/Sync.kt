@@ -150,6 +150,7 @@ fun DeckPicker.handleNewSync(
             throw exc
         }
         withCol { notetypes._clear_cache() }
+        setLastSyncTimeToNow()
         refreshState()
     }
 }
@@ -380,6 +381,12 @@ fun DeckPicker.showSyncLogMessage(@StringRes messageResource: Int, syncMessage: 
             val res = AnkiDroidApp.appResources
             showSimpleMessageDialog(title = res.getString(messageResource), message = syncMessage)
         }
+    }
+}
+
+fun Context.setLastSyncTimeToNow() {
+    sharedPrefs().edit {
+        putLong("lastSyncTime", TimeManager.time.intTimeMS())
     }
 }
 
