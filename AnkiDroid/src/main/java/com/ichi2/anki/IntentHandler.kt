@@ -33,6 +33,7 @@ import com.ichi2.anki.dialogs.DialogHandlerMessage
 import com.ichi2.anki.preferences.sharedPrefs
 import com.ichi2.anki.servicelayer.ScopedStorageService
 import com.ichi2.anki.services.ReminderService
+import com.ichi2.anki.worker.SyncWorker
 import com.ichi2.annotations.NeedsTest
 import com.ichi2.themes.Themes
 import com.ichi2.themes.Themes.disableXiaomiForceDarkMode
@@ -72,7 +73,14 @@ class IntentHandler : Activity() {
         // #6157 - We want to block actions that need permissions we don't have, but not the default case
         // as this requires nothing
         val runIfStoragePermissions = { runnable: () -> Unit -> performActionIfStorageAccessible(reloadIntent, action) { runnable() } }
-        when (getLaunchType(intent)) {
+        val launchType = getLaunchType(intent)
+        // TODO block the UI with some kind of ProgressDialog instead of cancelling the sync work
+        if (launchType != LaunchType.COPY_DEBUG_INFO) {
+            // copy debug is the only type that doesn't need a Collection instance, and
+            // consequently won't be hanged by SyncWorker's collection block
+            SyncWorker.cancel(this)
+        }
+        when (launchType) {
             LaunchType.FILE_IMPORT -> runIfStoragePermissions {
                 handleFileImport(fileIntent, reloadIntent, action)
                 finish()
@@ -85,8 +93,12 @@ class IntentHandler : Activity() {
                 handleImageImport(intent)
                 finish()
             }
-            LaunchType.SYNC -> runIfStoragePermissions { handleSyncIntent(reloadIntent, action) }
-            LaunchType.REVIEW -> runIfStoragePermissions { handleReviewIntent(intent) }
+            LaunchType.SYNC -> runIfStoragePermissions {
+                handleSyncIntent(reloadIntent, action)
+            }
+            LaunchType.REVIEW -> runIfStoragePermissions {
+                handleReviewIntent(intent)
+            }
             LaunchType.DEFAULT_START_APP_IF_NEW -> {
                 Timber.d("onCreate() performing default action")
                 launchDeckPickerIfNoOtherTasks(reloadIntent)

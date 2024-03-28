@@ -187,7 +187,7 @@ private fun updateLogin(context: Context, username: String, hkey: String?) {
     }
 }
 
-private fun cancelSync(backend: Backend) {
+fun cancelSync(backend: Backend) {
     backend.setWantsAbort()
     backend.abortSync()
 }
@@ -208,7 +208,7 @@ private suspend fun handleNormalSync(
         manualCancelButton = R.string.dialog_cancel
     ) {
         withCol {
-            syncCollection(auth2, media = false) // media is synced by SyncMediaWorker
+            syncCollection(auth2, media = false) // media is synced in the background by SyncWorker
         }
     }
 
