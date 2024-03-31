@@ -21,6 +21,7 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import android.webkit.WebView
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.appcompat.view.menu.MenuBuilder
 import androidx.appcompat.widget.ThemeUtils
@@ -42,6 +43,7 @@ import com.ichi2.anki.utils.ext.collectIn
 import com.ichi2.anki.utils.ext.collectLatestIn
 import com.ichi2.anki.utils.navBarNeedsScrim
 import com.ichi2.utils.increaseHorizontalPaddingOfOverflowMenuIcons
+import kotlinx.coroutines.launch
 
 class ReviewerFragment :
     CardViewerFragment(R.layout.reviewer2),
@@ -61,6 +63,9 @@ class ReviewerFragment :
     override val baseSnackbarBuilder: SnackbarBuilder = {
         anchorView = this@ReviewerFragment.view?.findViewById(R.id.buttons_area)
     }
+
+    private val editCardLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -100,8 +105,13 @@ class ReviewerFragment :
     }
 
     // TODO
-    override fun onMenuItemClick(item: MenuItem?): Boolean {
-        showSnackbar("Not yet implemented")
+    override fun onMenuItemClick(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.action_edit -> editCard()
+            R.id.action_mark -> viewModel.toggleMark()
+            R.id.action_flag -> showSnackbar("Not yet implemented")
+            else -> return false
+        }
         return true
     }
 
@@ -178,6 +188,13 @@ class ReviewerFragment :
                         .start()
                 }
                 .start()
+        }
+    }
+
+    private fun editCard() {
+        lifecycleScope.launch {
+            val intent = viewModel.getNoteEditorDestination().toIntent(requireContext())
+            editCardLauncher.launch(intent)
         }
     }
 

@@ -21,6 +21,7 @@ import androidx.core.text.inSpans
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import anki.collection.OpChanges
 import anki.frontend.SetSchedulingStatesRequest
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.Ease
@@ -30,9 +31,14 @@ import com.ichi2.anki.launchCatchingIO
 import com.ichi2.anki.pages.AnkiServer
 import com.ichi2.anki.pages.PostRequestHandler
 import com.ichi2.anki.previewer.CardViewerViewModel
+import com.ichi2.anki.previewer.NoteEditorDestination
 import com.ichi2.anki.reviewer.CardSide
+import com.ichi2.anki.servicelayer.NoteService
 import com.ichi2.libanki.Card
+import com.ichi2.libanki.ChangeManager
+import com.ichi2.libanki.note
 import com.ichi2.libanki.sched.CurrentQueueState
+import com.ichi2.libanki.undo
 import com.ichi2.libanki.undoableOp
 import com.ichi2.libanki.utils.TimeManager
 import kotlinx.coroutines.CompletableDeferred
@@ -43,7 +49,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 
 class ReviewerViewModel(soundPlayer: SoundPlayer) :
     CardViewerViewModel(soundPlayer),
-    PostRequestHandler {
+    PostRequestHandler,
+    ChangeManager.Subscriber {
 
     private var queueState: CurrentQueueState? = null
     var isQueueFinishedFlow = MutableSharedFlow<Boolean>()
@@ -79,6 +86,10 @@ class ReviewerViewModel(soundPlayer: SoundPlayer) :
      * been configured.
      */
     private var statesMutated = true
+
+    init {
+        ChangeManager.subscribe(this)
+    }
 
     /* *********************************************************************************************
     ************************ Public methods: meant to be used by the View **************************
@@ -117,6 +128,28 @@ class ReviewerViewModel(soundPlayer: SoundPlayer) :
 
     fun onStateMutationCallback() {
         statesMutated = true
+    }
+
+    suspend fun getNoteEditorDestination(): NoteEditorDestination {
+        return NoteEditorDestination(currentCard.await().id)
+    }
+
+    fun toggleMark() {
+        launchCatchingIO {
+            val card = currentCard.await()
+            val note = withCol { card.note() }
+            NoteService.toggleMark(note)
+        }
+    }
+
+    fun undo() {
+        launchCatchingIO {
+            undoableOp(OpChangesHandler.UNDO) {
+                if (undoAvailable()) {
+                    this.undo()
+                }
+            }
+        }
     }
 
     /* *********************************************************************************************
@@ -244,4 +277,14 @@ class ReviewerViewModel(soundPlayer: SoundPlayer) :
             }
         }
     }
+
+    override suspend fun opExecuted(changes: OpChanges, handler: Any?) {
+        if (changes.card || changes.note) {
+            updateCurrentCard()
+        }
+    }
+}
+
+enum class OpChangesHandler {
+    UNDO
 }

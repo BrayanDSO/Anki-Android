@@ -59,7 +59,7 @@
         android:id="@+id/action_mark"
         android:icon="@drawable/ic_star_border_white"
         android:title="@string/menu_mark_note"
-        app:showAsAction="collapseActionView"/>
+        app:showAsAction="always"/>
     <item
         android:id="@+id/action_edit"
         android:icon="@drawable/ic_mode_edit_white"
