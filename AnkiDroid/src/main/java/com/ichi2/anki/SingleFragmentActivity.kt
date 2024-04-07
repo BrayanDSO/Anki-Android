@@ -17,8 +17,10 @@ package com.ichi2.anki
 
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.KeyEvent
+import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.commit
@@ -70,6 +72,14 @@ open class SingleFragmentActivity : AnkiActivity() {
         }
     }
 
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
+        if (fragment !is OnConfigurationChangedHandler) {
+            ActivityCompat.recreate(this)
+        }
+    }
+
     companion object {
         const val FRAGMENT_NAME_EXTRA = "fragmentName"
         const val FRAGMENT_ARGS_EXTRA = "fragmentArgs"
@@ -86,3 +96,5 @@ open class SingleFragmentActivity : AnkiActivity() {
 interface DispatchKeyEventListener {
     fun dispatchKeyEvent(event: KeyEvent): Boolean
 }
+
+interface OnConfigurationChangedHandler
