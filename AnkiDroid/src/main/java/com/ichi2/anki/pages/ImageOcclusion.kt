@@ -20,15 +20,18 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.webkit.WebView
+import androidx.activity.addCallback
 import androidx.core.os.bundleOf
 import com.google.android.material.appbar.MaterialToolbar
 import com.ichi2.anki.CollectionManager.TR
-import com.ichi2.anki.ImageOcclusionActivity
+import com.ichi2.anki.OnConfigurationChangedHandler
 import com.ichi2.anki.R
+import com.ichi2.anki.SingleFragmentActivity
+import com.ichi2.anki.dialogs.DiscardChangesDialog
 import org.json.JSONObject
 import timber.log.Timber
 
-class ImageOcclusion : PageFragment(R.layout.image_occlusion) {
+class ImageOcclusion : PageFragment(R.layout.image_occlusion), OnConfigurationChangedHandler {
 
     override val title: String
         get() = TR.notetypesImageOcclusionName()
@@ -43,6 +46,14 @@ class ImageOcclusion : PageFragment(R.layout.image_occlusion) {
                 webView.evaluateJavascript("anki.imageOcclusion.addNote()", null)
             }
             return@setOnMenuItemClickListener true
+        }
+
+        with(requireActivity()) {
+            onBackPressedDispatcher.addCallback(this) {
+                DiscardChangesDialog.showDialog(this@with) {
+                    finish()
+                }
+            }
         }
     }
 
@@ -76,7 +87,7 @@ class ImageOcclusion : PageFragment(R.layout.image_occlusion) {
 
         fun getIntent(context: Context, kind: String, noteOrNotetypeId: Long, imagePath: String?): Intent {
             val arguments = bundleOf(ARG_KEY_KIND to kind, ARG_KEY_ID to noteOrNotetypeId, ARG_KEY_PATH to imagePath)
-            return ImageOcclusionActivity.getIntent(context, ImageOcclusion::class, arguments)
+            return SingleFragmentActivity.getIntent(context, ImageOcclusion::class, arguments)
         }
     }
 }
