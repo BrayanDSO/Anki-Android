@@ -344,7 +344,6 @@
         <activity
             android:name="com.ichi2.anki.preferences.Preferences"
             android:exported="false"
-            android:configChanges="screenSize"
             >
             <intent-filter>
                 <category android:name="android.intent.category.MONKEY" />

@@ -43,7 +43,7 @@
         </com.google.android.material.appbar.AppBarLayout>
 
         <androidx.fragment.app.FragmentContainerView
-            android:id="@+id/lateral_nav_container"
+            android:id="@+id/header_container"
             android:layout_width="0dp"
             android:layout_height="0dp"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -52,16 +52,19 @@
             app:layout_constraintTop_toBottomOf="@id/appbar"
             app:layout_constraintWidth_max="400dp"
             app:layout_constraintWidth_min="320dp"
-            app:layout_constraintWidth_percent="0.33"/>
+            app:layout_constraintWidth_percent="0.33"
+            android:name="com.ichi2.anki.preferences.HeaderFragment"/>
 
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/settings_container"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            app:layout_constraintStart_toEndOf="@id/lateral_nav_container"
+            app:layout_constraintStart_toEndOf="@id/header_container"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:name="com.ichi2.anki.preferences.HeaderFragment"
+            />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

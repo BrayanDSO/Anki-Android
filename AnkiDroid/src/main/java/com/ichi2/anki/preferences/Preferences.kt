@@ -28,7 +28,6 @@ import androidx.annotation.VisibleForTesting
 import androidx.annotation.XmlRes
 import androidx.core.content.edit
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.commit
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -54,8 +53,8 @@ class Preferences :
     PreferenceFragmentCompat.OnPreferenceStartFragmentCallback,
     SearchPreferenceResultListener {
 
-    private fun hasLateralNavigation(): Boolean {
-        return findViewById<FragmentContainerView>(R.id.lateral_nav_container) != null
+    private fun isSw600dp(): Boolean {
+        return resources.getBoolean(R.bool.is_sw600dp)
     }
 
     override fun onTitleChanged(title: CharSequence?, color: Int) {
@@ -96,7 +95,7 @@ class Preferences :
     private fun loadInitialFragment() {
         val fragmentClassName = intent?.getStringExtra(INITIAL_FRAGMENT_EXTRA)
         val initialFragment = if (fragmentClassName == null) {
-            if (hasLateralNavigation()) GeneralSettingsFragment() else HeaderFragment()
+            if (isSw600dp()) GeneralSettingsFragment() else HeaderFragment()
         } else {
             try {
                 getInstanceFromClassName<Fragment>(fragmentClassName)
@@ -105,13 +104,7 @@ class Preferences :
             }
         }
         supportFragmentManager.commit {
-            // In tablets, show the headers fragment at the lateral navigation container
-            if (hasLateralNavigation()) {
-                replace(R.id.lateral_nav_container, HeaderFragment())
-                replace(R.id.settings_container, initialFragment, initialFragment::class.java.name)
-            } else {
-                replace(R.id.settings_container, initialFragment, initialFragment::class.java.name)
-            }
+            replace(R.id.settings_container, initialFragment, initialFragment::class.java.name)
         }
     }
 
@@ -121,8 +114,7 @@ class Preferences :
     ): Boolean {
         // avoid reopening the same fragment if already active
         val currentFragment = supportFragmentManager.findFragmentById(R.id.settings_container)
-            ?: return true
-        if (pref.fragment == currentFragment::class.jvmName) return true
+        if (currentFragment != null && pref.fragment == currentFragment::class.jvmName) return true
 
         val fragment = supportFragmentManager.fragmentFactory.instantiate(
             classLoader,
@@ -138,7 +130,7 @@ class Preferences :
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == android.R.id.home) {
-            if (hasLateralNavigation()) {
+            if (isSw600dp()) {
                 finish()
             } else {
                 onBackPressedDispatcher.onBackPressed()
