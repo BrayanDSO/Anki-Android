@@ -87,6 +87,8 @@ class ReviewerViewModel(soundPlayer: SoundPlayer) :
      */
     private var statesMutated = true
 
+    val isMarked = MutableStateFlow(false)
+
     init {
         ChangeManager.subscribe(this)
     }
@@ -139,12 +141,13 @@ class ReviewerViewModel(soundPlayer: SoundPlayer) :
             val card = currentCard.await()
             val note = withCol { card.note() }
             NoteService.toggleMark(note)
+            isMarked.emit(NoteService.isMarked(note))
         }
     }
 
     fun undo() {
         launchCatchingIO {
-            undoableOp(OpChangesHandler.UNDO) {
+            undoableOp(ReviewerOp.UNDO) {
                 if (undoAvailable()) {
                     this.undo()
                 }
@@ -183,11 +186,14 @@ class ReviewerViewModel(soundPlayer: SoundPlayer) :
 
     private suspend fun updateCurrentCard() {
         updateQueueState()
-        queueState?.let {
-            currentCard = CompletableDeferred(it.topCard)
+        val state = queueState
+        if (state == null) {
+            isQueueFinishedFlow.emit(true)
+        } else {
+            currentCard = CompletableDeferred(state.topCard)
             showQuestion()
             loadAndPlaySounds(CardSide.QUESTION)
-        } ?: isQueueFinishedFlow.emit(true)
+        }
     }
 
     // TODO
@@ -266,7 +272,7 @@ class ReviewerViewModel(soundPlayer: SoundPlayer) :
         fun getAnswerButtonText(title: String, nextTime: String?): CharSequence {
             return if (nextTime != null) {
                 buildSpannedString {
-                    inSpans(RelativeSizeSpan(0.8F)) {
+                    inSpans(RelativeSizeSpan(0.7F)) {
                         append(nextTime)
                     }
                     append("\n")
@@ -279,12 +285,12 @@ class ReviewerViewModel(soundPlayer: SoundPlayer) :
     }
 
     override suspend fun opExecuted(changes: OpChanges, handler: Any?) {
-        if (changes.card || changes.note) {
-            updateCurrentCard()
-        }
+//        if (changes.card || changes.note) {
+//            updateCurrentCard()
+//        }
     }
 }
 
-enum class OpChangesHandler {
+enum class ReviewerOp {
     UNDO
 }

@@ -27,6 +27,22 @@ import kotlin.reflect.jvm.jvmName
  * @see TemplatePreviewerFragment
  */
 class CardViewerActivity : SingleFragmentActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // TODO reajeitar o fitsSystemWindows
+//        enableEdgeToEdge()
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+//            window.attributes.layoutInDisplayCutoutMode =
+//                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+//        }
+
+//        val windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
+//        windowInsetsController.systemBarsBehavior =
+//            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+//        windowInsetsController.hide(WindowInsetsCompat.Type.statusBars())
+    }
+
     companion object {
         fun getIntent(context: Context, fragmentClass: KClass<out CardViewerFragment>, arguments: Bundle? = null): Intent {
             return Intent(context, CardViewerActivity::class.java).apply {

@@ -102,6 +102,18 @@ class ReviewerFragment :
                 viewModel.onStateMutationCallback()
             }
         }
+
+        setupReviewerSettings(view)
+        setupActions(view)
+    }
+
+    private fun setupActions(view: View) {
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    private fun setupReviewerSettings(view: View) {
+        // TODO: Hide toolbar setting
+//        view.findViewById<AppBarLayout>(R.id.appbar).isVisible = false
     }
 
     // TODO
@@ -123,9 +135,7 @@ class ReviewerFragment :
 
         // Again button
         view.findViewById<MaterialButton>(R.id.again_button).apply {
-            setOnClickListener {
-                viewModel.answerAgain()
-            }
+            setOnClickListener { viewModel.answerAgain() }
             viewModel.againNextTime.collectLatestIn(lifecycleScope) { nextTime ->
                 setAnswerButtonNextTime(R.string.ease_button_again, nextTime)
             }
@@ -133,9 +143,7 @@ class ReviewerFragment :
 
         // Hard button
         view.findViewById<MaterialButton>(R.id.hard_button).apply {
-            setOnClickListener {
-                viewModel.answerHard()
-            }
+            setOnClickListener { viewModel.answerHard() }
             viewModel.hardNextTime.collectLatestIn(lifecycleScope) { nextTime ->
                 setAnswerButtonNextTime(R.string.ease_button_hard, nextTime)
             }
@@ -143,9 +151,7 @@ class ReviewerFragment :
 
         // Good button
         view.findViewById<MaterialButton>(R.id.good_button).apply {
-            setOnClickListener {
-                viewModel.answerGood()
-            }
+            setOnClickListener { viewModel.answerGood() }
             viewModel.goodNextTime.collectLatestIn(lifecycleScope) { nextTime ->
                 setAnswerButtonNextTime(R.string.ease_button_good, nextTime)
             }
@@ -153,9 +159,7 @@ class ReviewerFragment :
 
         // Easy button
         view.findViewById<MaterialButton>(R.id.easy_button).apply {
-            setOnClickListener {
-                viewModel.answerEasy()
-            }
+            setOnClickListener { viewModel.answerEasy() }
             viewModel.easyNextTime.collectLatestIn(lifecycleScope) { nextTime ->
                 setAnswerButtonNextTime(R.string.ease_button_easy, nextTime)
             }
