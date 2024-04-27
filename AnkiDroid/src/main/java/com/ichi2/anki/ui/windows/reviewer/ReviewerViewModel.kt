@@ -33,6 +33,7 @@ import com.ichi2.anki.asyncIO
 import com.ichi2.anki.cardviewer.CardMediaPlayer
 import com.ichi2.anki.launchCatchingIO
 import com.ichi2.anki.pages.AnkiServer
+import com.ichi2.anki.pages.CardInfoDestination
 import com.ichi2.anki.pages.PostRequestHandler
 import com.ichi2.anki.previewer.CardViewerViewModel
 import com.ichi2.anki.previewer.NoteEditorDestination
@@ -150,6 +151,10 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
 
     suspend fun getNoteEditorDestination(): NoteEditorDestination {
         return NoteEditorDestination(currentCard.await().id)
+    }
+
+    suspend fun getCardInfoDestination(): CardInfoDestination {
+        return CardInfoDestination(currentCard.await().id)
     }
 
     fun toggleMark() {

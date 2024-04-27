@@ -37,6 +37,7 @@ import com.ichi2.anki.AbstractFlashcardViewer.Companion.RESULT_NO_MORE_CARDS
 import com.ichi2.anki.NoteEditor
 import com.ichi2.anki.R
 import com.ichi2.anki.cardviewer.CardMediaPlayer
+import com.ichi2.anki.pages.CardInfo.Companion.toIntent
 import com.ichi2.anki.previewer.CardViewerActivity
 import com.ichi2.anki.previewer.CardViewerFragment
 import com.ichi2.anki.snackbar.BaseSnackbarBuilderProvider
@@ -167,6 +168,7 @@ class ReviewerFragment :
         when (item.itemId) {
             R.id.action_edit -> editCard()
             R.id.action_add -> addCard()
+            R.id.action_card_info -> cardInfo()
             R.id.action_mark -> viewModel.toggleMark()
             R.id.action_undo -> viewModel.undo()
             R.id.action_redo -> viewModel.redo()
@@ -256,6 +258,13 @@ class ReviewerFragment :
             putExtra(NoteEditor.EXTRA_CALLER, NoteEditor.CALLER_REVIEWER_ADD)
         }
         addCardLauncher.launch(intent)
+    }
+
+    private fun cardInfo() {
+        lifecycleScope.launch {
+            val intent = viewModel.getCardInfoDestination().toIntent(requireContext())
+            startActivity(intent)
+        }
     }
 
     companion object {

@@ -59,7 +59,7 @@
         android:id="@+id/action_add_note_reviewer"
         android:title="@string/menu_add_note"
         android:icon="@drawable/ic_add_white"
-        app:showAsAction="always"/>
+        app:showAsAction="collapseActionView"/>
     <item
         android:id="@+id/action_undo"
         android:enabled="false"
@@ -81,5 +81,10 @@
         android:id="@+id/action_edit"
         android:icon="@drawable/ic_mode_edit_white"
         android:title="@string/cardeditor_title_edit_card"
+        app:showAsAction="collapseActionView"/>
+    <item
+        android:id="@+id/action_card_info"
+        android:icon="@drawable/ic_dialog_info"
+        android:title="@string/card_info_title"
         app:showAsAction="collapseActionView"/>
 </menu>
