@@ -55,6 +55,7 @@ import com.ichi2.anki.pages.AnkiServer.Companion.ANKI_PREFIX
 import com.ichi2.anki.pages.CardInfo.Companion.toIntent
 import com.ichi2.anki.pages.CardInfoDestination
 import com.ichi2.anki.preferences.sharedPrefs
+import com.ichi2.anki.previewer.UserAction
 import com.ichi2.anki.reviewer.*
 import com.ichi2.anki.reviewer.AnswerButtons.Companion.getBackgroundColors
 import com.ichi2.anki.reviewer.AnswerButtons.Companion.getTextColors
@@ -1259,10 +1260,6 @@ open class Reviewer :
             else -> return super.executeCommand(which, fromGesture)
         }
     }
-
-    @Retention(AnnotationRetention.SOURCE)
-    @IntDef(1, 2, 3, 4, 5, 6, 7, 8, 9)
-    annotation class UserAction
 
     private fun userAction(@UserAction number: Int) {
         Timber.v("userAction%d", number)

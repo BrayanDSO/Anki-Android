@@ -37,6 +37,7 @@ import com.ichi2.anki.pages.CardInfoDestination
 import com.ichi2.anki.pages.PostRequestHandler
 import com.ichi2.anki.previewer.CardViewerViewModel
 import com.ichi2.anki.previewer.NoteEditorDestination
+import com.ichi2.anki.previewer.UserAction
 import com.ichi2.anki.reviewer.CardSide
 import com.ichi2.anki.servicelayer.NoteService
 import com.ichi2.libanki.Card
@@ -202,6 +203,12 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
             launchCatchingIO {
                 updateCurrentCard()
             }
+        }
+    }
+
+    fun userAction(@UserAction number: Int) {
+        launchCatchingIO {
+            eval.emit("javascript: ankidroid.userAction($number);")
         }
     }
 

@@ -86,7 +86,7 @@ abstract class CardViewerFragment(@LayoutRes layout: Int) : Fragment(layout) {
             val baseUrl = CollectionHelper.getMediaDirectory(requireContext()).toURI().toString()
             loadDataWithBaseURL(
                 baseUrl,
-                stdHtml(requireContext(), Themes.currentTheme.isNightMode),
+                onLoadData(),
                 "text/html",
                 null,
                 null
@@ -214,6 +214,10 @@ abstract class CardViewerFragment(@LayoutRes layout: Int) : Fragment(layout) {
                 }
             }
         }
+    }
+
+    protected open fun onLoadData(): String {
+        return stdHtml(requireContext(), Themes.currentTheme.isNightMode)
     }
 
     private fun showMediaErrorSnackbar(filename: String) {

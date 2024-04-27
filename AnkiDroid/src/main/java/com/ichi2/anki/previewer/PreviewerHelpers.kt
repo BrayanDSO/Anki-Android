@@ -18,6 +18,7 @@ package com.ichi2.anki.previewer
 import android.R
 import android.content.Context
 import android.content.Intent
+import androidx.annotation.IntDef
 import com.google.android.material.color.MaterialColors
 import com.ichi2.anki.AnkiDroidApp
 import com.ichi2.anki.LanguageUtils
@@ -43,7 +44,8 @@ class NoteEditorDestination(val cardId: Long) {
  */
 fun stdHtml(
     context: Context = AnkiDroidApp.instance,
-    nightMode: Boolean = false
+    nightMode: Boolean = false,
+    extraScripts: List<String> = listOf()
 ): String {
     val languageDirectionality = if (LanguageUtils.appLanguageIsRTL()) "rtl" else "ltr"
 
@@ -76,32 +78,37 @@ fun stdHtml(
             MaterialColors.getColor(context, R.attr.textColor, R.color.white).toRGBHex()
         ":root[class*=night-mode] { --canvas: $canvasColor; --fg: $fgColor; }"
     }
+    val scriptsList = listOf(
+        "jquery.min.js",
+        "mathjax/tex-chtml.js",
+        "backend/web/reviewer.js"
+    ) + extraScripts
+    val scripts = scriptsList.joinToString(separator = "\n  ") {
+        """<script src="file:///android_asset/$it"></script>"""
+    }
 
-    @Suppress("UnnecessaryVariable") // necessary for the HTML notation
     @Language("HTML")
     val html = """
-                <!DOCTYPE html>
-                <html class="$docClass" dir="$languageDirectionality" data-bs-theme="$baseTheme">
-                <head>
-                    <title>AnkiDroid</title>
-                        <link rel="stylesheet" type="text/css" href="file:///android_asset/backend/web/root-vars.css">
-                        <link rel="stylesheet" type="text/css" href="file:///android_asset/backend/web/reviewer.css">
-                        <link rel="stylesheet" type="text/css" href="file:///android_asset/ankidroid.css">
-                    <style>
-                        .night-mode button { --canvas: #606060; --fg: #eee; }
-                        $colors
-                    </style>
-                </head>
-                <body class="${bodyClass()}">
-                    <div id="_mark" hidden>&#x2605;</div>
-                    <div id="_flag" hidden>&#x2691;</div>
-                    <div id="qa"></div>
-                    <script src="file:///android_asset/jquery.min.js"></script>
-                    <script src="file:///android_asset/mathjax/tex-chtml.js"></script>
-                    <script src="file:///android_asset/backend/web/reviewer.js"></script>
-                    <script>bridgeCommand = function(){};</script>
-                </body>
-                </html>
+        <!DOCTYPE html>
+        <html class="$docClass" dir="$languageDirectionality" data-bs-theme="$baseTheme">
+        <head>
+          <title>AnkiDroid</title>
+            <link rel="stylesheet" type="text/css" href="file:///android_asset/backend/web/root-vars.css">
+            <link rel="stylesheet" type="text/css" href="file:///android_asset/backend/web/reviewer.css">
+            <link rel="stylesheet" type="text/css" href="file:///android_asset/ankidroid.css">
+          <style>
+            .night-mode button { --canvas: #606060; --fg: #eee; }
+            $colors
+          </style>
+        </head>
+        <body class="${bodyClass()}">
+          <div id="_mark" hidden>&#x2605;</div>
+          <div id="_flag" hidden>&#x2691;</div>
+          <div id="qa"></div>
+          $scripts
+          <script>bridgeCommand = function(){};</script>
+        </body>
+        </html>
     """.trimIndent()
     return html
 }
@@ -117,3 +124,7 @@ fun bodyClassForCardOrd(
 private fun bodyClass(nightMode: Boolean = Themes.currentTheme.isNightMode): String {
     return if (nightMode) "nightMode night_mode" else ""
 }
+
+@Retention(AnnotationRetention.SOURCE)
+@IntDef(1, 2, 3, 4, 5, 6, 7, 8, 9)
+annotation class UserAction
