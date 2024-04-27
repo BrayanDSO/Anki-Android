@@ -33,7 +33,7 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.ichi2.anki.AbstractFlashcardViewer.Companion.RESULT_NO_MORE_CARDS
 import com.ichi2.anki.R
-import com.ichi2.anki.cardviewer.SoundPlayer
+import com.ichi2.anki.cardviewer.CardMediaPlayer
 import com.ichi2.anki.previewer.CardViewerActivity
 import com.ichi2.anki.previewer.CardViewerFragment
 import com.ichi2.anki.snackbar.BaseSnackbarBuilderProvider
@@ -51,7 +51,7 @@ class ReviewerFragment :
     Toolbar.OnMenuItemClickListener {
 
     override val viewModel: ReviewerViewModel by viewModels {
-        ReviewerViewModel.factory(SoundPlayer())
+        ReviewerViewModel.factory(CardMediaPlayer())
     }
 
     override val webView: WebView

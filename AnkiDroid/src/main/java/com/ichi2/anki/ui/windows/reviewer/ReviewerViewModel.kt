@@ -26,7 +26,7 @@ import anki.frontend.SetSchedulingStatesRequest
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.Ease
 import com.ichi2.anki.asyncIO
-import com.ichi2.anki.cardviewer.SoundPlayer
+import com.ichi2.anki.cardviewer.CardMediaPlayer
 import com.ichi2.anki.launchCatchingIO
 import com.ichi2.anki.pages.AnkiServer
 import com.ichi2.anki.pages.PostRequestHandler
@@ -47,8 +47,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 
-class ReviewerViewModel(soundPlayer: SoundPlayer) :
-    CardViewerViewModel(soundPlayer),
+class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
+    CardViewerViewModel(cardMediaPlayer),
     PostRequestHandler,
     ChangeManager.Subscriber {
 
@@ -169,8 +169,8 @@ class ReviewerViewModel(soundPlayer: SoundPlayer) :
     }
 
     private suspend fun loadAndPlaySounds(side: CardSide) {
-        soundPlayer.loadCardSounds(currentCard.await())
-        soundPlayer.playAllSoundsForSide(side)
+        cardMediaPlayer.loadCardSounds(currentCard.await())
+        cardMediaPlayer.playAllSoundsForSide(side)
     }
 
     override suspend fun showQuestion() {
@@ -261,10 +261,10 @@ class ReviewerViewModel(soundPlayer: SoundPlayer) :
     }
 
     companion object {
-        fun factory(soundPlayer: SoundPlayer): ViewModelProvider.Factory {
+        fun factory(cardMediaPlayer: CardMediaPlayer): ViewModelProvider.Factory {
             return viewModelFactory {
                 initializer {
-                    ReviewerViewModel(soundPlayer)
+                    ReviewerViewModel(cardMediaPlayer)
                 }
             }
         }
