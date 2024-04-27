@@ -32,6 +32,7 @@ import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.snackbar.Snackbar
 import com.ichi2.anki.AbstractFlashcardViewer.Companion.RESULT_NO_MORE_CARDS
 import com.ichi2.anki.R
 import com.ichi2.anki.cardviewer.CardMediaPlayer
@@ -57,9 +58,6 @@ class ReviewerFragment :
 
     override val webView: WebView
         get() = requireView().findViewById(R.id.webview)
-
-    override val baseUrl: String
-        get() = viewModel.baseUrl()
 
     override val baseSnackbarBuilder: SnackbarBuilder = {
         anchorView = this@ReviewerFragment.view?.findViewById(R.id.buttons_area)
@@ -104,6 +102,11 @@ class ReviewerFragment :
             }
         }
 
+        viewModel.snackbarMessageFlow.flowWithLifecycle(lifecycle)
+            .collectIn(lifecycleScope) {
+                showSnackbar(it, Snackbar.LENGTH_SHORT)
+            }
+
         setupReviewerSettings(view)
         setupActions(view)
     }
@@ -123,6 +126,27 @@ class ReviewerFragment :
                     markItem.setTitle(R.string.menu_mark_note)
                 }
             }
+
+        // Undo
+        val undoItem = menu.findItem(R.id.action_undo)
+        viewModel.undoTitleFlow.flowWithLifecycle(lifecycle)
+            .collectLatestIn(lifecycleScope) { title ->
+                undoItem.title = title
+            }
+        viewModel.isUndoAvailableFlow.flowWithLifecycle(lifecycle)
+            .collectLatestIn(lifecycleScope) { isEnabled ->
+                undoItem.isEnabled = isEnabled
+            }
+        // Redo
+        val redoItem = menu.findItem(R.id.action_redo)
+        viewModel.redoTitleFlow.flowWithLifecycle(lifecycle)
+            .collectLatestIn(lifecycleScope) { title ->
+                redoItem.title = title
+            }
+        viewModel.isRedoAvailableFlow.flowWithLifecycle(lifecycle)
+            .collectLatestIn(lifecycleScope) { isEnabled ->
+                redoItem.isEnabled = isEnabled
+            }
     }
 
     @Suppress("UNUSED_PARAMETER")
@@ -136,6 +160,8 @@ class ReviewerFragment :
         when (item.itemId) {
             R.id.action_edit -> editCard()
             R.id.action_mark -> viewModel.toggleMark()
+            R.id.action_undo -> viewModel.undo()
+            R.id.action_redo -> viewModel.redo()
             R.id.action_flag -> showSnackbar("Not yet implemented")
             else -> return false
         }

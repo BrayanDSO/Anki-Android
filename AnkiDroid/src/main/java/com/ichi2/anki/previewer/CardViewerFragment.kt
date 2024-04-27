@@ -48,7 +48,6 @@ import timber.log.Timber
 abstract class CardViewerFragment(@LayoutRes layout: Int) : Fragment(layout) {
     protected abstract val viewModel: CardViewerViewModel
     protected abstract val webView: WebView
-    protected open val baseUrl = "http://${AnkiServer.LOCALHOST}/"
 
     @CallSuper
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

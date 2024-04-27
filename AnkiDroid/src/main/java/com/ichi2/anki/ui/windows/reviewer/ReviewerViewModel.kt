@@ -19,10 +19,12 @@ import android.text.style.RelativeSizeSpan
 import androidx.core.text.buildSpannedString
 import androidx.core.text.inSpans
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import anki.collection.OpChanges
 import anki.frontend.SetSchedulingStatesRequest
+import com.ichi2.anki.CollectionManager.TR
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.Ease
 import com.ichi2.anki.asyncIO
@@ -37,6 +39,7 @@ import com.ichi2.anki.servicelayer.NoteService
 import com.ichi2.libanki.Card
 import com.ichi2.libanki.ChangeManager
 import com.ichi2.libanki.note
+import com.ichi2.libanki.redo
 import com.ichi2.libanki.sched.CurrentQueueState
 import com.ichi2.libanki.undo
 import com.ichi2.libanki.undoableOp
@@ -46,6 +49,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 
 class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
     CardViewerViewModel(cardMediaPlayer),
@@ -89,8 +93,19 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
 
     val isMarked = MutableStateFlow(false)
 
+    val undoTitleFlow = MutableStateFlow(TR.undoUndo())
+    val isUndoAvailableFlow = MutableStateFlow(false)
+    val redoTitleFlow = MutableStateFlow(TR.undoRedo())
+    val isRedoAvailableFlow = MutableStateFlow(false)
+
+    val snackbarMessageFlow = MutableSharedFlow<String>()
+
     init {
         ChangeManager.subscribe(this)
+
+        launchCatchingIO {
+            updateUndoRedo()
+        }
     }
 
     /* *********************************************************************************************
@@ -146,12 +161,30 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
     }
 
     fun undo() {
-        launchCatchingIO {
-            undoableOp(ReviewerOp.UNDO) {
-                if (undoAvailable()) {
-                    this.undo()
-                }
+        viewModelScope.launch {
+            val changes = undoableOp(ReviewerOp.UNDO) {
+                undo()
             }
+            val message = if (changes.operation.isEmpty()) {
+                TR.actionsNothingToUndo()
+            } else {
+                TR.undoActionUndone(changes.operation)
+            }
+            snackbarMessageFlow.emit(message)
+        }
+    }
+
+    fun redo() {
+        viewModelScope.launch {
+            val changes = undoableOp(ReviewerOp.REDO) {
+                redo()
+            }
+            val message = if (changes.operation.isEmpty()) {
+                TR.actionsNothingToRedo()
+            } else {
+                TR.undoRedoAction(changes.operation)
+            }
+            snackbarMessageFlow.emit(message)
         }
     }
 
@@ -284,7 +317,18 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
         }
     }
 
+    private suspend fun updateUndoRedo() {
+        undoTitleFlow.emit(withCol { undoLabel() } ?: TR.undoUndo())
+        redoTitleFlow.emit(withCol { redoLabel() } ?: TR.undoRedo())
+
+        isUndoAvailableFlow.emit(withCol { undoAvailable() })
+        isRedoAvailableFlow.emit(withCol { redoAvailable() })
+    }
+
     override suspend fun opExecuted(changes: OpChanges, handler: Any?) {
+        // update undo
+        updateUndoRedo()
+
 //        if (changes.card || changes.note) {
 //            updateCurrentCard()
 //        }
@@ -292,5 +336,6 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
 }
 
 enum class ReviewerOp {
-    UNDO
+    UNDO,
+    REDO
 }
