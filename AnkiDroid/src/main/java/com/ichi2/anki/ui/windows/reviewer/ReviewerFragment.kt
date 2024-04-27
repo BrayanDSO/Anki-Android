@@ -18,6 +18,8 @@ package com.ichi2.anki.ui.windows.reviewer
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.text.SpannableString
+import android.text.style.UnderlineSpan
 import android.view.MenuItem
 import android.view.View
 import android.webkit.WebView
@@ -34,6 +36,7 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.textview.MaterialTextView
 import com.ichi2.anki.AbstractFlashcardViewer.Companion.RESULT_NO_MORE_CARDS
 import com.ichi2.anki.NoteEditor
 import com.ichi2.anki.R
@@ -47,6 +50,7 @@ import com.ichi2.anki.snackbar.showSnackbar
 import com.ichi2.anki.utils.ext.collectIn
 import com.ichi2.anki.utils.ext.collectLatestIn
 import com.ichi2.anki.utils.navBarNeedsScrim
+import com.ichi2.libanki.sched.Counts
 import com.ichi2.utils.increaseHorizontalPaddingOfOverflowMenuIcons
 import kotlinx.coroutines.launch
 
@@ -118,6 +122,7 @@ class ReviewerFragment :
 
         setupReviewerSettings(view)
         setupActions(view)
+        setupCounts(view)
     }
 
     private fun setupActions(view: View) {
@@ -155,6 +160,28 @@ class ReviewerFragment :
         viewModel.isRedoAvailableFlow.flowWithLifecycle(lifecycle)
             .collectLatestIn(lifecycleScope) { isEnabled ->
                 redoItem.isEnabled = isEnabled
+            }
+    }
+
+    private fun setupCounts(view: View) {
+        val newCount = view.findViewById<MaterialTextView>(R.id.new_count)
+        val learnCount = view.findViewById<MaterialTextView>(R.id.lrn_count)
+        val reviewCount = view.findViewById<MaterialTextView>(R.id.rev_count)
+
+        viewModel.countsFlow.flowWithLifecycle(lifecycle)
+            .collectIn(lifecycleScope) { (counts, countsType) ->
+                newCount.text = counts.new.toString()
+                learnCount.text = counts.lrn.toString()
+                reviewCount.text = counts.rev.toString()
+
+                val currentCount = when (countsType) {
+                    Counts.Queue.NEW -> newCount
+                    Counts.Queue.LRN -> learnCount
+                    Counts.Queue.REV -> reviewCount
+                }
+                val spannableString = SpannableString(currentCount.text)
+                spannableString.setSpan(UnderlineSpan(), 0, currentCount.text.length, 0)
+                currentCount.text = spannableString
             }
     }
 

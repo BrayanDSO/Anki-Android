@@ -38,13 +38,15 @@
             app:layout_constraintTop_toBottomOf="@id/appbar"
             />
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/mini_bar"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:paddingTop="2dp"
-            android:paddingBottom="3dp"
+            android:paddingVertical="3dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
             app:layout_constraintStart_toStartOf="@id/webview_container"
+            app:layout_constraintEnd_toEndOf="@id/webview_container"
             app:layout_constraintTop_toBottomOf="@id/progress_bar"
             >
 
@@ -53,7 +55,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="?attr/newCountColor"
-                tools:text="27 "
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/lrn_count"
+                android:paddingEnd="4sp"
+                tools:text="27"
                 />
 
             <com.google.android.material.textview.MaterialTextView
@@ -61,7 +66,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="?attr/learnCountColor"
-                tools:text="81 "
+                app:layout_constraintStart_toEndOf="@id/new_count"
+                app:layout_constraintEnd_toStartOf="@id/rev_count"
+                android:paddingEnd="4sp"
+                tools:text="81"
                 />
 
             <com.google.android.material.textview.MaterialTextView
@@ -69,10 +77,44 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="?attr/reviewCountColor"
+                app:layout_constraintStart_toEndOf="@id/lrn_count"
                 tools:text="54"
                 />
 
-        </LinearLayout>
+            <Chronometer
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="invisible"
+                tools:visibility="visible"
+                android:textSize="14sp"
+                app:layout_constraintStart_toEndOf="@id/rev_count"
+                app:layout_constraintEnd_toStartOf="@id/flag_icon"
+                />
+
+            <ImageView
+                android:id="@+id/flag_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="24sp"
+                tools:src="@drawable/ic_flag_red"
+                android:layout_alignParentEnd="true"
+                android:layout_gravity="end"
+                app:layout_constraintEnd_toStartOf="@id/mark_icon"
+                app:layout_constraintTop_toTopOf="@id/new_count"
+                app:layout_constraintBottom_toBottomOf="@id/new_count"
+                tools:visibility="visible"/>
+
+            <ImageView
+                android:id="@+id/mark_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:visibility="invisible"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/new_count"
+                app:layout_constraintBottom_toBottomOf="@id/new_count"
+                tools:src="@drawable/ic_star_white_bordered_24dp"
+                tools:visibility="visible"
+                />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/webview_container"

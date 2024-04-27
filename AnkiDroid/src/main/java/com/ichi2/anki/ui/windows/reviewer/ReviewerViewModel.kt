@@ -46,6 +46,7 @@ import com.ichi2.libanki.ChangeManager
 import com.ichi2.libanki.Utils
 import com.ichi2.libanki.note
 import com.ichi2.libanki.redo
+import com.ichi2.libanki.sched.Counts
 import com.ichi2.libanki.sched.CurrentQueueState
 import com.ichi2.libanki.undo
 import com.ichi2.libanki.undoableOp
@@ -106,6 +107,8 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
     val isRedoAvailableFlow = MutableStateFlow(false)
 
     val snackbarMessageFlow = MutableSharedFlow<String>()
+
+    val countsFlow = MutableStateFlow(Counts() to Counts.Queue.NEW)
 
     init {
         ChangeManager.subscribe(this)
@@ -224,6 +227,10 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
         }
     }
 
+    fun getTotalCount(): Int {
+        return queueState?.counts?.count() ?: 0
+    }
+
     suspend fun getDeleteNoteDialogStrippedCardContent(): String {
         val card = currentCard.await()
         val cardQuestion = withCol { card.question(this, true) }
@@ -266,6 +273,11 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
     private suspend fun updateQueueState() {
         queueState = withCol {
             sched.currentQueueState()
+        }
+
+        // TODO organizar
+        queueState?.let {
+            countsFlow.emit(it.counts to it.countsIndex)
         }
     }
 
@@ -357,7 +369,7 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
         fun getAnswerButtonText(title: String, nextTime: String?): CharSequence {
             return if (nextTime != null) {
                 buildSpannedString {
-                    inSpans(RelativeSizeSpan(0.75F)) {
+                    inSpans(RelativeSizeSpan(0.8F)) {
                         append(nextTime)
                     }
                     append("\n")
