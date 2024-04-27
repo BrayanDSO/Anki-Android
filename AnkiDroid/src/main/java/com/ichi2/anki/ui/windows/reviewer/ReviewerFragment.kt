@@ -32,6 +32,7 @@ import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.ichi2.anki.AbstractFlashcardViewer.Companion.RESULT_NO_MORE_CARDS
 import com.ichi2.anki.NoteEditor
@@ -177,12 +178,12 @@ class ReviewerFragment :
     override fun onMenuItemClick(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.action_edit -> editCard()
-            R.id.action_add -> addCard()
+            R.id.action_add_note -> addCard()
             R.id.action_card_info -> cardInfo()
+            R.id.action_delete -> showDeleteNoteDialog()
             R.id.action_mark -> viewModel.toggleMark()
             R.id.action_undo -> viewModel.undo()
             R.id.action_redo -> viewModel.redo()
-            R.id.action_delete -> viewModel.deleteNote()
             R.id.action_open_deck_options -> openDeckOptions()
             R.id.action_tag, R.id.action_flag -> showSnackbar("Not yet implemented")
             R.id.user_action_1 -> viewModel.userAction(1)
@@ -292,6 +293,25 @@ class ReviewerFragment :
         lifecycleScope.launch {
             val intent = viewModel.getDeckOptionsDestination().getIntent(requireContext())
             startActivity(intent)
+        }
+    }
+
+    private fun showDeleteNoteDialog() {
+        lifecycleScope.launch {
+            val message = getString(
+                R.string.delete_note_message,
+                viewModel.getDeleteNoteDialogStrippedCardContent()
+            )
+
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.delete_card_title)
+                .setIcon(R.drawable.ic_warning)
+                .setPositiveButton(R.string.dialog_positive_delete) { _, _ ->
+                    viewModel.deleteNote()
+                }
+                .setNegativeButton(R.string.dialog_cancel) { _, _ -> }
+                .setMessage(message)
+                .show()
         }
     }
 

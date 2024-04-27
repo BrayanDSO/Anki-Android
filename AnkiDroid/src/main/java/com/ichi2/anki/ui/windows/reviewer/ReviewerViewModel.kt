@@ -43,6 +43,7 @@ import com.ichi2.anki.reviewer.CardSide
 import com.ichi2.anki.servicelayer.NoteService
 import com.ichi2.libanki.Card
 import com.ichi2.libanki.ChangeManager
+import com.ichi2.libanki.Utils
 import com.ichi2.libanki.note
 import com.ichi2.libanki.redo
 import com.ichi2.libanki.sched.CurrentQueueState
@@ -151,11 +152,13 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
         statesMutated = true
     }
 
-    suspend fun getNoteEditorDestination(): NoteEditorDestination =
-        NoteEditorDestination(currentCard.await().id)
+    suspend fun getNoteEditorDestination(): NoteEditorDestination {
+        return NoteEditorDestination(currentCard.await().id)
+    }
 
-    suspend fun getCardInfoDestination(): CardInfoDestination =
-        CardInfoDestination(currentCard.await().id)
+    suspend fun getCardInfoDestination(): CardInfoDestination {
+        return CardInfoDestination(currentCard.await().id)
+    }
 
     suspend fun getDeckOptionsDestination(): DeckOptionsDestination {
         val deckId = withCol { decks.getCurrentId() }
@@ -217,7 +220,12 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
         }
     }
 
-    // TODO dialogo de confirmação se quer deletar
+    suspend fun getDeleteNoteDialogStrippedCardContent(): String {
+        val card = currentCard.await()
+        val cardQuestion = withCol { card.question(this, true) }
+        return Utils.stripHTMLAndSpecialFields(cardQuestion).trim()
+    }
+
     fun deleteNote() {
         launchCatchingIO {
             val card = currentCard.await()
@@ -345,7 +353,7 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
         fun getAnswerButtonText(title: String, nextTime: String?): CharSequence {
             return if (nextTime != null) {
                 buildSpannedString {
-                    inSpans(RelativeSizeSpan(0.7F)) {
+                    inSpans(RelativeSizeSpan(0.75F)) {
                         append(nextTime)
                     }
                     append("\n")

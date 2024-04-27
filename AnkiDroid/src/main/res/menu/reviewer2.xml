@@ -56,7 +56,7 @@
         </menu>
     </item>
     <item
-        android:id="@+id/action_add_note_reviewer"
+        android:id="@+id/action_add_note"
         android:title="@string/menu_add_note"
         android:icon="@drawable/ic_add_white"
         app:showAsAction="never"/>

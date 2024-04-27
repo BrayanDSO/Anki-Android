@@ -30,7 +30,7 @@ import org.intellij.lang.annotations.Language
 class NoteEditorDestination(val cardId: Long) {
     fun toIntent(context: Context): Intent =
         Intent(context, NoteEditor::class.java).apply {
-            putExtra(NoteEditor.EXTRA_CALLER, NoteEditor.CALLER_EDIT)
+            putExtra(NoteEditor.EXTRA_CALLER, NoteEditor.CALLER_PREVIEWER_EDIT)
             putExtra(NoteEditor.EXTRA_EDIT_FROM_CARD_ID, cardId)
         }
 }
