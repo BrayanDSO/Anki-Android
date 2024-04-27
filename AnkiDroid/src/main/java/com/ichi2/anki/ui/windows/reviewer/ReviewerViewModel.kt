@@ -116,10 +116,6 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
         launchCatchingIO {
             updateUndoRedo()
         }
-        // TODO organizar
-        launchCatchingIO {
-            updateQueueState()
-        }
     }
 
     /* *********************************************************************************************
@@ -273,11 +269,9 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
     private suspend fun updateQueueState() {
         queueState = withCol {
             sched.currentQueueState()
-        }
-
-        // TODO organizar
-        queueState?.let {
-            countsFlow.emit(it.counts to it.countsIndex)
+        }?.also {
+            val ue = it.counts to it.countsIndex
+            countsFlow.emit(ue)
         }
     }
 
@@ -389,11 +383,13 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
         isRedoAvailableFlow.emit(withCol { redoAvailable() })
     }
 
-    override suspend fun opExecuted(changes: OpChanges, handler: Any?) {
+    override fun opExecuted(changes: OpChanges, handler: Any?) {
         // update undo
-        updateUndoRedo()
-        if (changes.card || changes.note) {
-            updateCurrentCard()
+        launchCatchingIO {
+            updateUndoRedo()
+            if (changes.card || changes.note) {
+                updateCurrentCard()
+            }
         }
     }
 }

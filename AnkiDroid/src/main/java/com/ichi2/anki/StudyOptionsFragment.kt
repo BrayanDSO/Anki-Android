@@ -688,7 +688,7 @@ class StudyOptionsFragment : Fragment(), ChangeManager.Subscriber, Toolbar.OnMen
         }
     }
 
-    override suspend fun opExecuted(changes: OpChanges, handler: Any?) {
+    override fun opExecuted(changes: OpChanges, handler: Any?) {
         if (activity != null) {
             refreshInterface(true)
         }
