@@ -34,6 +34,7 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.snackbar.Snackbar
 import com.ichi2.anki.AbstractFlashcardViewer.Companion.RESULT_NO_MORE_CARDS
+import com.ichi2.anki.NoteEditor
 import com.ichi2.anki.R
 import com.ichi2.anki.cardviewer.CardMediaPlayer
 import com.ichi2.anki.previewer.CardViewerActivity
@@ -64,7 +65,13 @@ class ReviewerFragment :
     }
 
     private val editCardLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            viewModel.handleEditCardResult(result)
+        }
+
+    private val addCardLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -159,6 +166,7 @@ class ReviewerFragment :
     override fun onMenuItemClick(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.action_edit -> editCard()
+            R.id.action_add -> addCard()
             R.id.action_mark -> viewModel.toggleMark()
             R.id.action_undo -> viewModel.undo()
             R.id.action_redo -> viewModel.redo()
@@ -241,6 +249,13 @@ class ReviewerFragment :
             val intent = viewModel.getNoteEditorDestination().toIntent(requireContext())
             editCardLauncher.launch(intent)
         }
+    }
+
+    private fun addCard() {
+        val intent = Intent(context, NoteEditor::class.java).apply {
+            putExtra(NoteEditor.EXTRA_CALLER, NoteEditor.CALLER_REVIEWER_ADD)
+        }
+        addCardLauncher.launch(intent)
     }
 
     companion object {

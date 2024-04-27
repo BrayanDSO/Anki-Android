@@ -16,6 +16,7 @@
 package com.ichi2.anki.ui.windows.reviewer
 
 import android.text.style.RelativeSizeSpan
+import androidx.activity.result.ActivityResult
 import androidx.core.text.buildSpannedString
 import androidx.core.text.inSpans
 import androidx.lifecycle.ViewModelProvider
@@ -27,6 +28,7 @@ import anki.frontend.SetSchedulingStatesRequest
 import com.ichi2.anki.CollectionManager.TR
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.Ease
+import com.ichi2.anki.NoteEditor
 import com.ichi2.anki.asyncIO
 import com.ichi2.anki.cardviewer.CardMediaPlayer
 import com.ichi2.anki.launchCatchingIO
@@ -50,6 +52,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
     CardViewerViewModel(cardMediaPlayer),
@@ -125,8 +128,6 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
         }
     }
 
-    fun baseUrl() = server.baseUrl()
-
     fun showAnswer() {
         launchCatchingIO {
             while (!statesMutated) {
@@ -185,6 +186,17 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
                 TR.undoRedoAction(changes.operation)
             }
             snackbarMessageFlow.emit(message)
+        }
+    }
+
+    fun handleEditCardResult(result: ActivityResult) {
+        if (result.data?.getBooleanExtra(NoteEditor.RELOAD_REQUIRED_EXTRA_KEY, false) == true ||
+            result.data?.getBooleanExtra(NoteEditor.NOTE_CHANGED_EXTRA_KEY, false) == true
+        ) {
+            Timber.v("handleEditCardResult()")
+            launchCatchingIO {
+                updateCurrentCard()
+            }
         }
     }
 
