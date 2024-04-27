@@ -96,6 +96,8 @@ class CardMediaPlayer : Closeable {
     private val soundTagPlayer: SoundTagPlayer
     private val ttsPlayer: Deferred<TtsPlayer>
     private var soundErrorListener: SoundErrorListener? = null
+
+    /** Wrapped in a lambda so the value in this class propagates down */
     var javascriptEvaluator: () -> JavascriptEvaluator? = { null }
 
     constructor(soundTagPlayer: SoundTagPlayer, ttsPlayer: Deferred<TtsPlayer>, soundErrorListener: SoundErrorListener) {
@@ -105,7 +107,6 @@ class CardMediaPlayer : Closeable {
     }
 
     constructor() {
-        // javascriptEvaluator is wrapped in a lambda so the value in this class propagates down
         this.soundTagPlayer = SoundTagPlayer(getMediaBaseUrl(getMediaDirectory(AnkiDroidApp.instance).path), VideoPlayer { javascriptEvaluator() })
         this.ttsPlayer = scope.async { AndroidTtsPlayer.createInstance(AnkiDroidApp.instance, scope) }
     }

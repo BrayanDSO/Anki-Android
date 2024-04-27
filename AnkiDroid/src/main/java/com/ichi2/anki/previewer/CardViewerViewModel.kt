@@ -122,8 +122,7 @@ abstract class CardViewerViewModel(
         val card = currentCard.await()
         val questionData = withCol { card.question(this) }
         val question = mungeQA(questionData)
-        val answer =
-            withCol { media.escapeMediaFilenames(card.answer(this)) }
+        val answer = withCol { media.escapeMediaFilenames(card.answer(this)) }
 
         eval.emit("_showQuestion(${Json.encodeToString(question)}, ${Json.encodeToString(answer)}, '${bodyClass()}');")
     }
