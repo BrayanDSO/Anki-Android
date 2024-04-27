@@ -212,6 +212,17 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
         }
     }
 
+    // TODO dialogo de confirmação se quer deletar
+    fun deleteNote() {
+        launchCatchingIO {
+            val card = currentCard.await()
+            val noteCount = undoableOp {
+                removeNotes(cids = listOf(card.id))
+            }.count
+            snackbarMessageFlow.emit(TR.browsingCardsDeleted(noteCount))
+        }
+    }
+
     /* *********************************************************************************************
     *************************************** Internal methods ***************************************
     ********************************************************************************************* */
@@ -352,14 +363,14 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
     override suspend fun opExecuted(changes: OpChanges, handler: Any?) {
         // update undo
         updateUndoRedo()
-
-//        if (changes.card || changes.note) {
-//            updateCurrentCard()
-//        }
+        if (changes.card || changes.note) {
+            updateCurrentCard()
+        }
     }
 }
 
 enum class ReviewerOp {
     UNDO,
-    REDO
+    REDO,
+    DELETE
 }

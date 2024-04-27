@@ -182,6 +182,7 @@ class ReviewerFragment :
             R.id.action_mark -> viewModel.toggleMark()
             R.id.action_undo -> viewModel.undo()
             R.id.action_redo -> viewModel.redo()
+            R.id.action_delete -> viewModel.deleteNote()
             R.id.action_tag, R.id.action_flag -> showSnackbar("Not yet implemented")
             R.id.user_action_1 -> viewModel.userAction(1)
             R.id.user_action_2 -> viewModel.userAction(2)
