@@ -206,6 +206,7 @@ enum class ViewerCommand(val resourceId: Int) {
         /**
          * @return whether the command was executed
          */
+        // TODO remover o fromGesture
         fun executeCommand(which: ViewerCommand, fromGesture: Gesture?): Boolean
     }
 }
