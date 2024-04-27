@@ -17,6 +17,7 @@ package com.ichi2.anki.ui.windows.reviewer
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.text.SpannableString
 import android.text.style.UnderlineSpan
@@ -213,6 +214,17 @@ class ReviewerFragment :
             R.id.user_action_7 -> viewModel.userAction(7)
             R.id.user_action_8 -> viewModel.userAction(8)
             R.id.user_action_9 -> viewModel.userAction(9)
+            else -> return false
+        }
+        return true
+    }
+
+    override fun handleUrl(url: Uri): Boolean {
+        if (super.handleUrl(url)) {
+            return true
+        }
+        when (url.scheme) {
+            "tap" -> viewModel.onTap(url.host!!)
             else -> return false
         }
         return true

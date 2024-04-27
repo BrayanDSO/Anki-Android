@@ -126,35 +126,18 @@ abstract class CardViewerFragment(@LayoutRes layout: Int) : Fragment(layout) {
             }
 
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                return handleUrl(request.url)
+                return handleOrOpenUrl(request.url)
             }
 
             @Suppress("DEPRECATION") // necessary in API 23
             @Deprecated("Deprecated in Java")
             override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
                 if (view == null || url == null) return super.shouldOverrideUrlLoading(view, url)
-                return handleUrl(url.toUri())
+                return handleOrOpenUrl(url.toUri())
             }
 
-            private fun handleUrl(url: Uri): Boolean {
-                val urlString = url.toString()
-
-                if (urlString.startsWith("playsound:")) {
-                    viewModel.playSoundFromUrl(urlString)
-                    return true
-                }
-                if (urlString.startsWith("videoended:")) {
-                    viewModel.onVideoFinished()
-                    return true
-                }
-                if (urlString.startsWith("videopause:")) {
-                    viewModel.onVideoPaused()
-                    return true
-                }
-                if (urlString.startsWith("tts-voices:")) {
-                    TtsVoicesDialogFragment().show(childFragmentManager, null)
-                    return true
-                }
+            fun handleOrOpenUrl(url: Uri): Boolean {
+                if (handleUrl(url)) return true
                 return try {
                     openUrl(url)
                     true
@@ -174,6 +157,17 @@ abstract class CardViewerFragment(@LayoutRes layout: Int) : Fragment(layout) {
                 }
             }
         }
+    }
+
+    protected open fun handleUrl(url: Uri): Boolean {
+        when (url.scheme) {
+            "playsound" -> viewModel.playSoundFromUrl(url.toString())
+            "videoended" -> viewModel.onVideoFinished()
+            "videopause" -> viewModel.onVideoPaused()
+            "tts-voices" -> TtsVoicesDialogFragment().show(childFragmentManager, null)
+            else -> return false
+        }
+        return true
     }
 
     private fun onCreateWebChromeClient(): WebChromeClient {
