@@ -40,7 +40,6 @@ import com.ichi2.anki.R
 import com.ichi2.anki.dialogs.TtsVoicesDialogFragment
 import com.ichi2.anki.localizedErrorMessage
 import com.ichi2.anki.snackbar.showSnackbar
-import com.ichi2.themes.Themes
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import timber.log.Timber
@@ -86,7 +85,7 @@ abstract class CardViewerFragment(@LayoutRes layout: Int) : Fragment(layout) {
             val baseUrl = CollectionHelper.getMediaDirectory(requireContext()).toURI().toString()
             loadDataWithBaseURL(
                 baseUrl,
-                onLoadData(),
+                stdHtml(viewModel.baseUrl(), requireContext()),
                 "text/html",
                 null,
                 null
@@ -214,10 +213,6 @@ abstract class CardViewerFragment(@LayoutRes layout: Int) : Fragment(layout) {
                 }
             }
         }
-    }
-
-    protected open fun onLoadData(): String {
-        return stdHtml(requireContext(), Themes.currentTheme.isNightMode)
     }
 
     private fun showMediaErrorSnackbar(filename: String) {

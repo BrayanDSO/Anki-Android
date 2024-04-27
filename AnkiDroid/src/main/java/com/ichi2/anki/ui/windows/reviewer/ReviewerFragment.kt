@@ -41,14 +41,12 @@ import com.ichi2.anki.cardviewer.CardMediaPlayer
 import com.ichi2.anki.pages.CardInfo.Companion.toIntent
 import com.ichi2.anki.previewer.CardViewerActivity
 import com.ichi2.anki.previewer.CardViewerFragment
-import com.ichi2.anki.previewer.stdHtml
 import com.ichi2.anki.snackbar.BaseSnackbarBuilderProvider
 import com.ichi2.anki.snackbar.SnackbarBuilder
 import com.ichi2.anki.snackbar.showSnackbar
 import com.ichi2.anki.utils.ext.collectIn
 import com.ichi2.anki.utils.ext.collectLatestIn
 import com.ichi2.anki.utils.navBarNeedsScrim
-import com.ichi2.themes.Themes
 import com.ichi2.utils.increaseHorizontalPaddingOfOverflowMenuIcons
 import kotlinx.coroutines.launch
 
@@ -76,14 +74,6 @@ class ReviewerFragment :
     private val addCardLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         }
-
-    override fun onLoadData(): String {
-        return stdHtml(
-            requireContext(),
-            Themes.currentTheme.isNightMode,
-            listOf("scripts/ankidroid.js")
-        )
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

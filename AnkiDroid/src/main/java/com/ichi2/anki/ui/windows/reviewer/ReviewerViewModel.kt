@@ -79,7 +79,7 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
         queueState!!.topCard
     }
 
-    private val server = AnkiServer(this).also { it.start() }
+    override val server = AnkiServer(this).also { it.start() }
     private val stateMutationKey = TimeManager.time.intTimeMS().toString()
     val statesMutationEval = MutableSharedFlow<String>()
 

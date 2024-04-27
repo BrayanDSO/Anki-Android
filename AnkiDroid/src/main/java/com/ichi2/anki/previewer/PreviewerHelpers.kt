@@ -43,9 +43,9 @@ class NoteEditorDestination(val cardId: Long) {
  * Aimed to be used only for reviewing/previewing cards
  */
 fun stdHtml(
+    postBaseUrl: String,
     context: Context = AnkiDroidApp.instance,
-    nightMode: Boolean = false,
-    extraScripts: List<String> = listOf()
+    nightMode: Boolean = false
 ): String {
     val languageDirectionality = if (LanguageUtils.appLanguageIsRTL()) "rtl" else "ltr"
 
@@ -78,14 +78,6 @@ fun stdHtml(
             MaterialColors.getColor(context, R.attr.textColor, R.color.white).toRGBHex()
         ":root[class*=night-mode] { --canvas: $canvasColor; --fg: $fgColor; }"
     }
-    val scriptsList = listOf(
-        "jquery.min.js",
-        "mathjax/tex-chtml.js",
-        "backend/web/reviewer.js"
-    ) + extraScripts
-    val scripts = scriptsList.joinToString(separator = "\n  ") {
-        """<script src="file:///android_asset/$it"></script>"""
-    }
 
     @Language("HTML")
     val html = """
@@ -105,8 +97,14 @@ fun stdHtml(
           <div id="_mark" hidden>&#x2605;</div>
           <div id="_flag" hidden>&#x2691;</div>
           <div id="qa"></div>
-          $scripts
-          <script>bridgeCommand = function(){};</script>
+          <script src="file:///android_asset/jquery.min.js"></script>
+          <script src="file:///android_asset/mathjax/tex-chtml.js"></script>
+          <script src="file:///android_asset/scripts/ankidroid.js"></script>
+          <script src="file:///android_asset/backend/web/reviewer.js"></script>
+          <script>
+            ankidroid.postBaseUrl = "$postBaseUrl";
+            bridgeCommand = function(){};
+          </script>
         </body>
         </html>
     """.trimIndent()
