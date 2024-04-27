@@ -28,6 +28,7 @@ import androidx.appcompat.widget.ThemeUtils
 import androidx.appcompat.widget.Toolbar
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
@@ -108,6 +109,20 @@ class ReviewerFragment :
     }
 
     private fun setupActions(view: View) {
+        val toolbar = view.findViewById<MaterialToolbar>(R.id.toolbar)
+        val menu = toolbar.menu
+        // Mark
+        val markItem = menu.findItem(R.id.action_mark)
+        viewModel.isMarked.flowWithLifecycle(lifecycle)
+            .collectLatestIn(lifecycleScope) { isMarked ->
+                if (isMarked) {
+                    markItem.setIcon(R.drawable.ic_star)
+                    markItem.setTitle(R.string.menu_unmark_note)
+                } else {
+                    markItem.setIcon(R.drawable.ic_star_border_white)
+                    markItem.setTitle(R.string.menu_mark_note)
+                }
+            }
     }
 
     @Suppress("UNUSED_PARAMETER")
