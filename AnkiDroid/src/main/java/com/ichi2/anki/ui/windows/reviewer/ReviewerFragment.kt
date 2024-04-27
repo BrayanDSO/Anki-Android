@@ -183,6 +183,7 @@ class ReviewerFragment :
             R.id.action_undo -> viewModel.undo()
             R.id.action_redo -> viewModel.redo()
             R.id.action_delete -> viewModel.deleteNote()
+            R.id.action_open_deck_options -> openDeckOptions()
             R.id.action_tag, R.id.action_flag -> showSnackbar("Not yet implemented")
             R.id.user_action_1 -> viewModel.userAction(1)
             R.id.user_action_2 -> viewModel.userAction(2)
@@ -283,6 +284,13 @@ class ReviewerFragment :
     private fun cardInfo() {
         lifecycleScope.launch {
             val intent = viewModel.getCardInfoDestination().toIntent(requireContext())
+            startActivity(intent)
+        }
+    }
+
+    private fun openDeckOptions() {
+        lifecycleScope.launch {
+            val intent = viewModel.getDeckOptionsDestination().getIntent(requireContext())
             startActivity(intent)
         }
     }

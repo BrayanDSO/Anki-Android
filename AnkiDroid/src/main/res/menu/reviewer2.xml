@@ -98,6 +98,11 @@
         android:title="@string/menu_edit_tags"
         app:showAsAction="never"/>
     <item
+        android:id="@+id/action_open_deck_options"
+        android:icon="@drawable/ic_tune_white"
+        android:title="@string/menu__deck_options"
+        app:showAsAction="never"/>
+    <item
         android:id="@+id/user_action_1"
         android:icon="@drawable/user_action_1"
         android:title="@string/user_action_1"

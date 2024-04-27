@@ -34,6 +34,7 @@ import com.ichi2.anki.cardviewer.CardMediaPlayer
 import com.ichi2.anki.launchCatchingIO
 import com.ichi2.anki.pages.AnkiServer
 import com.ichi2.anki.pages.CardInfoDestination
+import com.ichi2.anki.pages.DeckOptionsDestination
 import com.ichi2.anki.pages.PostRequestHandler
 import com.ichi2.anki.previewer.CardViewerViewModel
 import com.ichi2.anki.previewer.NoteEditorDestination
@@ -150,12 +151,16 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
         statesMutated = true
     }
 
-    suspend fun getNoteEditorDestination(): NoteEditorDestination {
-        return NoteEditorDestination(currentCard.await().id)
-    }
+    suspend fun getNoteEditorDestination(): NoteEditorDestination =
+        NoteEditorDestination(currentCard.await().id)
 
-    suspend fun getCardInfoDestination(): CardInfoDestination {
-        return CardInfoDestination(currentCard.await().id)
+    suspend fun getCardInfoDestination(): CardInfoDestination =
+        CardInfoDestination(currentCard.await().id)
+
+    suspend fun getDeckOptionsDestination(): DeckOptionsDestination {
+        val deckId = withCol { decks.getCurrentId() }
+        val isFiltered = withCol { decks.isFiltered(deckId) }
+        return DeckOptionsDestination(deckId, isFiltered)
     }
 
     fun toggleMark() {
