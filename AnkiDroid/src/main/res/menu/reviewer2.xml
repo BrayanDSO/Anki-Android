@@ -87,4 +87,9 @@
         android:icon="@drawable/ic_dialog_info"
         android:title="@string/card_info_title"
         app:showAsAction="collapseActionView"/>
+    <item
+        android:id="@+id/action_tag"
+        android:icon="@drawable/ic_tag"
+        android:title="@string/menu_edit_tags"
+        app:showAsAction="collapseActionView"/>
 </menu>

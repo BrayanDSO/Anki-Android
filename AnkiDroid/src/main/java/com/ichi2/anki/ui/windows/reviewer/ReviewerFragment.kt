@@ -172,7 +172,7 @@ class ReviewerFragment :
             R.id.action_mark -> viewModel.toggleMark()
             R.id.action_undo -> viewModel.undo()
             R.id.action_redo -> viewModel.redo()
-            R.id.action_flag -> showSnackbar("Not yet implemented")
+            R.id.action_tag, R.id.action_flag -> showSnackbar("Not yet implemented")
             else -> return false
         }
         return true
