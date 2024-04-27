@@ -31,11 +31,54 @@
                 />
         </com.google.android.material.appbar.AppBarLayout>
 
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/progress_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@id/appbar"
+            />
+
+        <LinearLayout
+            android:id="@+id/mini_bar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:paddingTop="2dp"
+            android:paddingBottom="3dp"
+            app:layout_constraintStart_toStartOf="@id/webview_container"
+            app:layout_constraintTop_toBottomOf="@id/progress_bar"
+            >
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/new_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/newCountColor"
+                tools:text="27 "
+                />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/lrn_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/learnCountColor"
+                tools:text="81 "
+                />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/rev_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/reviewCountColor"
+                tools:text="54"
+                />
+
+        </LinearLayout>
+
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/webview_container"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            app:layout_constraintTop_toBottomOf="@id/appbar"
+            app:layout_constraintTop_toBottomOf="@id/mini_bar"
             app:layout_constraintBottom_toTopOf="@id/buttons_area"
             style="@style/MaterialCardView.CardViewer">
 
@@ -51,92 +94,86 @@
             android:id="@+id/buttons_area"
             android:layout_width="0dp"
             android:layout_height="@dimen/touch_target"
-            app:layout_constraintStart_toStartOf="@id/webview_container"
-            app:layout_constraintEnd_toEndOf="@id/webview_container"
-            app:layout_constraintTop_toBottomOf="@id/webview"
+            android:layout_marginVertical="2dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            >
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/show_answer"
-                android:text="@string/show_answer"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:visibility="visible"
-                tools:visibility="gone"
-                />
+            app:layout_constraintEnd_toEndOf="@id/webview_container"
+            app:layout_constraintStart_toStartOf="@id/webview_container"
+            app:layout_constraintTop_toBottomOf="@id/webview_container">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/answer_buttons"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:visibility="gone"
-                tools:visibility="visible"
-                >
+                tools:visibility="visible">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/again_button"
+                    style="@style/answerButton"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
-                    android:text="@string/ease_button_again"
-                    android:backgroundTint="@color/material_red_100"
-                    android:textColor="@color/material_red_900"
                     android:layout_marginHorizontal="3dp"
-                    app:layout_constraintTop_toTopOf="parent"
+                    android:backgroundTint="@color/material_red_100"
+                    android:text="@string/ease_button_again"
+                    android:textColor="@color/material_red_900"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toStartOf="@id/hard_button"
-                    style="@style/answerButton"
-                    />
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/hard_button"
+                    style="@style/answerButton"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
-                    android:text="@string/ease_button_hard"
-                    android:backgroundTint="@color/material_orange_100"
-                    android:textColor="#B33800"
                     android:layout_marginHorizontal="3dp"
-                    app:layout_constraintTop_toTopOf="parent"
+                    android:backgroundTint="@color/material_orange_100"
+                    android:text="@string/ease_button_hard"
+                    android:textColor="#B33800"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toEndOf="@id/again_button"
                     app:layout_constraintEnd_toStartOf="@id/good_button"
-                    style="@style/answerButton"
-                    />
+                    app:layout_constraintStart_toEndOf="@id/again_button"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/good_button"
+                    style="@style/answerButton"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
-                    android:text="@string/ease_button_good"
-                    android:backgroundTint="@color/material_green_100"
-                    android:textColor="@color/material_green_900"
                     android:layout_marginHorizontal="3dp"
-                    app:layout_constraintTop_toTopOf="parent"
+                    android:backgroundTint="@color/material_green_100"
+                    android:text="@string/ease_button_good"
+                    android:textColor="@color/material_green_900"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toEndOf="@id/hard_button"
                     app:layout_constraintEnd_toStartOf="@id/easy_button"
-                    style="@style/answerButton"
-                    />
+                    app:layout_constraintStart_toEndOf="@id/hard_button"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/easy_button"
+                    style="@style/answerButton"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
+                    android:layout_marginHorizontal="3dp"
+                    android:backgroundTint="@color/material_light_blue_100"
                     android:padding="0dp"
                     android:text="@string/ease_button_easy"
-                    android:backgroundTint="@color/material_light_blue_100"
                     android:textColor="@color/material_light_blue_900"
-                    android:layout_marginHorizontal="3dp"
-                    app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toEndOf="@id/good_button"
                     app:layout_constraintEnd_toEndOf="parent"
-                    style="@style/answerButton"
-                    />
+                    app:layout_constraintStart_toEndOf="@id/good_button"
+                    app:layout_constraintTop_toTopOf="parent" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/show_answer"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="@string/show_answer"
+                android:visibility="visible"
+                tools:visibility="gone" />
 
         </FrameLayout>
 

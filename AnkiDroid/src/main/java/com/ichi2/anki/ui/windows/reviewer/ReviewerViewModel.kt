@@ -113,6 +113,10 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
         launchCatchingIO {
             updateUndoRedo()
         }
+        // TODO organizar
+        launchCatchingIO {
+            updateQueueState()
+        }
     }
 
     /* *********************************************************************************************
