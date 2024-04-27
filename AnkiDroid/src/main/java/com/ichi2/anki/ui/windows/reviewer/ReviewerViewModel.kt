@@ -19,6 +19,8 @@ import android.text.style.RelativeSizeSpan
 import androidx.activity.result.ActivityResult
 import androidx.core.text.buildSpannedString
 import androidx.core.text.inSpans
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
@@ -39,10 +41,15 @@ import com.ichi2.anki.pages.PostRequestHandler
 import com.ichi2.anki.previewer.CardViewerViewModel
 import com.ichi2.anki.previewer.NoteEditorDestination
 import com.ichi2.anki.previewer.UserAction
+import com.ichi2.anki.reviewer.AutomaticAnswerAction
 import com.ichi2.anki.reviewer.CardSide
 import com.ichi2.anki.servicelayer.NoteService
+import com.ichi2.anki.utils.ext.secondsToShowAnswer
+import com.ichi2.anki.utils.ext.secondsToShowQuestion
 import com.ichi2.libanki.Card
 import com.ichi2.libanki.ChangeManager
+import com.ichi2.libanki.DeckConfig
+import com.ichi2.libanki.DeckId
 import com.ichi2.libanki.Utils
 import com.ichi2.libanki.note
 import com.ichi2.libanki.redo
@@ -53,6 +60,7 @@ import com.ichi2.libanki.undoableOp
 import com.ichi2.libanki.utils.TimeManager
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -110,6 +118,8 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
 
     val countsFlow = MutableStateFlow(Counts() to Counts.Queue.NEW)
 
+    val autoAdvance = AutoAdvance(this)
+
     init {
         ChangeManager.subscribe(this)
 
@@ -143,6 +153,7 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
             showAnswerInternal()
             loadAndPlaySounds(CardSide.ANSWER)
             updateNextTimes()
+            autoAdvance.onShowAnswer()
         }
     }
 
@@ -243,6 +254,15 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
         }
     }
 
+    fun buryCard() {
+        launchCatchingIO {
+            val cardId = currentCard.await().id
+            undoableOp {
+                sched.buryCards(listOf(cardId))
+            }
+        }
+    }
+
     /* *********************************************************************************************
     *************************************** Internal methods ***************************************
     ********************************************************************************************* */
@@ -250,7 +270,7 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
     private fun answerCard(ease: Ease) {
         launchCatchingIO {
             queueState?.let {
-                undoableOp { sched.answerCard(it, ease.value) }
+                undoableOp(ReviewerOp.ANSWER_CARD) { sched.answerCard(it, ease.value) }
                 updateCurrentCard()
             }
         }
@@ -264,14 +284,12 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
     override suspend fun showQuestion() {
         super.showQuestion()
         runStateMutationHook()
+        autoAdvance.onShowQuestion()
     }
 
     private suspend fun updateQueueState() {
         queueState = withCol {
             sched.currentQueueState()
-        }?.also {
-            val ue = it.counts to it.countsIndex
-            countsFlow.emit(ue)
         }
     }
 
@@ -281,9 +299,12 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
         if (state == null) {
             isQueueFinishedFlow.emit(true)
         } else {
-            currentCard = CompletableDeferred(state.topCard)
+            val card = state.topCard
+            currentCard = CompletableDeferred(card)
+            autoAdvance.onCardChange(card)
             showQuestion()
             loadAndPlaySounds(CardSide.QUESTION)
+            countsFlow.emit(state.counts to state.countsIndex)
         }
     }
 
@@ -384,9 +405,14 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
     }
 
     override fun opExecuted(changes: OpChanges, handler: Any?) {
-        // update undo
+        Timber.d("opExecuted: %s %s", changes, handler)
         launchCatchingIO {
             updateUndoRedo()
+        }
+
+        if (handler == ReviewerOp.ANSWER_CARD) return
+
+        launchCatchingIO {
             if (changes.card || changes.note) {
                 updateCurrentCard()
             }
@@ -397,5 +423,126 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
 enum class ReviewerOp {
     UNDO,
     REDO,
-    DELETE
+    ANSWER_CARD
+}
+
+class AutoAdvance(val viewModel: ReviewerViewModel) : DefaultLifecycleObserver {
+    private var showAnswerJob: Job? = null
+    private var answerActionJob: Job? = null
+    private var cardChangeJob: Job? = null
+
+    private var settings = viewModel.asyncIO {
+        val card = viewModel.currentCard.await()
+        AutoAdvanceSettings.createInstance(card.did)
+    }
+
+    private suspend fun millisToShowQuestionFor() = settings.await().millisToShowQuestionFor
+    private suspend fun millisToShowAnswerFor() = settings.await().millisToShowAnswerFor
+    private suspend fun advanceInQuestion() = settings.await().advanceInQuestion
+    private suspend fun advanceInAnswer() = settings.await().advanceInAnswer
+    private suspend fun answerAction() = settings.await().answerAction
+    private suspend fun deckId() = settings.await().deckId
+
+    fun onCardChange(card: Card) {
+        cardChangeJob = viewModel.launchCatchingIO {
+            val cardDid = card.currentDeckId().did
+            Timber.w("cardDID %s", cardDid)
+            if (deckId() != cardDid) {
+                Timber.d("CardDID - changing settings")
+                settings = viewModel.asyncIO {
+                    AutoAdvanceSettings.createInstance(cardDid)
+                }
+            } else {
+                Timber.d("CardDID - keeping settings")
+            }
+        }
+    }
+
+    fun onShowQuestion() {
+        answerActionJob?.cancel()
+        showAnswerJob = viewModel.launchCatchingIO {
+            cardChangeJob?.join()
+            if (advanceInQuestion()) {
+                delay(millisToShowQuestionFor())
+                viewModel.showAnswer()
+            }
+        }
+    }
+
+    fun onShowAnswer() {
+        showAnswerJob?.cancel()
+        answerActionJob = viewModel.launchCatchingIO {
+            cardChangeJob?.join()
+            if (advanceInAnswer()) {
+                delay(millisToShowAnswerFor())
+
+                when (answerAction()) {
+                    AutoAdvanceAction.BURY_CARD -> viewModel.buryCard()
+                    AutoAdvanceAction.ANSWER_AGAIN -> viewModel.answerAgain()
+                    AutoAdvanceAction.ANSWER_HARD -> viewModel.answerHard()
+                    AutoAdvanceAction.ANSWER_GOOD -> viewModel.answerGood()
+                    AutoAdvanceAction.SHOW_REMINDER -> TODO()
+                }
+            }
+        }
+    }
+
+    override fun onStop(owner: LifecycleOwner) {
+        // TODO handle configuration changes para não parar o timer se entar no modo escuro
+        showAnswerJob?.cancel()
+        answerActionJob?.cancel()
+    }
+}
+
+class AutoAdvanceSettings(
+    val answerAction: AutoAdvanceAction = AutoAdvanceAction.BURY_CARD,
+    val deckId: Long,
+    secondsToShowQuestionFor: Double = 0.0,
+    secondsToShowAnswerFor: Double = 0.0
+) {
+    val millisToShowQuestionFor = (secondsToShowQuestionFor * 1000L).toLong()
+    val millisToShowAnswerFor = (secondsToShowAnswerFor * 1000L).toLong()
+    val advanceInAnswer = millisToShowAnswerFor > 0
+    val advanceInQuestion = millisToShowQuestionFor > 0
+
+    companion object {
+        private fun getAction(config: DeckConfig): AutoAdvanceAction {
+            val value = config.optInt(AutoAdvanceAction.CONFIG_KEY)
+            return AutoAdvanceAction.fromConfigValue(value)
+        }
+
+        suspend fun createInstance(deckId: DeckId): AutoAdvanceSettings {
+            val config = withCol { decks.configDictForDeckId(deckId) }
+            val action = getAction(config)
+
+            return AutoAdvanceSettings(
+                answerAction = action,
+                secondsToShowQuestionFor = config.secondsToShowQuestion,
+                secondsToShowAnswerFor = config.secondsToShowAnswer,
+                deckId = deckId
+            )
+        }
+    }
+}
+
+enum class AutoAdvanceAction(val configValue: Int) {
+    BURY_CARD(0),
+    ANSWER_AGAIN(1),
+    ANSWER_GOOD(2),
+    ANSWER_HARD(3),
+    SHOW_REMINDER(4);
+
+    companion object {
+        /**
+         * An integer representing the action when Automatic Answer flips a card from answer to question
+         *
+         * @see AutomaticAnswerAction
+         */
+        const val CONFIG_KEY = "answerAction"
+
+        /** convert from [anki.deck_config.DeckConfig.Config.AnswerAction] to the enum */
+        fun fromConfigValue(value: Int): AutoAdvanceAction {
+            return AutoAdvanceAction.entries.firstOrNull { it.configValue == value } ?: BURY_CARD
+        }
+    }
 }

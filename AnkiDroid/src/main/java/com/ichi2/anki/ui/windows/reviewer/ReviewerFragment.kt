@@ -123,6 +123,7 @@ class ReviewerFragment :
         setupReviewerSettings(view)
         setupActions(view)
         setupCounts(view)
+        lifecycle.addObserver(viewModel.autoAdvance)
     }
 
     private fun setupActions(view: View) {
