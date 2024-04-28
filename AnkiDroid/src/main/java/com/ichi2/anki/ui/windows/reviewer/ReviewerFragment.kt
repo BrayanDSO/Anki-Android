@@ -39,6 +39,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textview.MaterialTextView
 import com.ichi2.anki.AbstractFlashcardViewer.Companion.RESULT_NO_MORE_CARDS
+import com.ichi2.anki.Flag
 import com.ichi2.anki.NoteEditor
 import com.ichi2.anki.R
 import com.ichi2.anki.cardviewer.CardMediaPlayer
@@ -163,6 +164,14 @@ class ReviewerFragment :
             .collectLatestIn(lifecycleScope) { isEnabled ->
                 redoItem.isEnabled = isEnabled
             }
+
+        // Flag
+        val flagItem = menu.findItem(R.id.action_flag)
+        viewModel.flagCode
+            .flowWithLifecycle(lifecycle)
+            .collectLatestIn(lifecycleScope) { flagCode ->
+                flagItem.setIcon(Flag.fromCode(flagCode).drawableRes)
+            }
     }
 
     private fun setupCounts(view: View) {
@@ -204,7 +213,15 @@ class ReviewerFragment :
             R.id.action_undo -> viewModel.undo()
             R.id.action_redo -> viewModel.redo()
             R.id.action_open_deck_options -> openDeckOptions()
-            R.id.action_tag, R.id.action_flag -> showSnackbar("Not yet implemented")
+            R.id.action_tag -> showSnackbar("Not yet implemented")
+            R.id.action_flag_zero -> viewModel.setFlag(Flag.NONE)
+            R.id.action_flag_one -> viewModel.setFlag(Flag.RED)
+            R.id.action_flag_two -> viewModel.setFlag(Flag.ORANGE)
+            R.id.action_flag_three -> viewModel.setFlag(Flag.GREEN)
+            R.id.action_flag_four -> viewModel.setFlag(Flag.BLUE)
+            R.id.action_flag_five -> viewModel.setFlag(Flag.PINK)
+            R.id.action_flag_six -> viewModel.setFlag(Flag.TURQUOISE)
+            R.id.action_flag_seven -> viewModel.setFlag(Flag.PURPLE)
             R.id.user_action_1 -> viewModel.userAction(1)
             R.id.user_action_2 -> viewModel.userAction(2)
             R.id.user_action_3 -> viewModel.userAction(3)

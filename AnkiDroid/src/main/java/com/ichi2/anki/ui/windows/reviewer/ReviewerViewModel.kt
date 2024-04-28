@@ -30,6 +30,7 @@ import anki.frontend.SetSchedulingStatesRequest
 import com.ichi2.anki.CollectionManager.TR
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.Ease
+import com.ichi2.anki.Flag
 import com.ichi2.anki.NoteEditor
 import com.ichi2.anki.asyncIO
 import com.ichi2.anki.cardviewer.CardMediaPlayer
@@ -79,6 +80,8 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
     val hardNextTime: MutableStateFlow<String?> = MutableStateFlow(null)
     val goodNextTime: MutableStateFlow<String?> = MutableStateFlow(null)
     val easyNextTime: MutableStateFlow<String?> = MutableStateFlow(null)
+
+    val flagCode: MutableStateFlow<Int> = MutableStateFlow(Flag.NONE.code)
 
     private val shouldShowNextTimes: Deferred<Boolean> = asyncIO {
         withCol { config.get("estTimes") ?: true }
@@ -270,6 +273,16 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
         }
     }
 
+    fun setFlag(flag: Flag) {
+        launchCatchingIO {
+            val card = currentCard.await()
+            undoableOp(ReviewerOp.FLAG) {
+                setUserFlagForCards(listOf(card.id), flag.code)
+            }
+            flagCode.emit(flag.code)
+        }
+    }
+
     /* *********************************************************************************************
     *************************************** Internal methods ***************************************
     ********************************************************************************************* */
@@ -430,7 +443,8 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
 enum class ReviewerOp {
     UNDO,
     REDO,
-    ANSWER_CARD
+    ANSWER_CARD,
+    FLAG
 }
 
 class AutoAdvance(val viewModel: ReviewerViewModel) : DefaultLifecycleObserver {
