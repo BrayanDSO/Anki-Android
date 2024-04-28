@@ -73,7 +73,9 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
     PostRequestHandler,
     ChangeManager.Subscriber {
 
-    private var queueState: CurrentQueueState? = null
+    private var queueState: Deferred<CurrentQueueState?> = asyncIO {
+        withCol { sched.currentQueueState() }
+    }
     var isQueueFinishedFlow = MutableSharedFlow<Boolean>()
 
     val againNextTime: MutableStateFlow<String?> = MutableStateFlow(null)
@@ -87,8 +89,7 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
         withCol { config.get("estTimes") ?: true }
     }
     override var currentCard: Deferred<Card> = asyncIO {
-        updateQueueState()
-        queueState!!.topCard
+        queueState.await()!!.topCard
     }
 
     override val server = AnkiServer(this).also { it.start() }
@@ -128,6 +129,11 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
 
         launchCatchingIO {
             updateUndoRedo()
+        }
+        launchCatchingIO {
+            queueState.await()?.let { state ->
+                countsFlow.emit(state.counts to state.countsIndex)
+            }
         }
     }
 
@@ -237,10 +243,6 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
         }
     }
 
-    fun getTotalCount(): Int {
-        return queueState?.counts?.count() ?: 0
-    }
-
     suspend fun getDeleteNoteDialogStrippedCardContent(): String {
         val card = currentCard.await()
         val cardQuestion = withCol { card.question(this, true) }
@@ -289,7 +291,7 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
 
     private fun answerCard(ease: Ease) {
         launchCatchingIO {
-            queueState?.let {
+            queueState.await()?.let {
                 undoableOp(ReviewerOp.ANSWER_CARD) { sched.answerCard(it, ease.value) }
                 updateCurrentCard()
             }
@@ -307,15 +309,11 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
         autoAdvance.onShowQuestion()
     }
 
-    private suspend fun updateQueueState() {
-        queueState = withCol {
-            sched.currentQueueState()
-        }
-    }
-
     private suspend fun updateCurrentCard() {
-        updateQueueState()
-        val state = queueState
+        queueState = asyncIO {
+            withCol { sched.currentQueueState() }
+        }
+        val state = queueState.await()
         if (state == null) {
             isQueueFinishedFlow.emit(true)
         } else {
@@ -334,7 +332,7 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
     }
 
     private suspend fun updateNextTimes() {
-        val state = queueState
+        val state = queueState.await()
         if (!shouldShowNextTimes.await() || state == null) return
 
         val (again, hard, good, easy) = withCol { sched.describeNextStates(state.states) }
@@ -358,7 +356,7 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
     }
 
     private suspend fun runStateMutationHook() {
-        val state = queueState ?: return
+        val state = queueState.await() ?: return
         val js = state.customSchedulingJs
         if (js.isEmpty()) {
             statesMutated = true
@@ -370,8 +368,8 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
         )
     }
 
-    private fun getSchedulingStatesWithContext(): ByteArray {
-        val state = queueState ?: return ByteArray(0)
+    private suspend fun getSchedulingStatesWithContext(): ByteArray {
+        val state = queueState.await() ?: return ByteArray(0)
         return state.schedulingStatesWithContext().toBuilder()
             .mergeStates(
                 state.states.toBuilder().mergeCurrent(
@@ -383,8 +381,8 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
             .toByteArray()
     }
 
-    private fun setSchedulingStates(bytes: ByteArray): ByteArray {
-        val state = queueState ?: return ByteArray(0)
+    private suspend fun setSchedulingStates(bytes: ByteArray): ByteArray {
+        val state = queueState.await() ?: return ByteArray(0)
         val req = SetSchedulingStatesRequest.parseFrom(bytes)
         if (req.key == stateMutationKey) {
             state.states = req.states
