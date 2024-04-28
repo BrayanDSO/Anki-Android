@@ -13,20 +13,26 @@ globalThis.ankidroid.userAction = function(number) {
 };
 
 (() => {
+    const swipeDistance = 40;
+
     let startX = 0,
         startY = 0,
+        scrollX = 0,
+        scrollY = 0,
         tapTimer = null;
 
 
     document.ontouchstart = function (event) {
         startX = event.touches[0].clientX;
         startY = event.touches[0].clientY;
+        scrollX = window.scrollX;
+        scrollY = window.scrollY;
     };
 
     document.ontouchend = function (event) {
         if (tapTimer != null) {
-            window.location.href = "tap://double"
-            event.preventDefault();
+            sendRequest("tap://double")
+            preventEvent(event);
 
             clearTimeout(tapTimer);
             tapTimer = null;
@@ -39,23 +45,45 @@ globalThis.ankidroid.userAction = function(number) {
     };
 
     function processTap(event) {
-        if (isLink(event) || isTextSelected()) return;
+        if (isLink(event) || isTextSelected() || window.scrollX !== scrollX || window.scrollY !== scrollY) return;
         let endX = event.changedTouches[0].clientX,
             endY = event.changedTouches[0].clientY,
-            deltaX = Math.abs(endX - startX),
-            deltaY = Math.abs(endY - startY),
-            tolerance = 30;
-        if (deltaX > tolerance || deltaY > tolerance) return;
+            deltaX = endX - startX,
+            deltaY = endY - startY,
+            absDeltaX = Math.abs(deltaX),
+            absDeltaY = Math.abs(deltaY);
+
+        if (absDeltaX > swipeDistance || absDeltaY > swipeDistance) {
+            if (absDeltaX > absDeltaY) {
+                if (deltaX > 0) {
+                    sendRequest("swipe://right");
+                } else {
+                    sendRequest("swipe://left");
+                }
+            } else {
+                if (deltaY > 0) {
+                    sendRequest("swipe://down");
+                } else {
+                    sendRequest("swipe://up");
+                }
+            }
+            preventEvent(event);
+            return;
+        }
+
         let column = Math.floor(endX / (window.innerWidth / 3)),
             row = Math.floor(endY / (window.innerHeight / 3));
+
         if (column < 0 || column > 2 || row < 0 || row > 2) return;
+
         let columnLabels = ["Left", "Center", "Right"],
             rowLabels = ["top", "mid", "bottom"];
         column = columnLabels[column];
         row = rowLabels[row];
         let target = row + column;
-        window.location.href = `tap://${target}`
-        event.preventDefault();
+
+        sendRequest(`tap://${target}`);
+        preventEvent(event);
     }
 
     function isLink(e) {
@@ -81,5 +109,15 @@ globalThis.ankidroid.userAction = function(number) {
 
     function isTextSelected() {
         return !document.getSelection().isCollapsed;
+    }
+
+    function preventEvent(e) {
+        if (e.cancelable) {
+            e.preventDefault();
+        }
+    }
+
+    function sendRequest(request) {
+        window.location.href = request;
     }
 })();

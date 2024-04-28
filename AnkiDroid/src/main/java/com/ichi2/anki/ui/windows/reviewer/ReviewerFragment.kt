@@ -225,6 +225,7 @@ class ReviewerFragment :
         }
         when (url.scheme) {
             "tap" -> viewModel.onTap(url.host!!)
+            "swipe" -> viewModel.onTap(url.host!!)
             else -> return false
         }
         return true
