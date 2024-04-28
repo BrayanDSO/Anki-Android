@@ -430,7 +430,7 @@
             />
         <activity
             android:name="com.ichi2.anki.previewer.CardViewerActivity"
-            android:exported="false"
+            android:exported="true"
             android:configChanges="orientation|screenSize"
             />
         <activity

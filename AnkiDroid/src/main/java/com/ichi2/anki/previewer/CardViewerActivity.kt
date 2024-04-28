@@ -18,7 +18,9 @@ package com.ichi2.anki.previewer
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import androidx.core.os.bundleOf
 import com.ichi2.anki.SingleFragmentActivity
+import com.ichi2.anki.ui.windows.reviewer.ReviewerFragment
 import kotlin.reflect.KClass
 import kotlin.reflect.jvm.jvmName
 
@@ -29,6 +31,11 @@ import kotlin.reflect.jvm.jvmName
 class CardViewerActivity : SingleFragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // TODO remove this and the xport=
+        intent.apply {
+            putExtra(FRAGMENT_NAME_EXTRA, ReviewerFragment::class.jvmName)
+            putExtra(FRAGMENT_ARGS_EXTRA, bundleOf())
+        }
         super.onCreate(savedInstanceState)
         // TODO reajeitar o fitsSystemWindows
 //        enableEdgeToEdge()
