@@ -20,7 +20,7 @@
         android:id="@+id/action_flag"
         android:title="@string/menu_flag_card"
         android:icon="@drawable/ic_flag_transparent"
-        app:showAsAction="collapseActionView">
+        app:showAsAction="always">
         <menu>
             <item
                 android:id="@+id/action_flag_zero"
@@ -65,7 +65,7 @@
         android:enabled="false"
         android:icon="@drawable/ic_undo_white"
         android:title="@string/undo"
-        app:showAsAction="never"/>
+        app:showAsAction="always"/>
     <item
         android:id="@+id/action_redo"
         android:enabled="false"

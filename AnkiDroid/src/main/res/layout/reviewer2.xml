@@ -28,99 +28,46 @@
                 app:layout_constraintTop_toTopOf="parent"
                 android:background="?attr/alternativeBackgroundColor"
                 app:menu="@menu/reviewer2"
-                />
+                >
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/new_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/newCountColor"
+                    app:layout_constraintEnd_toStartOf="@id/lrn_count"
+                    android:paddingEnd="5dp"
+                    tools:text="27"
+                    />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/lrn_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/learnCountColor"
+                    app:layout_constraintStart_toEndOf="@id/new_count"
+                    app:layout_constraintEnd_toStartOf="@id/rev_count"
+                    android:paddingEnd="5dp"
+                    tools:text="81"
+                    />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/rev_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/reviewCountColor"
+                    app:layout_constraintStart_toEndOf="@id/lrn_count"
+                    tools:text="54"
+                    />
+
+            </com.google.android.material.appbar.MaterialToolbar>
         </com.google.android.material.appbar.AppBarLayout>
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/mini_bar"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            app:layout_constraintStart_toStartOf="@id/webview_container"
-            app:layout_constraintEnd_toEndOf="@id/webview_container"
-            app:layout_constraintTop_toBottomOf="@id/appbar"
-            >
-
-            <ImageView
-                android:id="@+id/mark_icon"
-                android:layout_width="wrap_content"
-                android:layout_height="0dp"
-                android:visibility="invisible"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@id/new_count"
-                app:layout_constraintBottom_toBottomOf="@id/new_count"
-                tools:src="@drawable/ic_star_white_bordered_24dp"
-                tools:visibility="visible"
-                />
-
-            <Space
-                android:id="@+id/space1"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                app:layout_constraintStart_toEndOf="@id/mark_icon"
-                app:layout_constraintEnd_toStartOf="@id/new_count"
-                />
-
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/new_count"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="?attr/newCountColor"
-                app:layout_constraintStart_toEndOf="@id/space1"
-                app:layout_constraintEnd_toStartOf="@id/lrn_count"
-                android:paddingEnd="5dp"
-                tools:text="27"
-                />
-
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/lrn_count"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="?attr/learnCountColor"
-                app:layout_constraintStart_toEndOf="@id/new_count"
-                app:layout_constraintEnd_toStartOf="@id/rev_count"
-                android:paddingEnd="5dp"
-                tools:text="81"
-                />
-
-            <com.google.android.material.textview.MaterialTextView
-                android:id="@+id/rev_count"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="?attr/reviewCountColor"
-                app:layout_constraintStart_toEndOf="@id/lrn_count"
-                app:layout_constraintEnd_toStartOf="@id/space2"
-                tools:text="54"
-                />
-
-            <Space
-                android:id="@+id/space2"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                app:layout_constraintStart_toEndOf="@id/rev_count"
-                app:layout_constraintEnd_toStartOf="@id/flag_icon"
-                />
-
-            <ImageView
-                android:id="@+id/flag_icon"
-                android:layout_width="wrap_content"
-                android:layout_height="24sp"
-                tools:src="@drawable/ic_flag_red"
-                android:layout_alignParentEnd="true"
-                android:layout_gravity="end"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="@id/new_count"
-                app:layout_constraintBottom_toBottomOf="@id/new_count"
-                tools:visibility="visible"/>
-        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/webview_container"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            app:layout_constraintTop_toBottomOf="@id/mini_bar"
+            app:layout_constraintTop_toBottomOf="@id/appbar"
             app:layout_constraintBottom_toTopOf="@id/buttons_area"
             style="@style/MaterialCardView.CardViewer">
 
@@ -141,6 +88,15 @@
             app:layout_constraintEnd_toEndOf="@id/webview_container"
             app:layout_constraintStart_toStartOf="@id/webview_container"
             app:layout_constraintTop_toBottomOf="@id/webview_container">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/show_answer"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="@string/show_answer"
+                android:visibility="visible"
+                tools:visibility="gone" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/answer_buttons"
@@ -207,30 +163,6 @@
                     app:layout_constraintTop_toTopOf="parent" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/show_answer"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:text="@string/show_answer"
-                android:visibility="visible"
-                tools:visibility="gone" />
-
         </FrameLayout>
-
-
-
-
-
-        <LinearLayout
-            android:id="@+id/answer_area"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="6dp"
-            app:layout_constraintTop_toBottomOf="@id/webview"
-            app:layout_constraintBottom_toBottomOf="parent">
-
-        </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
