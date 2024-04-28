@@ -263,6 +263,7 @@ class ReviewerViewModel(cardMediaPlayer: CardMediaPlayer) :
         }
     }
 
+    // TODO handle zoom and two finger touches
     fun onTap(position: String) {
         launchCatchingIO {
             eval.emit("""console.log("$position");""")

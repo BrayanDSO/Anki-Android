@@ -24,8 +24,8 @@
                 app:navigationIcon="?attr/homeAsUpIndicator"
                 app:navigationContentDescription="@string/abc_action_bar_up_description"
                 android:layout_width="match_parent"
-                app:layout_constraintTop_toTopOf="parent"
                 android:layout_height="wrap_content"
+                app:layout_constraintTop_toTopOf="parent"
                 android:background="?attr/alternativeBackgroundColor"
                 app:menu="@menu/reviewer2"
                 />
@@ -35,7 +35,7 @@
             android:id="@+id/mini_bar"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:paddingBottom="2dp"
+
             android:gravity="center_vertical"
             android:orientation="horizontal"
             app:layout_constraintStart_toStartOf="@id/webview_container"
@@ -43,12 +43,32 @@
             app:layout_constraintTop_toBottomOf="@id/appbar"
             >
 
+            <ImageView
+                android:id="@+id/mark_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:visibility="invisible"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@id/new_count"
+                app:layout_constraintBottom_toBottomOf="@id/new_count"
+                tools:src="@drawable/ic_star_white_bordered_24dp"
+                tools:visibility="visible"
+                />
+
+            <Space
+                android:id="@+id/space1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toEndOf="@id/mark_icon"
+                app:layout_constraintEnd_toStartOf="@id/new_count"
+                />
+
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/new_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="?attr/newCountColor"
-                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintStart_toEndOf="@id/space1"
                 app:layout_constraintEnd_toStartOf="@id/lrn_count"
                 android:paddingEnd="5dp"
                 tools:text="27"
@@ -71,15 +91,14 @@
                 android:layout_height="wrap_content"
                 android:textColor="?attr/reviewCountColor"
                 app:layout_constraintStart_toEndOf="@id/lrn_count"
+                app:layout_constraintEnd_toStartOf="@id/space2"
                 tools:text="54"
                 />
 
-            <Chronometer
-                android:layout_width="wrap_content"
+            <Space
+                android:id="@+id/space2"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:visibility="invisible"
-                tools:visibility="visible"
-                android:textSize="14sp"
                 app:layout_constraintStart_toEndOf="@id/rev_count"
                 app:layout_constraintEnd_toStartOf="@id/flag_icon"
                 />
@@ -91,22 +110,10 @@
                 tools:src="@drawable/ic_flag_red"
                 android:layout_alignParentEnd="true"
                 android:layout_gravity="end"
-                app:layout_constraintEnd_toStartOf="@id/mark_icon"
-                app:layout_constraintTop_toTopOf="@id/new_count"
-                app:layout_constraintBottom_toBottomOf="@id/new_count"
-                tools:visibility="visible"/>
-
-            <ImageView
-                android:id="@+id/mark_icon"
-                android:layout_width="wrap_content"
-                android:layout_height="0dp"
-                android:visibility="invisible"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="@id/new_count"
                 app:layout_constraintBottom_toBottomOf="@id/new_count"
-                tools:src="@drawable/ic_star_white_bordered_24dp"
-                tools:visibility="visible"
-                />
+                tools:visibility="visible"/>
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <com.google.android.material.card.MaterialCardView
