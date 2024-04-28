@@ -31,23 +31,16 @@
                 />
         </com.google.android.material.appbar.AppBarLayout>
 
-        <com.google.android.material.progressindicator.LinearProgressIndicator
-            android:id="@+id/progress_bar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:layout_constraintTop_toBottomOf="@id/appbar"
-            />
-
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/mini_bar"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:paddingVertical="3dp"
+            android:paddingBottom="2dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             app:layout_constraintStart_toStartOf="@id/webview_container"
             app:layout_constraintEnd_toEndOf="@id/webview_container"
-            app:layout_constraintTop_toBottomOf="@id/progress_bar"
+            app:layout_constraintTop_toBottomOf="@id/appbar"
             >
 
             <com.google.android.material.textview.MaterialTextView
@@ -57,7 +50,7 @@
                 android:textColor="?attr/newCountColor"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toStartOf="@id/lrn_count"
-                android:paddingEnd="4sp"
+                android:paddingEnd="5dp"
                 tools:text="27"
                 />
 
@@ -68,7 +61,7 @@
                 android:textColor="?attr/learnCountColor"
                 app:layout_constraintStart_toEndOf="@id/new_count"
                 app:layout_constraintEnd_toStartOf="@id/rev_count"
-                android:paddingEnd="4sp"
+                android:paddingEnd="5dp"
                 tools:text="81"
                 />
 
