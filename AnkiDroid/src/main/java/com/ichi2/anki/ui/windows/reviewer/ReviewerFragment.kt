@@ -24,6 +24,7 @@ import android.text.style.UnderlineSpan
 import android.view.MenuItem
 import android.view.View
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.appcompat.view.menu.MenuBuilder
@@ -55,6 +56,7 @@ import com.ichi2.anki.utils.navBarNeedsScrim
 import com.ichi2.libanki.sched.Counts
 import com.ichi2.utils.increaseHorizontalPaddingOfOverflowMenuIcons
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 class ReviewerFragment :
     CardViewerFragment(R.layout.reviewer2),
@@ -125,7 +127,7 @@ class ReviewerFragment :
         setupReviewerSettings(view)
         setupActions(view)
         setupCounts(view)
-        lifecycle.addObserver(viewModel.autoAdvance)
+        lifecycle.addObserver(viewModel.autoAdvance) // TODO remover isso daqui e fazer tipo um onStop()
     }
 
     private fun setupActions(view: View) {
@@ -236,16 +238,24 @@ class ReviewerFragment :
         return true
     }
 
-    override fun handleUrl(url: Uri): Boolean {
-        if (super.handleUrl(url)) {
-            return true
+    override fun onCreateWebViewClient(savedInstanceState: Bundle?): WebViewClient {
+        return object : CardViewerWebViewClient(savedInstanceState) {
+            override fun onScaleChanged(view: WebView?, oldScale: Float, newScale: Float) {
+                super.onScaleChanged(view, oldScale, newScale)
+                view?.evaluateJavascript("globalThis.ankidroid.scale = $newScale", null)
+            }
+
+            override fun handleUrl(url: Uri): Boolean {
+                if (super.handleUrl(url)) {
+                    return true
+                }
+                when (url.scheme) {
+                    "tap" -> Timber.d(url.host)
+                    else -> return false
+                }
+                return true
+            }
         }
-        when (url.scheme) {
-            "tap" -> viewModel.onTap(url.host!!)
-            "swipe" -> viewModel.onTap(url.host!!)
-            else -> return false
-        }
-        return true
     }
 
     private fun setupAnswerButtons(view: View) {

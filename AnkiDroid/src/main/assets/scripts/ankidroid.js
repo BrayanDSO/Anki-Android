@@ -12,78 +12,66 @@ globalThis.ankidroid.userAction = function(number) {
     }
 };
 
+globalThis.ankidroid.scale = 1;
+
 (() => {
-    const swipeDistance = 40;
+    const maxMovement = 20;
 
     let startX = 0,
         startY = 0,
         scrollX = 0,
         scrollY = 0,
-        tapTimer = null;
+        tapTimer = null,
+        isSingleTouch = false;
 
 
     document.ontouchstart = function (event) {
+        if (event.touches.length > 1) {
+            isSingleTouch = false;
+            return;
+        }
         startX = event.touches[0].clientX;
         startY = event.touches[0].clientY;
         scrollX = window.scrollX;
         scrollY = window.scrollY;
+        isSingleTouch = true;
     };
 
     document.ontouchend = function (event) {
-        if (tapTimer != null) {
-            sendRequest("tap://double")
-            preventEvent(event);
+        if (!isSingleTouch || isTextSelected() || isLink(event)) return;
 
-            clearTimeout(tapTimer);
-            tapTimer = null;
-            return;
-        }
-        tapTimer = setTimeout(() => {
-            processTap(event);
-            tapTimer = null;
-        }, 200);
-    };
-
-    function processTap(event) {
-        if (isLink(event) || isTextSelected() || window.scrollX !== scrollX || window.scrollY !== scrollY) return;
         let endX = event.changedTouches[0].clientX,
             endY = event.changedTouches[0].clientY,
-            deltaX = endX - startX,
-            deltaY = endY - startY,
-            absDeltaX = Math.abs(deltaX),
-            absDeltaY = Math.abs(deltaY);
+            deltaX = Math.abs(endX - startX),
+            deltaY = Math.abs(endY - startY),
+            threshold = maxMovement / globalThis.ankidroid.scale;
+        console.log(threshold + " " + deltaX + " " + deltaY);
+        if (deltaX > threshold || deltaY > threshold) return;
 
-        if (absDeltaX > swipeDistance || absDeltaY > swipeDistance) {
-            if (absDeltaX > absDeltaY) {
-                if (deltaX > 0) {
-                    sendRequest("swipe://right");
-                } else {
-                    sendRequest("swipe://left");
-                }
-            } else {
-                if (deltaY > 0) {
-                    sendRequest("swipe://down");
-                } else {
-                    sendRequest("swipe://up");
-                }
-            }
-            preventEvent(event);
-            return;
+        if (tapTimer != null) {
+            window.location.href = "tap://double";
+            event.preventDefault();
+            clearTimeout(tapTimer);
+            tapTimer = null;
+            return
         }
 
-        let column = Math.floor(endX / (window.innerWidth / 3)),
-            row = Math.floor(endY / (window.innerHeight / 3));
+        tapTimer = setTimeout(() => {
+            let column = Math.floor(endX / (window.innerWidth / 3)),
+                row = Math.floor(endY / (window.innerHeight / 3));
 
-        if (column < 0 || column > 2 || row < 0 || row > 2) return;
+            if (column < 0 || column > 2 || row < 0 || row > 2) return;
 
-        let columnLabels = ["Left", "Center", "Right"],
-            rowLabels = ["top", "mid", "bottom"];
-        column = columnLabels[column];
-        row = rowLabels[row];
-        let target = row + column;
+            let columnLabels = ["Left", "Center", "Right"],
+                rowLabels = ["top", "mid", "bottom"];
+            column = columnLabels[column];
+            row = rowLabels[row];
+            let target = row + column;
 
-        sendRequest(`tap://${target}`);
-        preventEvent(event);
+            window.location.href = `tap://${target}`
+            event.preventDefault();
+            tapTimer = null;
+        }, 200);
     }
 
     function isLink(e) {
@@ -109,15 +97,5 @@ globalThis.ankidroid.userAction = function(number) {
 
     function isTextSelected() {
         return !document.getSelection().isCollapsed;
-    }
-
-    function preventEvent(e) {
-        if (e.cancelable) {
-            e.preventDefault();
-        }
-    }
-
-    function sendRequest(request) {
-        window.location.href = request;
     }
 })();

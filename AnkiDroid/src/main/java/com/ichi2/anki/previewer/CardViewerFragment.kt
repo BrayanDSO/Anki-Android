@@ -18,6 +18,8 @@ package com.ichi2.anki.previewer
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
 import android.webkit.CookieManager
 import android.webkit.WebChromeClient
@@ -43,6 +45,7 @@ import com.ichi2.anki.snackbar.showSnackbar
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import timber.log.Timber
+import kotlin.math.abs
 
 abstract class CardViewerFragment(@LayoutRes layout: Int) : Fragment(layout) {
     protected abstract val viewModel: CardViewerViewModel
@@ -82,6 +85,7 @@ abstract class CardViewerFragment(@LayoutRes layout: Int) : Fragment(layout) {
                 // allow videos to autoplay via our JavaScript eval
                 mediaPlaybackRequiresUserGesture = false
             }
+
             val baseUrl = CollectionHelper.getMediaDirectory(requireContext()).toURI().toString()
             loadDataWithBaseURL(
                 baseUrl,
@@ -91,6 +95,43 @@ abstract class CardViewerFragment(@LayoutRes layout: Int) : Fragment(layout) {
                 null
             )
         }
+
+        val gestListener = object : GestureDetector.SimpleOnGestureListener() {
+            @Suppress("KotlinConstantConditions")
+            override fun onFling(
+                e1: MotionEvent?,
+                e2: MotionEvent,
+                velocityX: Float,
+                velocityY: Float
+            ): Boolean {
+                if (e1 == null) return super.onFling(e1, e2, velocityX, velocityY)
+                val deltaX = e2.x - e1.x
+                val deltaY = e2.y - e1.y
+
+                if (abs(deltaX) > abs(deltaY)) {
+                    if (deltaX > 0) {
+                        Timber.d("RIGHT")
+                    } else {
+                        Timber.d("LEFT")
+                    }
+                } else {
+                    if (deltaY > 0) {
+                        Timber.d("DOWN")
+                    } else {
+                        Timber.d("UP")
+                    }
+                }
+
+                return super.onFling(e1, e2, velocityX, velocityY)
+            }
+        }
+
+        val gest = GestureDetector(requireContext(), gestListener)
+
+        webView.setOnTouchListener { _, event -> gest.onTouchEvent(event) }
+
+//        webView.setOnScrollChangeListener()
+
         viewModel.eval
             .flowWithLifecycle(lifecycle)
             .onEach { eval ->
@@ -119,55 +160,57 @@ abstract class CardViewerFragment(@LayoutRes layout: Int) : Fragment(layout) {
             .launchIn(lifecycleScope)
     }
 
-    private fun onCreateWebViewClient(savedInstanceState: Bundle?): WebViewClient {
-        return object : WebViewClient() {
-            override fun onPageFinished(view: WebView?, url: String?) {
-                viewModel.onPageFinished(isAfterRecreation = savedInstanceState != null)
-            }
+    open inner class CardViewerWebViewClient(val savedInstanceState: Bundle?) : WebViewClient() {
+        override fun onPageFinished(view: WebView?, url: String?) {
+            viewModel.onPageFinished(isAfterRecreation = savedInstanceState != null)
+        }
 
-            override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                return handleOrOpenUrl(request.url)
-            }
+        override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+            return handleOrOpenUrl(request.url)
+        }
 
-            @Suppress("DEPRECATION") // necessary in API 23
-            @Deprecated("Deprecated in Java")
-            override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
-                if (view == null || url == null) return super.shouldOverrideUrlLoading(view, url)
-                return handleOrOpenUrl(url.toUri())
-            }
+        @Suppress("DEPRECATION") // necessary in API 23
+        @Deprecated("Deprecated in Java")
+        override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+            if (view == null || url == null) return super.shouldOverrideUrlLoading(view, url)
+            return handleOrOpenUrl(url.toUri())
+        }
 
-            fun handleOrOpenUrl(url: Uri): Boolean {
-                if (handleUrl(url)) return true
-                return try {
-                    openUrl(url)
-                    true
-                } catch (_: Throwable) {
-                    Timber.w("Could not open url")
-                    false
-                }
+        protected open fun handleUrl(url: Uri): Boolean {
+            when (url.scheme) {
+                "playsound" -> viewModel.playSoundFromUrl(url.toString())
+                "videoended" -> viewModel.onVideoFinished()
+                "videopause" -> viewModel.onVideoPaused()
+                "tts-voices" -> TtsVoicesDialogFragment().show(childFragmentManager, null)
+                else -> return false
             }
+            return true
+        }
 
-            override fun onReceivedError(
-                view: WebView,
-                request: WebResourceRequest,
-                error: WebResourceError
-            ) {
-                viewModel.mediaErrorHandler.processFailure(request) { filename: String ->
-                    showMediaErrorSnackbar(filename)
-                }
+        private fun handleOrOpenUrl(url: Uri): Boolean {
+            if (handleUrl(url)) return true
+            return try {
+                openUrl(url)
+                true
+            } catch (_: Throwable) {
+                Timber.w("Could not open url")
+                false
+            }
+        }
+
+        override fun onReceivedError(
+            view: WebView,
+            request: WebResourceRequest,
+            error: WebResourceError
+        ) {
+            viewModel.mediaErrorHandler.processFailure(request) { filename: String ->
+                showMediaErrorSnackbar(filename)
             }
         }
     }
 
-    protected open fun handleUrl(url: Uri): Boolean {
-        when (url.scheme) {
-            "playsound" -> viewModel.playSoundFromUrl(url.toString())
-            "videoended" -> viewModel.onVideoFinished()
-            "videopause" -> viewModel.onVideoPaused()
-            "tts-voices" -> TtsVoicesDialogFragment().show(childFragmentManager, null)
-            else -> return false
-        }
-        return true
+    protected open fun onCreateWebViewClient(savedInstanceState: Bundle?): WebViewClient {
+        return CardViewerWebViewClient(savedInstanceState)
     }
 
     private fun onCreateWebChromeClient(): WebChromeClient {
