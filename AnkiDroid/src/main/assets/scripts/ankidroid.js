@@ -1,7 +1,7 @@
 "use strict";
 globalThis.ankidroid = globalThis.ankidroid || {};
 
-globalThis.ankidroid.userAction = function(number) {
+globalThis.ankidroid.userAction = function (number) {
     try {
         let userJs = globalThis[`userJs${number}`];
         if (userJs != null) {
@@ -24,7 +24,6 @@ globalThis.ankidroid.scale = 1;
         tapTimer = null,
         isSingleTouch = false;
 
-
     document.ontouchstart = function (event) {
         if (event.touches.length > 1) {
             isSingleTouch = false;
@@ -45,7 +44,7 @@ globalThis.ankidroid.scale = 1;
             deltaX = Math.abs(endX - startX),
             deltaY = Math.abs(endY - startY),
             threshold = maxMovement / globalThis.ankidroid.scale;
-        console.log(threshold + " " + deltaX + " " + deltaY);
+
         if (deltaX > threshold || deltaY > threshold) return;
 
         if (tapTimer != null) {
@@ -53,7 +52,7 @@ globalThis.ankidroid.scale = 1;
             event.preventDefault();
             clearTimeout(tapTimer);
             tapTimer = null;
-            return
+            return;
         }
 
         tapTimer = setTimeout(() => {
@@ -68,22 +67,23 @@ globalThis.ankidroid.scale = 1;
             row = rowLabels[row];
             let target = row + column;
 
-            window.location.href = `tap://${target}`
+            window.location.href = `tap://${target}`;
             event.preventDefault();
             tapTimer = null;
         }, 200);
-    }
+    };
 
     function isLink(e) {
         let node = e.target;
         while (node && node !== document) {
-            const res = node.nodeName === "A"
-                || node.onclick
-                || node.nodeName === "BUTTON"
-                || node.nodeName === "VIDEO"
-                || node.nodeName === "SUMMARY"
-                || node.nodeName === "INPUT"
-                || node.getAttribute("contentEditable");
+            const res =
+                node.nodeName === "A" ||
+                node.onclick ||
+                node.nodeName === "BUTTON" ||
+                node.nodeName === "VIDEO" ||
+                node.nodeName === "SUMMARY" ||
+                node.nodeName === "INPUT" ||
+                node.getAttribute("contentEditable");
             if (res) {
                 return true;
             }
