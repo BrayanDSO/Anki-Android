@@ -19,9 +19,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.ichi2.anki.R
 import com.ichi2.ui.FixedTextView
+import java.util.Collections
 
 class ToolbarItemsAdapter(private val items: List<ToolbarItem>) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -31,10 +33,10 @@ class ToolbarItemsAdapter(private val items: List<ToolbarItem>) : RecyclerView.A
                     .inflate(R.layout.reviewer_settings_action_item, parent, false)
                 ActionViewHolder(itemView)
             }
-            DISPLAY_CATEGORY_VIEW_TYPE -> {
+            DISPLAY_TYPE_VIEW_TYPE -> {
                 val itemView = LayoutInflater.from(parent.context)
                     .inflate(R.layout.reviewer_settings_action_category, parent, false)
-                CategoryViewHolder(itemView)
+                DisplayTypeViewHolder(itemView)
             }
             else -> throw IllegalArgumentException("Unexpected viewType")
         }
@@ -46,7 +48,7 @@ class ToolbarItemsAdapter(private val items: List<ToolbarItem>) : RecyclerView.A
     override fun getItemViewType(position: Int): Int {
         return when (items[position]) {
             is ToolbarItem.Action -> ACTION_VIEW_TYPE
-            is ToolbarItem.DisplayCategory -> DISPLAY_CATEGORY_VIEW_TYPE
+            is ToolbarItem.DisplayType -> DISPLAY_TYPE_VIEW_TYPE
         }
     }
 
@@ -54,30 +56,78 @@ class ToolbarItemsAdapter(private val items: List<ToolbarItem>) : RecyclerView.A
         val item = items[position]
         when (holder) {
             is ActionViewHolder -> holder.bind((item as ToolbarItem.Action).action)
-            is CategoryViewHolder -> holder.bind((item as ToolbarItem.DisplayCategory).displayCategory)
+            is DisplayTypeViewHolder -> holder.bind((item as ToolbarItem.DisplayType).menuDisplayType)
         }
     }
 
     private class ActionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        fun bind(action: ToolbarAction) {
+        fun bind(action: ReviewerAction) {
             itemView.findViewById<FixedTextView>(R.id.title).setText(action.title)
             itemView.findViewById<AppCompatImageView>(R.id.icon).setBackgroundResource(action.drawable)
         }
     }
 
-    private class CategoryViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        fun bind(displayCategory: ToolbarDisplayCategory) {
+    private class DisplayTypeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        fun bind(displayCategory: MenuDisplayType) {
             itemView.findViewById<FixedTextView>(R.id.title).setText(displayCategory.title)
         }
     }
 
     companion object {
         private const val ACTION_VIEW_TYPE = 0
-        private const val DISPLAY_CATEGORY_VIEW_TYPE = 1
+        const val DISPLAY_TYPE_VIEW_TYPE = 1
     }
 }
 
 sealed class ToolbarItem {
-    data class Action(val action: ToolbarAction) : ToolbarItem()
-    data class DisplayCategory(val displayCategory: ToolbarDisplayCategory) : ToolbarItem()
+    data class Action(val action: ReviewerAction) : ToolbarItem()
+    data class DisplayType(val menuDisplayType: MenuDisplayType) : ToolbarItem()
+}
+
+class ToolbarItemsTouchHelperCallback<T : ToolbarItem>(private val items: List<T>) : ItemTouchHelper.Callback() {
+    private val movementFlags = makeMovementFlags(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0)
+    private var onClearViewListener: ((List<T>) -> Unit)? = null
+
+    override fun getMovementFlags(
+        recyclerView: RecyclerView,
+        viewHolder: RecyclerView.ViewHolder
+    ): Int {
+        return if (viewHolder.itemViewType == ToolbarItemsAdapter.DISPLAY_TYPE_VIEW_TYPE) {
+            0
+        } else {
+            movementFlags
+        }
+    }
+
+    override fun onMove(
+        recyclerView: RecyclerView,
+        viewHolder: RecyclerView.ViewHolder,
+        target: RecyclerView.ViewHolder
+    ): Boolean {
+        val fromPosition = viewHolder.absoluteAdapterPosition
+        val toPosition = target.absoluteAdapterPosition
+
+        // `Always show` is always the first element, so don't allow moving above it
+        if (toPosition == 0) return false
+
+        Collections.swap(items, fromPosition, toPosition)
+        recyclerView.adapter?.notifyItemMoved(fromPosition, toPosition)
+        return true
+    }
+
+    override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+        // do nothing
+    }
+
+    override fun clearView(
+        recyclerView: RecyclerView,
+        viewHolder: RecyclerView.ViewHolder
+    ) {
+        super.clearView(recyclerView, viewHolder)
+        onClearViewListener?.invoke(items)
+    }
+
+    fun setOnClearViewListener(listener: (List<T>) -> Unit) {
+        onClearViewListener = listener
+    }
 }

@@ -15,7 +15,8 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         app:navigationIcon="?attr/homeAsUpIndicator"
-        app:navigationContentDescription="@string/abc_action_bar_up_description"/>
+        app:navigationContentDescription="@string/abc_action_bar_up_description"
+        android:visibility="gone"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"

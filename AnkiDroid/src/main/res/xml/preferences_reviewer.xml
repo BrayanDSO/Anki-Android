@@ -30,5 +30,5 @@
 
     <Preference
         android:title="Toolbar buttons"
-        android:fragment="com.ichi2.anki.preferences.ReviewerOptionsFragment"/>
+        android:fragment="com.ichi2.anki.preferences.ReviewerToolbarButtonsFragment"/>
 </androidx.preference.PreferenceScreen>
