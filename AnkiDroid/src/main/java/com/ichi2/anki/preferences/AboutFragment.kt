@@ -47,7 +47,9 @@ import java.util.Date
 import java.util.Locale
 import net.ankiweb.rsdroid.BuildConfig as BackendBuildConfig
 
-class AboutFragment : Fragment(R.layout.about_layout) {
+class AboutFragment : Fragment(R.layout.about_layout), TitleProvider {
+    override val title: CharSequence
+        get() = getString(R.string.pref_cat_about_title)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         // Version date
@@ -111,11 +113,6 @@ class AboutFragment : Fragment(R.layout.about_layout) {
         view.findViewById<Button>(R.id.about_copy_debug).setOnClickListener {
             copyDebugInfo()
         }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        requireActivity().setTitle(R.string.pref_cat_about_title)
     }
 
     /**
