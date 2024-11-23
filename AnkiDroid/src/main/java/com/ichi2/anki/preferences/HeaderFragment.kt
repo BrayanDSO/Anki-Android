@@ -52,9 +52,8 @@ class HeaderFragment : PreferenceFragmentCompat() {
             }
         }
 
-        if (DevOptionsFragment.isEnabled(requireContext())) {
-            setDevOptionsVisibility(true)
-        }
+        requirePreference<Preference>(R.string.pref_dev_options_screen_key)
+            .isVisible = DevOptionsFragment.isEnabled(requireContext())
 
         configureSearchBar(
             requireActivity() as AppCompatActivity,
@@ -100,10 +99,6 @@ class HeaderFragment : PreferenceFragmentCompat() {
         requirePreference<SearchPreference>(R.string.search_preference_key)
             .searchConfiguration
             .setFragmentContainerViewId((view.parent as? ViewGroup)?.id ?: R.id.settings_container)
-    }
-
-    fun setDevOptionsVisibility(isVisible: Boolean) {
-        requirePreference<Preference>(R.string.pref_dev_options_screen_key).isVisible = isVisible
     }
 
     companion object {
