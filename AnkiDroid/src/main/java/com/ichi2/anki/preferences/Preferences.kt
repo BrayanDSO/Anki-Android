@@ -19,65 +19,124 @@
  ****************************************************************************************/
 package com.ichi2.anki.preferences
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
-import android.view.MenuItem
+import android.view.View
+import androidx.activity.OnBackPressedCallback
 import androidx.annotation.XmlRes
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import com.bytehamster.lib.preferencesearch.SearchConfiguration
 import com.bytehamster.lib.preferencesearch.SearchPreferenceResult
 import com.bytehamster.lib.preferencesearch.SearchPreferenceResultListener
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.appbar.CollapsingToolbarLayout
-import com.ichi2.anki.AnkiActivity
+import com.google.android.material.appbar.MaterialToolbar
 import com.ichi2.anki.R
+import com.ichi2.anki.SingleFragmentActivity
 import com.ichi2.anki.utils.isWindowCompact
-import com.ichi2.themes.setTransparentStatusBar
 import com.ichi2.utils.getInstanceFromClassName
 import timber.log.Timber
+import kotlin.reflect.KClass
 import kotlin.reflect.jvm.jvmName
 
-class Preferences :
-    AnkiActivity(),
+class PreferencesFragment :
+    Fragment(R.layout.preferences),
     PreferenceFragmentCompat.OnPreferenceStartFragmentCallback,
     SearchPreferenceResultListener {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.preferences)
-        setTransparentStatusBar()
-
-        enableToolbar().setDisplayHomeAsUpEnabled(true)
-
-        // Load initial fragment if activity is being first created
-        if (savedInstanceState == null) {
-            loadInitialFragment()
-        }
-        supportFragmentManager.addOnBackStackChangedListener {
-            // Expand bar in new fragments if scrolled to top
-            val fragment = supportFragmentManager.findFragmentById(R.id.settings_container)
-                as? PreferenceFragmentCompat ?: return@addOnBackStackChangedListener
-            fragment.listView.post {
-                val viewHolder = fragment.listView?.findViewHolderForAdapterPosition(0)
-                val isAtTop = viewHolder != null && viewHolder.itemView.top >= 0
-                findViewById<AppBarLayout>(R.id.appbar).setExpanded(isAtTop, false)
+    private val onBackPressedCallback = object : OnBackPressedCallback(true) {
+        override fun handleOnBackPressed() {
+            if (childFragmentManager.backStackEntryCount > 0) {
+                childFragmentManager.popBackStack()
+            } else {
+                requireActivity().finish()
             }
-
-            val title = if (fragment is TitleProvider) fragment.title else ""
-            findViewById<CollapsingToolbarLayout>(R.id.collapsingToolbarLayout)?.title = title
-            supportActionBar?.title = title
         }
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        view.findViewById<MaterialToolbar>(R.id.toolbar)
+            .setNavigationOnClickListener { onBackPressedCallback.handleOnBackPressed() }
+
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, onBackPressedCallback)
+
+        // Load initial subscreen if activity is being first created
+        if (savedInstanceState == null) {
+            loadInitialSubscreen()
+        } else {
+            childFragmentManager.findFragmentById(R.id.settings_container)?.let {
+                setFragmentTitleOnToolbar(it)
+            }
+        }
+
+        childFragmentManager.addOnBackStackChangedListener {
+            val fragment = childFragmentManager.findFragmentById(R.id.settings_container)
+                ?: return@addOnBackStackChangedListener
+
+            setFragmentTitleOnToolbar(fragment)
+
+            // Expand bar in new fragments if scrolled to top
+            (fragment as? PreferenceFragmentCompat)?.listView?.post {
+                val viewHolder = fragment.listView?.findViewHolderForAdapterPosition(0)
+                val isAtTop = viewHolder != null && viewHolder.itemView.top >= 0
+                view.findViewById<AppBarLayout>(R.id.appbar).setExpanded(isAtTop, false)
+            }
+        }
+    }
+
+    override fun onPreferenceStartFragment(
+        caller: PreferenceFragmentCompat,
+        pref: Preference
+    ): Boolean {
+        // avoid reopening the same fragment if already active
+        val currentFragment = childFragmentManager.findFragmentById(R.id.settings_container)
+            ?: return true
+        if (pref.fragment == currentFragment::class.jvmName) return true
+
+        val fragment = childFragmentManager.fragmentFactory.instantiate(
+            requireActivity().classLoader,
+            pref.fragment ?: return true
+        )
+        fragment.arguments = pref.extras
+        childFragmentManager.commit {
+            replace(R.id.settings_container, fragment, fragment::class.jvmName)
+            addToBackStack(null)
+        }
+        return true
+    }
+
+    override fun onSearchResultClicked(result: SearchPreferenceResult) {
+        val fragment = getFragmentFromXmlRes(result.resourceFile) ?: return
+
+        parentFragmentManager.popBackStack() // clear the search fragment from the backstack
+        childFragmentManager.commit {
+            replace(R.id.settings_container, fragment, fragment.javaClass.name)
+            addToBackStack(fragment.javaClass.name)
+        }
+
+        Timber.i("Highlighting key '%s' on %s", result.key, fragment)
+        result.highlight(fragment as PreferenceFragmentCompat)
+    }
+
+    private fun setFragmentTitleOnToolbar(fragment: Fragment) {
+        val title = if (fragment is TitleProvider) fragment.title else getString(R.string.settings)
+
+        view?.findViewById<CollapsingToolbarLayout>(R.id.collapsingToolbarLayout)?.title = title
+        view?.findViewById<MaterialToolbar>(R.id.toolbar)?.title = title
+    }
+
     /**
-     * Starts the first fragment for the [Preferences] activity,
-     * which by default is [HeaderFragment].
+     * Starts the first settings fragment, which by default is [HeaderFragment].
      * The initial fragment may be overridden by putting the java class name
      * of the fragment on an intent extra with the key [INITIAL_FRAGMENT_EXTRA]
      */
-    private fun loadInitialFragment() {
-        val fragmentClassName = intent?.getStringExtra(INITIAL_FRAGMENT_EXTRA)
+    private fun loadInitialSubscreen() {
+        val fragmentClassName = arguments?.getString(INITIAL_FRAGMENT_EXTRA)
         val initialFragment = if (fragmentClassName == null) {
             if (resources.isWindowCompact()) HeaderFragment() else GeneralSettingsFragment()
         } else {
@@ -87,62 +146,38 @@ class Preferences :
                 throw RuntimeException("Failed to load $fragmentClassName", e)
             }
         }
-        supportFragmentManager.commit {
-            // In tablets, show the headers fragment at the lateral navigation container
+        childFragmentManager.commit {
+            // In big screens, show the headers fragment at the lateral navigation container
             if (!resources.isWindowCompact()) {
                 replace(R.id.lateral_nav_container, HeaderFragment())
             }
             replace(R.id.settings_container, initialFragment, initialFragment::class.java.name)
         }
     }
+}
 
-    override fun onPreferenceStartFragment(
-        caller: PreferenceFragmentCompat,
-        pref: Preference
-    ): Boolean {
-        // avoid reopening the same fragment if already active
-        val currentFragment = supportFragmentManager.findFragmentById(R.id.settings_container)
-            ?: return true
-        if (pref.fragment == currentFragment::class.jvmName) return true
-
-        val fragment = supportFragmentManager.fragmentFactory.instantiate(
-            classLoader,
-            pref.fragment ?: return true
-        )
-        fragment.arguments = pref.extras
-        supportFragmentManager.commit {
-            replace(R.id.settings_container, fragment, fragment::class.jvmName)
-            addToBackStack(null)
+/**
+ * Host activity for [PreferencesFragment].
+ *
+ * Only necessary because [SearchConfiguration] demands an activity that implements
+ * [SearchPreferenceResultListener].
+ */
+class PreferencesActivity : SingleFragmentActivity(), SearchPreferenceResultListener {
+    override fun onSearchResultClicked(result: SearchPreferenceResult) {
+        val fragment = supportFragmentManager.findFragmentByTag(FRAGMENT_TAG)
+        if (fragment is SearchPreferenceResultListener) {
+            fragment.onSearchResultClicked(result)
         }
-        return true
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == android.R.id.home) {
-            if (resources.isWindowCompact()) {
-                onBackPressedDispatcher.onBackPressed()
-            } else {
-                finish()
+    companion object {
+        fun getIntent(context: Context, initialFragment: KClass<out SettingsFragment>? = null): Intent {
+            val arguments = bundleOf(INITIAL_FRAGMENT_EXTRA to initialFragment?.jvmName)
+            return Intent(context, PreferencesActivity::class.java).apply {
+                putExtra(FRAGMENT_NAME_EXTRA, PreferencesFragment::class.jvmName)
+                putExtra(FRAGMENT_ARGS_EXTRA, arguments)
             }
         }
-        return true
-    }
-
-    // ----------------------------------------------------------------------------
-    // Class methods
-    // ----------------------------------------------------------------------------
-
-    override fun onSearchResultClicked(result: SearchPreferenceResult) {
-        val fragment = getFragmentFromXmlRes(result.resourceFile) ?: return
-
-        supportFragmentManager.popBackStack() // clear the search fragment from the backstack
-        supportFragmentManager.commit {
-            replace(R.id.settings_container, fragment, fragment.javaClass.name)
-            addToBackStack(fragment.javaClass.name)
-        }
-
-        Timber.i("Highlighting key '%s' on %s", result.key, fragment)
-        result.highlight(fragment as PreferenceFragmentCompat)
     }
 }
 

@@ -16,7 +16,6 @@
 package com.ichi2.anki.preferences
 
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.appcompat.app.AlertDialog
@@ -140,12 +139,6 @@ class AdvancedSettingsFragment : SettingsFragment() {
             if (doubleScrolling != null) {
                 preferenceScreen.removePreference(doubleScrolling)
             }
-        }
-    }
-
-    companion object {
-        fun getSubscreenIntent(context: Context): Intent {
-            return getSubscreenIntent(context, AdvancedSettingsFragment::class)
         }
     }
 }
