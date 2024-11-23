@@ -27,4 +27,8 @@
         android:key="@string/hide_hard_and_easy_key"
         android:title="@string/hide_hard_and_easy"
         />
+
+    <Preference
+        android:title="Toolbar buttons"
+        android:fragment="com.ichi2.anki.preferences.ReviewerOptionsFragment"/>
 </androidx.preference.PreferenceScreen>
