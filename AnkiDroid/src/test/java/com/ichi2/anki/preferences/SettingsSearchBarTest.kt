@@ -62,7 +62,7 @@ class SettingsSearchBarTest : RobolectricTest() {
 
         // Check if all indexed XML resIDs lead to the correct fragments on getFragmentFromXmlRes
         for (resId in allResIds) {
-            val fragment = Preferences.getFragmentFromXmlRes(resId)
+            val fragment = getFragmentFromXmlRes(resId)
 
             assertNotNull(fragment)
             assertThat(

@@ -152,34 +152,31 @@ class Preferences :
         Timber.i("Highlighting key '%s' on %s", result.key, fragment)
         result.highlight(fragment as PreferenceFragmentCompat)
     }
+}
 
-    companion object {
+/* Only enable AnkiDroid notifications unrelated to due reminders */
+const val PENDING_NOTIFICATIONS_ONLY = 1000000
 
-        /* Only enable AnkiDroid notifications unrelated to due reminders */
-        const val PENDING_NOTIFICATIONS_ONLY = 1000000
+const val INITIAL_FRAGMENT_EXTRA = "initial_fragment"
 
-        const val INITIAL_FRAGMENT_EXTRA = "initial_fragment"
-
-        /**
-         * @return the [SettingsFragment] which uses the given [screen] resource.
-         * i.e. [SettingsFragment.preferenceResource] value is the same of [screen]
-         */
-        fun getFragmentFromXmlRes(@XmlRes screen: Int): SettingsFragment? {
-            return when (screen) {
-                R.xml.preferences_general -> GeneralSettingsFragment()
-                R.xml.preferences_reviewing -> ReviewingSettingsFragment()
-                R.xml.preferences_sync -> SyncSettingsFragment()
-                R.xml.preferences_backup_limits -> BackupLimitsSettingsFragment()
-                R.xml.preferences_custom_sync_server -> CustomSyncServerSettingsFragment()
-                R.xml.preferences_notifications -> NotificationsSettingsFragment()
-                R.xml.preferences_appearance -> AppearanceSettingsFragment()
-                R.xml.preferences_controls -> ControlsSettingsFragment()
-                R.xml.preferences_advanced -> AdvancedSettingsFragment()
-                R.xml.preferences_accessibility -> AccessibilitySettingsFragment()
-                R.xml.preferences_dev_options -> DevOptionsFragment()
-                R.xml.preferences_custom_buttons -> CustomButtonsSettingsFragment()
-                else -> null
-            }
-        }
+/**
+ * @return the [SettingsFragment] which uses the given [screen] resource.
+ * i.e. [SettingsFragment.preferenceResource] value is the same of [screen]
+ */
+fun getFragmentFromXmlRes(@XmlRes screen: Int): SettingsFragment? {
+    return when (screen) {
+        R.xml.preferences_general -> GeneralSettingsFragment()
+        R.xml.preferences_reviewing -> ReviewingSettingsFragment()
+        R.xml.preferences_sync -> SyncSettingsFragment()
+        R.xml.preferences_backup_limits -> BackupLimitsSettingsFragment()
+        R.xml.preferences_custom_sync_server -> CustomSyncServerSettingsFragment()
+        R.xml.preferences_notifications -> NotificationsSettingsFragment()
+        R.xml.preferences_appearance -> AppearanceSettingsFragment()
+        R.xml.preferences_controls -> ControlsSettingsFragment()
+        R.xml.preferences_advanced -> AdvancedSettingsFragment()
+        R.xml.preferences_accessibility -> AccessibilitySettingsFragment()
+        R.xml.preferences_dev_options -> DevOptionsFragment()
+        R.xml.preferences_custom_buttons -> CustomButtonsSettingsFragment()
+        else -> null
     }
 }
