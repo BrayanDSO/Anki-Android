@@ -37,11 +37,15 @@ import kotlin.reflect.jvm.jvmName
 abstract class SettingsFragment :
     PreferenceFragmentCompat(),
     OnPreferenceTreeClickListener,
-    SharedPreferences.OnSharedPreferenceChangeListener {
+    SharedPreferences.OnSharedPreferenceChangeListener,
+    TitleProvider {
     /** @return The XML file which defines the preferences displayed by this PreferenceFragment
      */
     @get:XmlRes
     abstract val preferenceResource: Int
+
+    override val title: CharSequence
+        get() = preferenceManager?.preferenceScreen?.title ?: ""
 
     /**
      * Refreshes all values on the screen
@@ -102,7 +106,6 @@ abstract class SettingsFragment :
 
     override fun onStart() {
         super.onStart()
-        requireActivity().title = preferenceScreen.title
         PreferenceManager.getDefaultSharedPreferences(requireContext())
             .registerOnSharedPreferenceChangeListener(this)
     }

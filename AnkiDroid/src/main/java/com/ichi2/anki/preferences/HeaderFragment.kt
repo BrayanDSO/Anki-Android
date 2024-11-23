@@ -33,9 +33,13 @@ import com.ichi2.compat.CompatHelper
 import com.ichi2.preferences.HeaderPreference
 import com.ichi2.utils.AdaptionUtil
 
-class HeaderFragment : PreferenceFragmentCompat() {
+class HeaderFragment : PreferenceFragmentCompat(), TitleProvider {
     private var selectedHeaderPreference: HeaderPreference? = null
     private var selectedHeaderPreferenceKey: String = DEFAULT_SELECTED_HEADER
+
+    override val title: CharSequence
+        get() = getString(R.string.settings)
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.preference_headers, rootKey)
 
@@ -86,11 +90,6 @@ class HeaderFragment : PreferenceFragmentCompat() {
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
         super.onViewStateRestored(savedInstanceState)
         highlightHeaderPreference(requirePreference<HeaderPreference>(selectedHeaderPreferenceKey))
-    }
-
-    override fun onStart() {
-        super.onStart()
-        requireActivity().setTitle(R.string.settings)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

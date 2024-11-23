@@ -43,12 +43,6 @@ class Preferences :
     PreferenceFragmentCompat.OnPreferenceStartFragmentCallback,
     SearchPreferenceResultListener {
 
-    override fun onTitleChanged(title: CharSequence?, color: Int) {
-        super.onTitleChanged(title, color)
-        findViewById<CollapsingToolbarLayout>(R.id.collapsingToolbarLayout)?.title = title
-        supportActionBar?.title = title
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.preferences)
@@ -69,6 +63,10 @@ class Preferences :
                 val isAtTop = viewHolder != null && viewHolder.itemView.top >= 0
                 findViewById<AppBarLayout>(R.id.appbar).setExpanded(isAtTop, false)
             }
+
+            val title = if (fragment is TitleProvider) fragment.title else ""
+            findViewById<CollapsingToolbarLayout>(R.id.collapsingToolbarLayout)?.title = title
+            supportActionBar?.title = title
         }
     }
 
@@ -148,6 +146,10 @@ class Preferences :
         Timber.i("Highlighting key '%s' on %s", result.key, fragment)
         result.highlight(fragment as PreferenceFragmentCompat)
     }
+}
+
+interface TitleProvider {
+    val title: CharSequence
 }
 
 /* Only enable AnkiDroid notifications unrelated to due reminders */
