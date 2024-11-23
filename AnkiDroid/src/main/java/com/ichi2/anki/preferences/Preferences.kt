@@ -23,7 +23,6 @@ import android.os.Bundle
 import android.view.MenuItem
 import androidx.annotation.XmlRes
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.commit
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -33,6 +32,7 @@ import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.appbar.CollapsingToolbarLayout
 import com.ichi2.anki.AnkiActivity
 import com.ichi2.anki.R
+import com.ichi2.anki.utils.isSw600dp
 import com.ichi2.themes.setTransparentStatusBar
 import com.ichi2.utils.getInstanceFromClassName
 import timber.log.Timber
@@ -42,10 +42,6 @@ class Preferences :
     AnkiActivity(),
     PreferenceFragmentCompat.OnPreferenceStartFragmentCallback,
     SearchPreferenceResultListener {
-
-    fun hasLateralNavigation(): Boolean {
-        return findViewById<FragmentContainerView>(R.id.lateral_nav_container) != null
-    }
 
     override fun onTitleChanged(title: CharSequence?, color: Int) {
         super.onTitleChanged(title, color)
@@ -85,7 +81,7 @@ class Preferences :
     private fun loadInitialFragment() {
         val fragmentClassName = intent?.getStringExtra(INITIAL_FRAGMENT_EXTRA)
         val initialFragment = if (fragmentClassName == null) {
-            if (hasLateralNavigation()) GeneralSettingsFragment() else HeaderFragment()
+            if (resources.isSw600dp()) GeneralSettingsFragment() else HeaderFragment()
         } else {
             try {
                 getInstanceFromClassName<Fragment>(fragmentClassName)
@@ -95,7 +91,7 @@ class Preferences :
         }
         supportFragmentManager.commit {
             // In tablets, show the headers fragment at the lateral navigation container
-            if (hasLateralNavigation()) {
+            if (resources.isSw600dp()) {
                 replace(R.id.lateral_nav_container, HeaderFragment())
                 replace(R.id.settings_container, initialFragment, initialFragment::class.java.name)
             } else {
@@ -127,7 +123,7 @@ class Preferences :
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == android.R.id.home) {
-            if (hasLateralNavigation()) {
+            if (resources.isSw600dp()) {
                 finish()
             } else {
                 onBackPressedDispatcher.onBackPressed()

@@ -22,6 +22,7 @@ import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import androidx.fragment.app.FragmentActivity
 import com.ichi2.anki.CrashReportService
+import com.ichi2.anki.R
 import com.ichi2.annotations.NeedsTest
 
 /**
@@ -63,3 +64,5 @@ private fun Context.getSystemBoolean(resName: String, fallback: Boolean): Boolea
 @NeedsTest("true if the navbar is transparent and needs a scrim, false if not")
 val FragmentActivity.navBarNeedsScrim: Boolean
     get() = getSystemBoolean("config_navBarNeedsScrim", true)
+
+fun Resources.isSw600dp(): Boolean = getBoolean(R.bool.is_sw600dp)

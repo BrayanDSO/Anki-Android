@@ -28,6 +28,7 @@ import com.ichi2.anki.CollectionManager
 import com.ichi2.anki.CollectionManager.TR
 import com.ichi2.anki.R
 import com.ichi2.anki.ui.internationalization.toSentenceCase
+import com.ichi2.anki.utils.isSw600dp
 import com.ichi2.compat.CompatHelper
 import com.ichi2.preferences.HeaderPreference
 import com.ichi2.utils.AdaptionUtil
@@ -62,7 +63,7 @@ class HeaderFragment : PreferenceFragmentCompat() {
     }
 
     private fun highlightHeaderPreference(headerPreference: HeaderPreference) {
-        if (!(activity as Preferences).hasLateralNavigation()) {
+        if (!resources.isSw600dp()) {
             return
         }
         selectedHeaderPreference?.setHighlighted(false)
