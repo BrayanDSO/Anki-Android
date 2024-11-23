@@ -34,12 +34,12 @@ import org.robolectric.annotation.Config
 
 @RunWith(AndroidJUnit4::class)
 class PreferencesTest : RobolectricTest() {
-    private lateinit var preferences: Preferences
+    private lateinit var preferences: PreferencesActivity
 
     @Before
     override fun setUp() {
         super.setUp()
-        preferences = Preferences()
+        preferences = PreferencesActivity()
         val attachBaseContext = getJavaMethodAsAccessible(
             AppCompatActivity::class.java,
             "attachBaseContext",
@@ -72,7 +72,7 @@ class PreferencesTest : RobolectricTest() {
     /** checks if any of the Preferences fragments throws while being created */
     @Test
     fun fragmentsDoNotThrowOnCreation() {
-        val activityScenario = ActivityScenario.launch(Preferences::class.java)
+        val activityScenario = ActivityScenario.launch<PreferencesActivity>(PreferencesActivity.getIntent(targetContext))
 
         activityScenario.onActivity { activity ->
             PreferenceTestUtils.getAllPreferencesFragments(activity).forEach {

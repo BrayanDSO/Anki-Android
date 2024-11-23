@@ -73,8 +73,9 @@ class SettingsSearchBarTest : RobolectricTest() {
         }
     }
 
-    private fun getPreferencesActivity(): Preferences {
-        return Robolectric.buildActivity(Preferences::class.java)
+    private fun getPreferencesActivity(): PreferencesActivity {
+        val intent = PreferencesActivity.getIntent(targetContext)
+        return Robolectric.buildActivity(PreferencesActivity::class.java, intent)
             .create().start().resume().get()
     }
 }
