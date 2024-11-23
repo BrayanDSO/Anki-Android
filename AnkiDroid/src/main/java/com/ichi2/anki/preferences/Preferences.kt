@@ -22,7 +22,6 @@ package com.ichi2.anki.preferences
 import android.os.Bundle
 import android.view.MenuItem
 import androidx.annotation.XmlRes
-import androidx.core.content.edit
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.commit
@@ -140,22 +139,6 @@ class Preferences :
     // ----------------------------------------------------------------------------
     // Class methods
     // ----------------------------------------------------------------------------
-
-    /**
-     * Enables and sets the visibility of the "Developer options" header on [HeaderFragment]
-     */
-    fun setDevOptionsEnabled(isEnabled: Boolean) {
-        // Update the "devOptionsEnabledByUser" pref value
-        this.sharedPrefs().edit {
-            putBoolean(getString(R.string.dev_options_enabled_by_user_key), isEnabled)
-        }
-        // Show/hide the header
-        val headerFragment =
-            supportFragmentManager.findFragmentByTag(HeaderFragment::class.java.name)
-        if (headerFragment is HeaderFragment) {
-            headerFragment.setDevOptionsVisibility(isEnabled)
-        }
-    }
 
     override fun onSearchResultClicked(result: SearchPreferenceResult) {
         val fragment = getFragmentFromXmlRes(result.resourceFile) ?: return

@@ -17,8 +17,10 @@ package com.ichi2.anki.preferences
 
 import android.content.Context
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.edit
 import androidx.preference.Preference
 import androidx.preference.SwitchPreferenceCompat
+import com.ichi2.anki.AnkiDroidApp.Companion.sharedPrefs
 import com.ichi2.anki.BuildConfig
 import com.ichi2.anki.CollectionManager
 import com.ichi2.anki.CrashReportService
@@ -148,8 +150,12 @@ class DevOptionsFragment : SettingsFragment() {
      * Destroys the fragment and hides developer options on [HeaderFragment]
      */
     private fun disableDevOptions() {
-        (requireActivity() as Preferences).setDevOptionsEnabled(false)
+        // Update the "devOptionsEnabledByUser" pref value
+        sharedPrefs().edit {
+            putBoolean(getString(R.string.dev_options_enabled_by_user_key), false)
+        }
         parentFragmentManager.popBackStack()
+        requireActivity().recreate()
     }
 
     companion object {
