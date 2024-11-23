@@ -15,17 +15,13 @@
  */
 package com.ichi2.anki.preferences.reviewer
 
-import androidx.annotation.DrawableRes
-import androidx.annotation.IdRes
 import androidx.annotation.StringRes
 import com.ichi2.anki.R
 
-enum class ToolbarAction(
-    @IdRes val id: Int,
-    @StringRes val title: Int,
-    @DrawableRes val drawable: Int
-) {
-    ADD_NOTE(R.id.reviewer_add_note, R.string.menu_add_note, R.drawable.ic_add_note),
-    UNDO(R.id.reviewer_undo, R.string.undo, R.drawable.ic_undo_white),
-    REDO(R.id.reviewer_redo, R.string.redo, R.drawable.ic_redo);
+enum class MenuDisplayType(@StringRes val title: Int) {
+    ALWAYS(R.string.custom_buttons_setting_always_show),
+    MENU_ONLY(R.string.custom_buttons_setting_menu_only),
+    DISABLED(R.string.disabled);
+
+    fun toToolbarItem(): ToolbarItem.DisplayType = ToolbarItem.DisplayType(this)
 }
