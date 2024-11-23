@@ -19,7 +19,6 @@
  ****************************************************************************************/
 package com.ichi2.anki.preferences
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import androidx.annotation.XmlRes
@@ -34,10 +33,7 @@ import com.bytehamster.lib.preferencesearch.SearchPreferenceResultListener
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.appbar.CollapsingToolbarLayout
 import com.ichi2.anki.AnkiActivity
-import com.ichi2.anki.CollectionManager
-import com.ichi2.anki.DeckPicker
 import com.ichi2.anki.R
-import com.ichi2.anki.launchCatchingTask
 import com.ichi2.themes.setTransparentStatusBar
 import com.ichi2.utils.getInstanceFromClassName
 import timber.log.Timber
@@ -139,15 +135,6 @@ class Preferences :
             }
         }
         return true
-    }
-
-    fun restartWithNewDeckPicker() {
-        launchCatchingTask {
-            CollectionManager.discardBackend()
-            val deckPicker = Intent(this@Preferences, DeckPicker::class.java)
-            deckPicker.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-            startActivity(deckPicker)
-        }
     }
 
     // ----------------------------------------------------------------------------
