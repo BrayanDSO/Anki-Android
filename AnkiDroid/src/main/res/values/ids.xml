@@ -23,4 +23,9 @@
     <item type="id" name="flag_pink"/>
     <item type="id" name="flag_turquoise"/>
     <item type="id" name="flag_purple"/>
+
+
+    <item type="id" name="reviewer_add_note"/>
+    <item type="id" name="reviewer_undo"/>
+    <item type="id" name="reviewer_redo"/>
 </resources>
