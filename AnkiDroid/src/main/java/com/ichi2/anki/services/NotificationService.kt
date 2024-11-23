@@ -42,7 +42,7 @@ class NotificationService : BroadcastReceiver() {
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val preferences = context.sharedPrefs()
             val minCardsDue = preferences.getString(
-                Preferences.MINIMUM_CARDS_DUE_FOR_NOTIFICATION,
+                context.getString(R.string.pref_notifications_minimum_cards_due_key),
                 Preferences.PENDING_NOTIFICATIONS_ONLY.toString()
             )!!.toInt()
             val dueCardsCount = WidgetStatus.fetchDue(context)

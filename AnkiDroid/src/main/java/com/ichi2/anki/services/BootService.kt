@@ -93,7 +93,7 @@ class BootService : BroadcastReceiver() {
             val sp = context.sharedPrefs()
             // Don't schedule a notification if the due reminders setting is not enabled
             if (sp.getString(
-                    Preferences.MINIMUM_CARDS_DUE_FOR_NOTIFICATION,
+                    context.getString(R.string.pref_notifications_minimum_cards_due_key),
                     Preferences.PENDING_NOTIFICATIONS_ONLY.toString()
                 )!!.toInt() >= Preferences.PENDING_NOTIFICATIONS_ONLY
             ) {

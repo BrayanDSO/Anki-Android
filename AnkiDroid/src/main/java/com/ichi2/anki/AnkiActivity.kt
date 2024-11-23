@@ -60,7 +60,6 @@ import com.ichi2.anki.dialogs.DialogHandler
 import com.ichi2.anki.dialogs.SimpleMessageDialog
 import com.ichi2.anki.dialogs.SimpleMessageDialog.SimpleMessageDialogListener
 import com.ichi2.anki.preferences.Preferences
-import com.ichi2.anki.preferences.Preferences.Companion.MINIMUM_CARDS_DUE_FOR_NOTIFICATION
 import com.ichi2.anki.preferences.sharedPrefs
 import com.ichi2.anki.receiver.SdCardReceiver
 import com.ichi2.anki.snackbar.showSnackbar
@@ -523,7 +522,7 @@ open class AnkiActivity : AppCompatActivity, SimpleMessageDialogListener, Shortc
     ) {
         val prefs = this.sharedPrefs()
         // Show a notification unless all notifications have been totally disabled
-        if (prefs.getString(MINIMUM_CARDS_DUE_FOR_NOTIFICATION, "0")!!
+        if (prefs.getString(getString(R.string.pref_notifications_minimum_cards_due_key), "0")!!
             .toInt() <= Preferences.PENDING_NOTIFICATIONS_ONLY
         ) {
             // Use the title as the ticker unless the title is simply "AnkiDroid"
