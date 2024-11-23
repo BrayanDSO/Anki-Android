@@ -158,11 +158,6 @@ class Preferences :
         /* Only enable AnkiDroid notifications unrelated to due reminders */
         const val PENDING_NOTIFICATIONS_ONLY = 1000000
 
-        /**
-         * The number of cards that should be due today in a deck to justify adding a notification.
-         */
-        const val MINIMUM_CARDS_DUE_FOR_NOTIFICATION = "minimumCardsDueForNotification"
-
         const val INITIAL_FRAGMENT_EXTRA = "initial_fragment"
 
         /**
