@@ -20,7 +20,6 @@
 package com.ichi2.anki.preferences
 
 import android.content.Intent
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.MenuItem
 import androidx.annotation.XmlRes
@@ -217,9 +216,5 @@ class Preferences :
                 else -> null
             }
         }
-
-        /** Whether the user is logged on to AnkiWeb  */
-        fun hasAnkiWebAccount(preferences: SharedPreferences): Boolean =
-            preferences.getString("username", "")!!.isNotEmpty()
     }
 }
