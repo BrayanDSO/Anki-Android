@@ -18,6 +18,7 @@ package com.ichi2.anki.preferences
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.ichi2.anki.R
@@ -25,6 +26,7 @@ import com.ichi2.anki.preferences.reviewer.MenuDisplayType
 import com.ichi2.anki.preferences.reviewer.ReviewerAction
 import com.ichi2.anki.preferences.reviewer.ToolbarItem
 import com.ichi2.anki.preferences.reviewer.ToolbarItemsAdapter
+import com.ichi2.anki.preferences.reviewer.ToolbarItemsTouchHelperCallback
 
 class ReviewerToolbarButtonsFragment : Fragment(R.layout.preferences_reviewer_toolbar_buttons) {
 
@@ -51,10 +53,13 @@ class ReviewerToolbarButtonsFragment : Fragment(R.layout.preferences_reviewer_to
             *disabledItems.toTypedArray()
         )
 
+        val itemTouchHelper = ItemTouchHelper(ToolbarItemsTouchHelperCallback(items))
         with(view.findViewById<RecyclerView>(R.id.recycler_view)) {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = ToolbarItemsAdapter(items)
+            itemTouchHelper.attachToRecyclerView(this)
         }
+
         super.onViewCreated(view, savedInstanceState)
     }
 }
