@@ -5,6 +5,9 @@
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="horizontal"
+    android:paddingStart="?android:attr/listPreferredItemPaddingStart"
+    android:paddingEnd="?android:attr/listPreferredItemPaddingEnd"
+    android:gravity="center_vertical"
     android:padding="8dp">
 
     <androidx.appcompat.widget.AppCompatImageView
@@ -12,13 +15,21 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
-        android:padding="12dp"
+        android:paddingStart="0dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        app:maxWidth="48dp"
+        app:maxHeight="48dp"
         tools:srcCompat="@drawable/ic_undo_white" />
 
     <com.ichi2.ui.FixedTextView
         android:id="@+id/title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="6dp"
+        android:layout_marginVertical="6dp"
         android:layout_weight="1"
         android:layout_gravity="center_vertical"
         tools:text="Undo"/>
@@ -27,7 +38,7 @@
         android:id="@+id/drag_handle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="12dp"
+        android:padding="8dp"
         android:layout_gravity="center_vertical"
         app:srcCompat="@drawable/ic_drag_indicator_24" />
 </LinearLayout>
