@@ -27,26 +27,27 @@ enum class MenuDisplayType(@StringRes val title: Int) {
 
     private val preferenceKey get() = "ReviewerMenuDisplayType_$name"
 
-    private fun getPreferenceActions(preferences: SharedPreferences): List<ViewerAction> {
+    private fun getPreferenceActions(preferences: SharedPreferences): List<ViewerMenuItem> {
         val prefValue = preferences.getString(preferenceKey, null)
             ?: return emptyList()
 
         val actionsNames = prefValue.split(SEPARATOR)
         return actionsNames.mapNotNull { name ->
             ViewerAction.entries.firstOrNull { it.name == name }
+                ?: ViewerActionMenu.entries.firstOrNull { it.name == name }
         }
     }
 
-    fun getToolbarActions(preferences: SharedPreferences): List<ToolbarItem.Action> {
+    fun getToolbarActions(preferences: SharedPreferences): List<ToolbarItem.ViewerItem> {
         val prefActions = getPreferenceActions(preferences)
         val unmappedActions = getUnmappedActions(preferences).filter {
             it.defaultDisplayType == this
         }
-        return (prefActions + unmappedActions).map { ToolbarItem.Action(it) }
+        return (prefActions + unmappedActions).map { ToolbarItem.ViewerItem(it) }
     }
 
-    fun setPreferenceValue(preferences: SharedPreferences, actions: List<ToolbarItem.Action>) {
-        val prefValue = actions.joinToString(SEPARATOR) { it.action.name }
+    fun setPreferenceValue(preferences: SharedPreferences, actions: List<ToolbarItem.ViewerItem>) {
+        val prefValue = actions.joinToString(SEPARATOR) { it.viewerItem.name }
         preferences.edit {
             putString(preferenceKey, prefValue)
         }
@@ -55,11 +56,15 @@ enum class MenuDisplayType(@StringRes val title: Int) {
     companion object {
         private const val SEPARATOR = ","
 
-        private fun getUnmappedActions(preferences: SharedPreferences): List<ViewerAction> {
+        private fun getUnmappedActions(preferences: SharedPreferences): List<ViewerMenuItem> {
             val mappedActions = MenuDisplayType.entries.flatMap {
                 it.getPreferenceActions(preferences)
             }
-            return ViewerAction.entries.filter { it !in mappedActions }
+            return ViewerAction.entries.filter {
+                it.defaultDisplayType != null && it !in mappedActions
+            } + ViewerActionMenu.entries.filter {
+                it !in mappedActions
+            }
         }
     }
 }

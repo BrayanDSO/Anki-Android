@@ -18,16 +18,22 @@ package com.ichi2.anki.preferences.reviewer
 import androidx.annotation.DrawableRes
 import androidx.annotation.IdRes
 import androidx.annotation.StringRes
+import com.ichi2.anki.Flag
 import com.ichi2.anki.R
 
+/**
+ * @param defaultDisplayType the default display type of the action in the toolbar.
+ * Use `null` if the action is restricted to gestures/controls and shouldn't be in the menu, or
+ * if the item
+ */
 enum class ViewerAction(
-    @IdRes val id: Int,
-    @StringRes val title: Int,
-    @DrawableRes val drawable: Int,
-    val defaultDisplayType: MenuDisplayType
-) {
+    @IdRes override val id: Int,
+    @StringRes override val titleRes: Int?,
+    @DrawableRes override val drawableRes: Int?,
+    override val defaultDisplayType: MenuDisplayType? = null,
+    val parentMenu: ViewerActionMenu? = null
+) : ViewerMenuItem {
     // Always
-    FLAG(R.id.flag_menu, R.string.menu_flag_card, R.drawable.ic_flag_transparent, MenuDisplayType.ALWAYS),
     UNDO(R.id.action_undo, R.string.undo, R.drawable.ic_undo_white, MenuDisplayType.ALWAYS),
 
     // Menu only
@@ -48,11 +54,47 @@ enum class ViewerAction(
     USER_ACTION_6(R.id.user_action_6, R.string.user_action_6, R.drawable.user_action_6, MenuDisplayType.DISABLED),
     USER_ACTION_7(R.id.user_action_7, R.string.user_action_7, R.drawable.user_action_7, MenuDisplayType.DISABLED),
     USER_ACTION_8(R.id.user_action_8, R.string.user_action_8, R.drawable.user_action_8, MenuDisplayType.DISABLED),
-    USER_ACTION_9(R.id.user_action_9, R.string.user_action_9, R.drawable.user_action_9, MenuDisplayType.DISABLED);
+    USER_ACTION_9(R.id.user_action_9, R.string.user_action_9, R.drawable.user_action_9, MenuDisplayType.DISABLED),
+
+    // Child items
+    BURY_NOTE(R.id.action_bury_note, R.string.menu_bury_note, drawableRes = null, parentMenu = ViewerActionMenu.BURY),
+    BURY_CARD(R.id.action_bury_card, R.string.menu_bury_card, drawableRes = null, parentMenu = ViewerActionMenu.BURY),
+    SUSPEND_NOTE(R.id.action_suspend_note, R.string.menu_suspend_note, drawableRes = null, parentMenu = ViewerActionMenu.SUSPEND),
+    SUSPEND_CARD(R.id.action_suspend_card, R.string.menu_suspend_card, drawableRes = null, parentMenu = ViewerActionMenu.SUSPEND),
+    UNSET_FLAG(R.id.flag_none, titleRes = null, Flag.NONE.drawableRes, parentMenu = ViewerActionMenu.FLAG),
+    FLAG_RED(R.id.flag_red, titleRes = null, Flag.RED.drawableRes, parentMenu = ViewerActionMenu.FLAG),
+    FLAG_BLUE(R.id.flag_blue, titleRes = null, Flag.BLUE.drawableRes, parentMenu = ViewerActionMenu.FLAG),
+    FLAG_PINK(R.id.flag_pink, titleRes = null, Flag.PINK.drawableRes, parentMenu = ViewerActionMenu.FLAG),
+    FLAG_TURQUOISE(R.id.flag_turquoise, titleRes = null, Flag.TURQUOISE.drawableRes, parentMenu = ViewerActionMenu.FLAG),
+    FLAG_GREEN(R.id.flag_green, titleRes = null, Flag.GREEN.drawableRes, parentMenu = ViewerActionMenu.FLAG),
+    FLAG_ORANGE(R.id.flag_orange, titleRes = null, Flag.ORANGE.drawableRes, parentMenu = ViewerActionMenu.FLAG),
+    FLAG_PURPLE(R.id.flag_purple, titleRes = null, Flag.PURPLE.drawableRes, parentMenu = ViewerActionMenu.FLAG)
+    ;
 
     companion object {
         fun fromId(@IdRes id: Int): ViewerAction {
             return entries.first { it.id == id }
         }
     }
+}
+
+interface ViewerMenuItem {
+    @get:IdRes val id: Int
+
+    @get:StringRes val titleRes: Int?
+
+    @get:DrawableRes val drawableRes: Int?
+    val defaultDisplayType: MenuDisplayType?
+    val name: String
+}
+
+enum class ViewerActionMenu(
+    @IdRes override val id: Int,
+    @StringRes override val titleRes: Int?,
+    @DrawableRes override val drawableRes: Int?,
+    override val defaultDisplayType: MenuDisplayType?
+) : ViewerMenuItem {
+    SUSPEND(R.id.action_suspend, R.string.menu_suspend, R.drawable.ic_suspend, MenuDisplayType.MENU_ONLY),
+    BURY(R.id.action_bury, R.string.menu_bury, R.drawable.ic_flip_to_back_white, MenuDisplayType.MENU_ONLY),
+    FLAG(R.id.action_flag, R.string.menu_flag, R.drawable.ic_flag_transparent, MenuDisplayType.MENU_ONLY)
 }
