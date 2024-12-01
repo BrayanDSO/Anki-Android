@@ -20,7 +20,7 @@ import androidx.annotation.IdRes
 import androidx.annotation.StringRes
 import com.ichi2.anki.R
 
-enum class ReviewerAction(
+enum class ViewerAction(
     @IdRes val id: Int,
     @StringRes val title: Int,
     @DrawableRes val drawable: Int,
@@ -51,7 +51,7 @@ enum class ReviewerAction(
     USER_ACTION_9(R.id.user_action_9, R.string.user_action_9, R.drawable.user_action_9, MenuDisplayType.DISABLED);
 
     companion object {
-        fun fromId(@IdRes id: Int): ReviewerAction {
+        fun fromId(@IdRes id: Int): ViewerAction {
             return entries.first { it.id == id }
         }
     }

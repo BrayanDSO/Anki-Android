@@ -27,13 +27,13 @@ enum class MenuDisplayType(@StringRes val title: Int) {
 
     private val preferenceKey get() = "ReviewerMenuDisplayType_$name"
 
-    private fun getPreferenceActions(preferences: SharedPreferences): List<ReviewerAction> {
+    private fun getPreferenceActions(preferences: SharedPreferences): List<ViewerAction> {
         val prefValue = preferences.getString(preferenceKey, null)
             ?: return emptyList()
 
         val actionsNames = prefValue.split(SEPARATOR)
         return actionsNames.mapNotNull { name ->
-            ReviewerAction.entries.firstOrNull { it.name == name }
+            ViewerAction.entries.firstOrNull { it.name == name }
         }
     }
 
@@ -55,11 +55,11 @@ enum class MenuDisplayType(@StringRes val title: Int) {
     companion object {
         private const val SEPARATOR = ","
 
-        private fun getUnmappedActions(preferences: SharedPreferences): List<ReviewerAction> {
+        private fun getUnmappedActions(preferences: SharedPreferences): List<ViewerAction> {
             val mappedActions = MenuDisplayType.entries.flatMap {
                 it.getPreferenceActions(preferences)
             }
-            return ReviewerAction.entries.filter { it !in mappedActions }
+            return ViewerAction.entries.filter { it !in mappedActions }
         }
     }
 }

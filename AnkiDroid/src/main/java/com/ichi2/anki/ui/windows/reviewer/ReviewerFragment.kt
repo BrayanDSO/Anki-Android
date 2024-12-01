@@ -49,8 +49,8 @@ import com.ichi2.anki.R
 import com.ichi2.anki.cardviewer.CardMediaPlayer
 import com.ichi2.anki.noteeditor.NoteEditorLauncher
 import com.ichi2.anki.preferences.ReviewerToolbarButtonsFragment
-import com.ichi2.anki.preferences.reviewer.ReviewerAction
-import com.ichi2.anki.preferences.reviewer.ReviewerAction.*
+import com.ichi2.anki.preferences.reviewer.ViewerAction
+import com.ichi2.anki.preferences.reviewer.ViewerAction.*
 import com.ichi2.anki.previewer.CardViewerActivity
 import com.ichi2.anki.previewer.CardViewerFragment
 import com.ichi2.anki.snackbar.BaseSnackbarBuilderProvider
@@ -126,7 +126,7 @@ class ReviewerFragment :
 
     // TODO
     override fun onMenuItemClick(item: MenuItem): Boolean {
-        val action = ReviewerAction.fromId(item.itemId)
+        val action = ViewerAction.fromId(item.itemId)
         when (action) {
             ADD_NOTE -> launchAddNote()
 //            R.id.action_bury_card -> viewModel.buryCard()
