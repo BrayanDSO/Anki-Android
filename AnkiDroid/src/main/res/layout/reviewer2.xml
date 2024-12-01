@@ -28,7 +28,6 @@
                 app:layout_constraintTop_toTopOf="parent"
                 android:layout_height="wrap_content"
                 android:background="?attr/alternativeBackgroundColor"
-                app:menu="@menu/reviewer2"
                 >
 
                 <com.google.android.material.textview.MaterialTextView
