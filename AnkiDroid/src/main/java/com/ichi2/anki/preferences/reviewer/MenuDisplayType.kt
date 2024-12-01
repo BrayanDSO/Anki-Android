@@ -25,33 +25,41 @@ enum class MenuDisplayType(@StringRes val title: Int) {
     MENU_ONLY(R.string.custom_buttons_setting_menu_only),
     DISABLED(R.string.disabled);
 
-    fun toToolbarItem(): ToolbarItem.DisplayType = ToolbarItem.DisplayType(this)
+    private val preferenceKey get() = "ReviewerMenuDisplayType_$name"
 
-    private fun getPreferenceKey() = "ReviewerMenuDisplayType_$name"
+    private fun getPreferenceActions(preferences: SharedPreferences): List<ReviewerAction> {
+        val prefValue = preferences.getString(preferenceKey, null)
+            ?: return emptyList()
 
-    private fun getActions(sharedPreferences: SharedPreferences): List<ReviewerAction> {
-        val prefValue = sharedPreferences.getString(getPreferenceKey(), null)
-        if (prefValue != null) {
-            val actionsNames = prefValue.split(SEPARATOR)
-            return actionsNames.mapNotNull { name ->
-                ReviewerAction.entries.firstOrNull { it.name == name }
-            }
-        } else {
-            return ReviewerAction.entries.filter { it.defaultDisplayType == this }
+        val actionsNames = prefValue.split(SEPARATOR)
+        return actionsNames.mapNotNull { name ->
+            ReviewerAction.entries.firstOrNull { it.name == name }
         }
     }
 
-    fun getToolbarActions(sharedPreferences: SharedPreferences) =
-        getActions(sharedPreferences).map { ToolbarItem.Action(it) }
+    fun getToolbarActions(preferences: SharedPreferences): List<ToolbarItem.Action> {
+        val prefActions = getPreferenceActions(preferences)
+        val unmappedActions = getUnmappedActions(preferences).filter {
+            it.defaultDisplayType == this
+        }
+        return (prefActions + unmappedActions).map { ToolbarItem.Action(it) }
+    }
 
-    fun setPreferenceValue(sharedPreferences: SharedPreferences, actions: List<ToolbarItem.Action>) {
+    fun setPreferenceValue(preferences: SharedPreferences, actions: List<ToolbarItem.Action>) {
         val prefValue = actions.joinToString(SEPARATOR) { it.action.name }
-        sharedPreferences.edit {
-            putString(getPreferenceKey(), prefValue)
+        preferences.edit {
+            putString(preferenceKey, prefValue)
         }
     }
 
     companion object {
         private const val SEPARATOR = ","
+
+        private fun getUnmappedActions(preferences: SharedPreferences): List<ReviewerAction> {
+            val mappedActions = MenuDisplayType.entries.flatMap {
+                it.getPreferenceActions(preferences)
+            }
+            return ReviewerAction.entries.filter { it !in mappedActions }
+        }
     }
 }
