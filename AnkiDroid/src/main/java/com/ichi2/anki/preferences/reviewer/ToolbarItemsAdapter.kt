@@ -16,6 +16,7 @@
 package com.ichi2.anki.preferences.reviewer
 
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
@@ -26,6 +27,8 @@ import com.ichi2.ui.FixedTextView
 import java.util.Collections
 
 class ToolbarItemsAdapter(private val items: List<ToolbarItem>) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    var onDragListener: ((RecyclerView.ViewHolder) -> Unit)? = null
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
             ACTION_VIEW_TYPE -> {
@@ -42,8 +45,7 @@ class ToolbarItemsAdapter(private val items: List<ToolbarItem>) : RecyclerView.A
         }
     }
 
-    override fun getItemCount(): Int =
-        items.size
+    override fun getItemCount(): Int = items.size
 
     override fun getItemViewType(position: Int): Int {
         return when (items[position]) {
@@ -60,10 +62,18 @@ class ToolbarItemsAdapter(private val items: List<ToolbarItem>) : RecyclerView.A
         }
     }
 
-    private class ActionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    private inner class ActionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        /** @see [R.layout.reviewer_settings_action_item] */
         fun bind(action: ReviewerAction) {
             itemView.findViewById<FixedTextView>(R.id.title).setText(action.title)
             itemView.findViewById<AppCompatImageView>(R.id.icon).setBackgroundResource(action.drawable)
+
+            itemView.findViewById<AppCompatImageView>(R.id.drag_handle).setOnTouchListener { _, event ->
+                if (event.action == MotionEvent.ACTION_DOWN) {
+                    onDragListener?.invoke(this)
+                }
+                return@setOnTouchListener false
+            }
         }
     }
 
@@ -126,6 +136,8 @@ class ToolbarItemsTouchHelperCallback<T : ToolbarItem>(private val items: List<T
         super.clearView(recyclerView, viewHolder)
         onClearViewListener?.invoke(items)
     }
+
+    override fun isLongPressDragEnabled(): Boolean = false
 
     fun setOnClearViewListener(listener: (List<T>) -> Unit) {
         onClearViewListener = listener

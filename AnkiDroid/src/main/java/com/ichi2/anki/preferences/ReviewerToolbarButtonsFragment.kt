@@ -54,9 +54,14 @@ class ReviewerToolbarButtonsFragment : Fragment(R.layout.preferences_reviewer_to
         )
 
         val itemTouchHelper = ItemTouchHelper(ToolbarItemsTouchHelperCallback(items))
+        val adapter = ToolbarItemsAdapter(items).apply {
+            onDragListener = { viewHolder ->
+                itemTouchHelper.startDrag(viewHolder)
+            }
+        }
         with(view.findViewById<RecyclerView>(R.id.recycler_view)) {
             layoutManager = LinearLayoutManager(requireContext())
-            adapter = ToolbarItemsAdapter(items)
+            this.adapter = adapter
             itemTouchHelper.attachToRecyclerView(this)
         }
 
