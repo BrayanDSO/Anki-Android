@@ -20,7 +20,6 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -31,6 +30,8 @@ import com.ichi2.anki.preferences.reviewer.MenuDisplayType
 import com.ichi2.anki.preferences.reviewer.ToolbarItem
 import com.ichi2.anki.preferences.reviewer.ToolbarItemsAdapter
 import com.ichi2.anki.preferences.reviewer.ToolbarItemsTouchHelperCallback
+import com.ichi2.anki.preferences.reviewer.ViewerAction
+import com.ichi2.anki.preferences.reviewer.ViewerActionMenu
 import com.ichi2.anki.utils.ext.sharedPrefs
 
 class ReviewerToolbarButtonsFragment : Fragment(R.layout.preferences_reviewer_toolbar_buttons) {
@@ -98,13 +99,19 @@ class ReviewerToolbarButtonsFragment : Fragment(R.layout.preferences_reviewer_to
             menu: Menu,
             items: List<ToolbarItem.ViewerItem>,
             menuActionType: Int,
-            context: Context
+            context: Context // TODO possivelmente converter para Resources
         ) {
             for (item in items) {
                 val action = item.viewerItem
                 val title = action.titleRes?.let { context.getString(it) } ?: ""
-                menu.add(0, action.id, Menu.NONE, title).apply {
-                    action.drawableRes?.let { icon = ContextCompat.getDrawable(context, it) }
+                val menuItem = if (action is ViewerActionMenu) {
+                    menu.addSubMenu(Menu.NONE, action.id, Menu.NONE, action.titleRes)
+                    menu.findItem(action.id)
+                } else {
+                    menu.add(Menu.NONE, action.id, Menu.NONE, title)
+                }
+                with(menuItem) {
+                    action.drawableRes?.let { setIcon(it) }
                     setShowAsAction(menuActionType)
                 }
             }
@@ -118,6 +125,15 @@ class ReviewerToolbarButtonsFragment : Fragment(R.layout.preferences_reviewer_to
 
             addItemsToMenu(menu, alwaysItems, MenuItem.SHOW_AS_ACTION_ALWAYS, context)
             addItemsToMenu(menu, menuOnlyItems, MenuItem.SHOW_AS_ACTION_NEVER, context)
+
+            for (action in ViewerAction.entries) {
+                if (action.parentMenu == null) continue
+                val subMenu = menu.findItem(action.parentMenu.id).subMenu
+                val title = action.titleRes?.let { context.getString(it) } ?: ""
+                subMenu?.add(Menu.NONE, action.id, Menu.NONE, title)?.apply {
+                    action.drawableRes?.let { setIcon(it) }
+                }
+            }
         }
     }
 }

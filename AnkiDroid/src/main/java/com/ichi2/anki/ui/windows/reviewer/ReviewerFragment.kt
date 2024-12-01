@@ -51,6 +51,7 @@ import com.ichi2.anki.noteeditor.NoteEditorLauncher
 import com.ichi2.anki.preferences.ReviewerToolbarButtonsFragment
 import com.ichi2.anki.preferences.reviewer.ViewerAction
 import com.ichi2.anki.preferences.reviewer.ViewerAction.*
+import com.ichi2.anki.preferences.reviewer.ViewerActionMenu
 import com.ichi2.anki.previewer.CardViewerActivity
 import com.ichi2.anki.previewer.CardViewerFragment
 import com.ichi2.anki.snackbar.BaseSnackbarBuilderProvider
@@ -126,6 +127,8 @@ class ReviewerFragment :
 
     // TODO
     override fun onMenuItemClick(item: MenuItem): Boolean {
+        if (ViewerActionMenu.fromId(item.itemId) != null) return false
+
         val action = ViewerAction.fromId(item.itemId)
         when (action) {
             ADD_NOTE -> launchAddNote()
@@ -244,8 +247,10 @@ class ReviewerFragment :
         val submenu = menu.findItem(R.id.action_flag).subMenu
         lifecycleScope.launch {
             for ((flag, name) in Flag.queryDisplayNames()) {
-                submenu?.add(Menu.NONE, flag.id, Menu.NONE, name)
-                    ?.setIcon(flag.drawableRes)
+                submenu?.findItem(flag.id)?.apply {
+                    setIcon(flag.drawableRes)
+                    title = name
+                }
             }
         }
 
@@ -257,7 +262,7 @@ class ReviewerFragment :
 
     private fun setupMenuItems(menu: Menu) {
         ReviewerToolbarButtonsFragment.setConfiguredMenu(menu, requireContext())
-        // TODO setupFlagMenu(menu)
+        setupFlagMenu(menu)
 
         // TODO show that the card is marked somehow when the menu item is overflowed or not shown
         val markItem = menu.findItem(R.id.action_mark)
