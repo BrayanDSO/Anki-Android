@@ -64,7 +64,7 @@ class ToolbarItemsAdapter(private val items: List<ToolbarItem>) : RecyclerView.A
 
     private inner class ActionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         /** @see [R.layout.reviewer_settings_action_item] */
-        fun bind(action: ReviewerAction) {
+        fun bind(action: ViewerAction) {
             itemView.findViewById<FixedTextView>(R.id.title).setText(action.title)
             itemView.findViewById<AppCompatImageView>(R.id.icon).setBackgroundResource(action.drawable)
 
@@ -90,7 +90,7 @@ class ToolbarItemsAdapter(private val items: List<ToolbarItem>) : RecyclerView.A
 }
 
 sealed class ToolbarItem {
-    data class Action(val action: ReviewerAction) : ToolbarItem()
+    data class Action(val action: ViewerAction) : ToolbarItem()
     data class DisplayType(val menuDisplayType: MenuDisplayType) : ToolbarItem()
 }
 
