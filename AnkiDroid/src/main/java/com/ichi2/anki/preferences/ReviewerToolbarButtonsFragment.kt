@@ -42,11 +42,11 @@ class ReviewerToolbarButtonsFragment : Fragment(R.layout.preferences_reviewer_to
         val disabledItems = MenuDisplayType.DISABLED.getToolbarActions(sharedPreferences)
 
         val items: List<ToolbarItem> = listOf(
-            MenuDisplayType.ALWAYS.toToolbarItem(),
+            ToolbarItem.DisplayType(MenuDisplayType.ALWAYS),
             *alwaysItems.toTypedArray(),
-            MenuDisplayType.MENU_ONLY.toToolbarItem(),
+            ToolbarItem.DisplayType(MenuDisplayType.MENU_ONLY),
             *menuOnlyItems.toTypedArray(),
-            MenuDisplayType.DISABLED.toToolbarItem(),
+            ToolbarItem.DisplayType(MenuDisplayType.DISABLED),
             *disabledItems.toTypedArray()
         )
 
