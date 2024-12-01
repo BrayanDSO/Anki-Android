@@ -49,7 +49,7 @@ class ToolbarItemsAdapter(private val items: List<ToolbarItem>) : RecyclerView.A
 
     override fun getItemViewType(position: Int): Int {
         return when (items[position]) {
-            is ToolbarItem.Action -> ACTION_VIEW_TYPE
+            is ToolbarItem.ViewerItem -> ACTION_VIEW_TYPE
             is ToolbarItem.DisplayType -> DISPLAY_TYPE_VIEW_TYPE
         }
     }
@@ -57,16 +57,16 @@ class ToolbarItemsAdapter(private val items: List<ToolbarItem>) : RecyclerView.A
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val item = items[position]
         when (holder) {
-            is ActionViewHolder -> holder.bind((item as ToolbarItem.Action).action)
+            is ActionViewHolder -> holder.bind((item as ToolbarItem.ViewerItem).viewerItem)
             is DisplayTypeViewHolder -> holder.bind((item as ToolbarItem.DisplayType).menuDisplayType)
         }
     }
 
     private inner class ActionViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         /** @see [R.layout.reviewer_settings_action_item] */
-        fun bind(action: ViewerAction) {
-            itemView.findViewById<FixedTextView>(R.id.title).setText(action.title)
-            itemView.findViewById<AppCompatImageView>(R.id.icon).setBackgroundResource(action.drawable)
+        fun bind(action: ViewerMenuItem) {
+            action.titleRes?.let { itemView.findViewById<FixedTextView>(R.id.title).setText(it) }
+            action.drawableRes?.let { itemView.findViewById<AppCompatImageView>(R.id.icon).setBackgroundResource(it) }
 
             itemView.findViewById<AppCompatImageView>(R.id.drag_handle).setOnTouchListener { _, event ->
                 if (event.action == MotionEvent.ACTION_DOWN) {
@@ -78,6 +78,7 @@ class ToolbarItemsAdapter(private val items: List<ToolbarItem>) : RecyclerView.A
     }
 
     private class DisplayTypeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        /** @see [R.layout.reviewer_settings_action_category] */
         fun bind(displayCategory: MenuDisplayType) {
             itemView.findViewById<FixedTextView>(R.id.title).setText(displayCategory.title)
         }
@@ -90,7 +91,7 @@ class ToolbarItemsAdapter(private val items: List<ToolbarItem>) : RecyclerView.A
 }
 
 sealed class ToolbarItem {
-    data class Action(val action: ViewerAction) : ToolbarItem()
+    data class ViewerItem(val viewerItem: ViewerMenuItem) : ToolbarItem()
     data class DisplayType(val menuDisplayType: MenuDisplayType) : ToolbarItem()
 }
 

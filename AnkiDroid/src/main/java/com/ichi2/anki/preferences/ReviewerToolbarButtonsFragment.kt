@@ -60,9 +60,9 @@ class ReviewerToolbarButtonsFragment : Fragment(R.layout.preferences_reviewer_to
                     it is ToolbarItem.DisplayType && it.menuDisplayType == MenuDisplayType.DISABLED
                 }
 
-                val alwaysShowItems = items.subList(1, menuOnlyItemsIndex).filterIsInstance<ToolbarItem.Action>()
-                val onMenuItems = items.subList(menuOnlyItemsIndex, disabledItemsIndex).filterIsInstance<ToolbarItem.Action>()
-                val disabledItems2 = items.subList(disabledItemsIndex, items.lastIndex).filterIsInstance<ToolbarItem.Action>()
+                val alwaysShowItems = items.subList(1, menuOnlyItemsIndex).filterIsInstance<ToolbarItem.ViewerItem>()
+                val onMenuItems = items.subList(menuOnlyItemsIndex, disabledItemsIndex).filterIsInstance<ToolbarItem.ViewerItem>()
+                val disabledItems2 = items.subList(disabledItemsIndex, items.lastIndex).filterIsInstance<ToolbarItem.ViewerItem>()
 
                 val prefs = sharedPrefs()
                 MenuDisplayType.ALWAYS.setPreferenceValue(prefs, alwaysShowItems)
@@ -96,14 +96,15 @@ class ReviewerToolbarButtonsFragment : Fragment(R.layout.preferences_reviewer_to
     companion object {
         private fun addItemsToMenu(
             menu: Menu,
-            items: List<ToolbarItem.Action>,
+            items: List<ToolbarItem.ViewerItem>,
             menuActionType: Int,
             context: Context
         ) {
             for (item in items) {
-                val action = item.action
-                menu.add(0, action.id, Menu.NONE, action.title).apply {
-                    icon = ContextCompat.getDrawable(context, action.drawable)
+                val action = item.viewerItem
+                val title = action.titleRes?.let { context.getString(it) } ?: ""
+                menu.add(0, action.id, Menu.NONE, title).apply {
+                    action.drawableRes?.let { icon = ContextCompat.getDrawable(context, it) }
                     setShowAsAction(menuActionType)
                 }
             }
