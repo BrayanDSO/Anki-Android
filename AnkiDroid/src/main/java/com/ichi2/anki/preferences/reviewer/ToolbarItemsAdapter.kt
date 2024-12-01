@@ -139,6 +139,7 @@ class ToolbarItemsTouchHelperCallback<T : ToolbarItem>(private val items: List<T
 
     override fun isLongPressDragEnabled(): Boolean = false
 
+    /** Sets a listener to be called after [clearView] */
     fun setOnClearViewListener(listener: (List<T>) -> Unit) {
         onClearViewListener = listener
     }
