@@ -31,12 +31,12 @@ class ToolbarItemsAdapter(private val items: List<ToolbarItem>) : RecyclerView.A
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
-            ACTION_VIEW_TYPE -> {
+            ToolbarItem.ACTION_VIEW_TYPE -> {
                 val itemView = LayoutInflater.from(parent.context)
                     .inflate(R.layout.reviewer_settings_action_item, parent, false)
                 ActionViewHolder(itemView)
             }
-            DISPLAY_TYPE_VIEW_TYPE -> {
+            ToolbarItem.DISPLAY_TYPE_VIEW_TYPE -> {
                 val itemView = LayoutInflater.from(parent.context)
                     .inflate(R.layout.reviewer_settings_action_category, parent, false)
                 DisplayTypeViewHolder(itemView)
@@ -48,10 +48,7 @@ class ToolbarItemsAdapter(private val items: List<ToolbarItem>) : RecyclerView.A
     override fun getItemCount(): Int = items.size
 
     override fun getItemViewType(position: Int): Int {
-        return when (items[position]) {
-            is ToolbarItem.ViewerItem -> ACTION_VIEW_TYPE
-            is ToolbarItem.DisplayType -> DISPLAY_TYPE_VIEW_TYPE
-        }
+        return items[position].viewType
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
@@ -83,16 +80,16 @@ class ToolbarItemsAdapter(private val items: List<ToolbarItem>) : RecyclerView.A
             itemView.findViewById<FixedTextView>(R.id.title).setText(displayCategory.title)
         }
     }
-
-    companion object {
-        private const val ACTION_VIEW_TYPE = 0
-        const val DISPLAY_TYPE_VIEW_TYPE = 1
-    }
 }
 
-sealed class ToolbarItem {
-    data class ViewerItem(val viewerItem: ViewerMenuItem) : ToolbarItem()
-    data class DisplayType(val menuDisplayType: MenuDisplayType) : ToolbarItem()
+sealed class ToolbarItem(val viewType: Int) {
+    data class ViewerItem(val viewerItem: ViewerMenuItem) : ToolbarItem(ACTION_VIEW_TYPE)
+    data class DisplayType(val menuDisplayType: MenuDisplayType) : ToolbarItem(DISPLAY_TYPE_VIEW_TYPE)
+
+    companion object {
+        const val ACTION_VIEW_TYPE = 0
+        const val DISPLAY_TYPE_VIEW_TYPE = 1
+    }
 }
 
 class ToolbarItemsTouchHelperCallback<T : ToolbarItem>(private val items: List<T>) : ItemTouchHelper.Callback() {
@@ -103,7 +100,7 @@ class ToolbarItemsTouchHelperCallback<T : ToolbarItem>(private val items: List<T
         recyclerView: RecyclerView,
         viewHolder: RecyclerView.ViewHolder
     ): Int {
-        return if (viewHolder.itemViewType == ToolbarItemsAdapter.DISPLAY_TYPE_VIEW_TYPE) {
+        return if (viewHolder.itemViewType == ToolbarItem.DISPLAY_TYPE_VIEW_TYPE) {
             0
         } else {
             movementFlags
