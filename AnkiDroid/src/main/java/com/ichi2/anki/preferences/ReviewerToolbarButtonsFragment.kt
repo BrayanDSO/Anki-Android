@@ -27,27 +27,19 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
 import com.ichi2.anki.R
 import com.ichi2.anki.preferences.reviewer.MenuDisplayType
-import com.ichi2.anki.preferences.reviewer.ReviewerAction
 import com.ichi2.anki.preferences.reviewer.ToolbarItem
 import com.ichi2.anki.preferences.reviewer.ToolbarItemsAdapter
 import com.ichi2.anki.preferences.reviewer.ToolbarItemsTouchHelperCallback
 import com.ichi2.anki.showThemedToast
+import com.ichi2.anki.utils.ext.sharedPrefs
 
 class ReviewerToolbarButtonsFragment : Fragment(R.layout.preferences_reviewer_toolbar_buttons) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val alwaysItems = mutableListOf<ToolbarItem.Action>()
-        val menuOnlyItems = mutableListOf<ToolbarItem.Action>()
-        val disabledItems = mutableListOf<ToolbarItem.Action>()
-
-        for (reviewerAction in ReviewerAction.entries) {
-            val toolbarItem = reviewerAction.toToolbarItem()
-            when (reviewerAction.defaultDisplayType) {
-                MenuDisplayType.ALWAYS -> alwaysItems.add(toolbarItem)
-                MenuDisplayType.MENU_ONLY -> menuOnlyItems.add(toolbarItem)
-                MenuDisplayType.DISABLED -> disabledItems.add(toolbarItem)
-            }
-        }
+        val sharedPreferences = sharedPrefs()
+        val alwaysItems = MenuDisplayType.ALWAYS.getToolbarActions(sharedPreferences)
+        val menuOnlyItems = MenuDisplayType.MENU_ONLY.getToolbarActions(sharedPreferences)
+        val disabledItems = MenuDisplayType.DISABLED.getToolbarActions(sharedPreferences)
 
         val items: List<ToolbarItem> = listOf(
             MenuDisplayType.ALWAYS.toToolbarItem(),
@@ -60,7 +52,7 @@ class ReviewerToolbarButtonsFragment : Fragment(R.layout.preferences_reviewer_to
 
         val menu = view.findViewById<MaterialToolbar>(R.id.toolbar).menu
         val callback = ToolbarItemsTouchHelperCallback(items).apply {
-            setOnClearViewListener {
+            setOnClearViewListener { items ->
                 val menuOnlyItemsIndex = items.indexOfFirst {
                     it is ToolbarItem.DisplayType && it.menuDisplayType == MenuDisplayType.MENU_ONLY
                 }
@@ -68,8 +60,14 @@ class ReviewerToolbarButtonsFragment : Fragment(R.layout.preferences_reviewer_to
                     it is ToolbarItem.DisplayType && it.menuDisplayType == MenuDisplayType.DISABLED
                 }
 
-                val alwaysShowItems = items.subList(0 + 1, menuOnlyItemsIndex).filterIsInstance<ToolbarItem.Action>()
-                val onMenuItems = items.subList(menuOnlyItemsIndex + 1, disabledItemsIndex).filterIsInstance<ToolbarItem.Action>()
+                val alwaysShowItems = items.subList(1, menuOnlyItemsIndex).filterIsInstance<ToolbarItem.Action>()
+                val onMenuItems = items.subList(menuOnlyItemsIndex, disabledItemsIndex).filterIsInstance<ToolbarItem.Action>()
+                val disabledItems2 = items.subList(disabledItemsIndex, items.lastIndex).filterIsInstance<ToolbarItem.Action>()
+
+                val prefs = sharedPrefs()
+                MenuDisplayType.ALWAYS.setPreferenceValue(prefs, alwaysShowItems)
+                MenuDisplayType.MENU_ONLY.setPreferenceValue(prefs, onMenuItems)
+                MenuDisplayType.DISABLED.setPreferenceValue(prefs, disabledItems2)
 
                 menu.clear()
                 addItemsToMenu(menu, alwaysShowItems, MenuItem.SHOW_AS_ACTION_ALWAYS)
