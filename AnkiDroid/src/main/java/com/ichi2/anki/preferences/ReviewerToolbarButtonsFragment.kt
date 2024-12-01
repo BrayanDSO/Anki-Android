@@ -15,6 +15,7 @@
  */
 package com.ichi2.anki.preferences
 
+import android.content.Context
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -30,7 +31,6 @@ import com.ichi2.anki.preferences.reviewer.MenuDisplayType
 import com.ichi2.anki.preferences.reviewer.ToolbarItem
 import com.ichi2.anki.preferences.reviewer.ToolbarItemsAdapter
 import com.ichi2.anki.preferences.reviewer.ToolbarItemsTouchHelperCallback
-import com.ichi2.anki.showThemedToast
 import com.ichi2.anki.utils.ext.sharedPrefs
 
 class ReviewerToolbarButtonsFragment : Fragment(R.layout.preferences_reviewer_toolbar_buttons) {
@@ -70,8 +70,8 @@ class ReviewerToolbarButtonsFragment : Fragment(R.layout.preferences_reviewer_to
                 MenuDisplayType.DISABLED.setPreferenceValue(prefs, disabledItems2)
 
                 menu.clear()
-                addItemsToMenu(menu, alwaysShowItems, MenuItem.SHOW_AS_ACTION_ALWAYS)
-                addItemsToMenu(menu, onMenuItems, MenuItem.SHOW_AS_ACTION_NEVER)
+                addItemsToMenu(menu, alwaysShowItems, MenuItem.SHOW_AS_ACTION_ALWAYS, requireContext())
+                addItemsToMenu(menu, onMenuItems, MenuItem.SHOW_AS_ACTION_NEVER, requireContext())
             }
         }
         val itemTouchHelper = ItemTouchHelper(callback)
@@ -86,24 +86,37 @@ class ReviewerToolbarButtonsFragment : Fragment(R.layout.preferences_reviewer_to
             itemTouchHelper.attachToRecyclerView(this)
         }
 
-        addItemsToMenu(menu, alwaysItems, MenuItem.SHOW_AS_ACTION_ALWAYS)
-        addItemsToMenu(menu, menuOnlyItems, MenuItem.SHOW_AS_ACTION_NEVER)
+        addItemsToMenu(menu, alwaysItems, MenuItem.SHOW_AS_ACTION_ALWAYS, requireContext())
+        addItemsToMenu(menu, menuOnlyItems, MenuItem.SHOW_AS_ACTION_NEVER, requireContext())
 
         super.onViewCreated(view, savedInstanceState)
     }
 
-    private fun addItemsToMenu(menu: Menu, items: List<ToolbarItem.Action>, menuActionType: Int) {
-        for (item in items) {
-            val action = item.action
-            menu.add(0, action.id, Menu.NONE, action.title).apply {
-                icon = ContextCompat.getDrawable(requireContext(), action.drawable)
-                setShowAsAction(menuActionType)
-                setOnMenuItemClickListener {
-                    val title = getString(action.title)
-                    showThemedToast(requireContext(), title, true)
-                    true
+    // TODO mostrar ícones no menu
+    companion object {
+        private fun addItemsToMenu(
+            menu: Menu,
+            items: List<ToolbarItem.Action>,
+            menuActionType: Int,
+            context: Context
+        ) {
+            for (item in items) {
+                val action = item.action
+                menu.add(0, action.id, Menu.NONE, action.title).apply {
+                    icon = ContextCompat.getDrawable(context, action.drawable)
+                    setShowAsAction(menuActionType)
                 }
             }
+        }
+
+        fun setConfiguredMenu(menu: Menu, context: Context) {
+            val preferences = context.sharedPrefs()
+
+            val alwaysItems = MenuDisplayType.ALWAYS.getToolbarActions(preferences)
+            val menuOnlyItems = MenuDisplayType.MENU_ONLY.getToolbarActions(preferences)
+
+            addItemsToMenu(menu, alwaysItems, MenuItem.SHOW_AS_ACTION_ALWAYS, context)
+            addItemsToMenu(menu, menuOnlyItems, MenuItem.SHOW_AS_ACTION_NEVER, context)
         }
     }
 }

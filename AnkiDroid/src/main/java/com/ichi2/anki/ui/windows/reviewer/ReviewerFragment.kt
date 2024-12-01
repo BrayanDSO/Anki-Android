@@ -48,6 +48,9 @@ import com.ichi2.anki.NoteEditor
 import com.ichi2.anki.R
 import com.ichi2.anki.cardviewer.CardMediaPlayer
 import com.ichi2.anki.noteeditor.NoteEditorLauncher
+import com.ichi2.anki.preferences.ReviewerToolbarButtonsFragment
+import com.ichi2.anki.preferences.reviewer.ReviewerAction
+import com.ichi2.anki.preferences.reviewer.ReviewerAction.*
 import com.ichi2.anki.previewer.CardViewerActivity
 import com.ichi2.anki.previewer.CardViewerFragment
 import com.ichi2.anki.snackbar.BaseSnackbarBuilderProvider
@@ -123,36 +126,40 @@ class ReviewerFragment :
 
     // TODO
     override fun onMenuItemClick(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.action_add_note -> launchAddNote()
-            R.id.action_bury_card -> viewModel.buryCard()
-            R.id.action_bury_note -> viewModel.buryNote()
-            R.id.action_card_info -> launchCardInfo()
-            R.id.action_delete -> viewModel.deleteNote()
-            R.id.action_edit -> launchEditNote()
-            R.id.action_mark -> viewModel.toggleMark()
-            R.id.action_open_deck_options -> launchDeckOptions()
-            R.id.action_redo -> viewModel.redo()
-            R.id.action_suspend_card -> viewModel.suspendCard()
-            R.id.action_suspend_note -> viewModel.suspendNote()
-            R.id.action_undo -> viewModel.undo()
-            R.id.flag_none -> viewModel.setFlag(Flag.NONE)
-            R.id.flag_red -> viewModel.setFlag(Flag.RED)
-            R.id.flag_orange -> viewModel.setFlag(Flag.ORANGE)
-            R.id.flag_green -> viewModel.setFlag(Flag.GREEN)
-            R.id.flag_blue -> viewModel.setFlag(Flag.BLUE)
-            R.id.flag_pink -> viewModel.setFlag(Flag.PINK)
-            R.id.flag_turquoise -> viewModel.setFlag(Flag.TURQUOISE)
-            R.id.flag_purple -> viewModel.setFlag(Flag.PURPLE)
-            R.id.user_action_1 -> viewModel.userAction(1)
-            R.id.user_action_2 -> viewModel.userAction(2)
-            R.id.user_action_3 -> viewModel.userAction(3)
-            R.id.user_action_4 -> viewModel.userAction(4)
-            R.id.user_action_5 -> viewModel.userAction(5)
-            R.id.user_action_6 -> viewModel.userAction(6)
-            R.id.user_action_7 -> viewModel.userAction(7)
-            R.id.user_action_8 -> viewModel.userAction(8)
-            R.id.user_action_9 -> viewModel.userAction(9)
+        val action = ReviewerAction.fromId(item.itemId)
+        when (action) {
+            ADD_NOTE -> launchAddNote()
+//            R.id.action_bury_card -> viewModel.buryCard()
+//            R.id.action_bury_note -> viewModel.buryNote()
+            CARD_INFO -> launchCardInfo()
+            DELETE -> viewModel.deleteNote()
+            EDIT_NOTE -> launchEditNote()
+            MARK -> viewModel.toggleMark()
+            DECK_OPTIONS -> launchDeckOptions()
+            REDO -> viewModel.redo()
+//            R.id.action_suspend_card -> viewModel.suspendCard()
+//            R.id.action_suspend_note -> viewModel.suspendNote()
+            UNDO -> viewModel.undo()
+//            R.id.flag_none -> viewModel.setFlag(Flag.NONE)
+//            R.id.flag_red -> viewModel.setFlag(Flag.RED)
+//            R.id.flag_orange -> viewModel.setFlag(Flag.ORANGE)
+//            R.id.flag_green -> viewModel.setFlag(Flag.GREEN)
+//            R.id.flag_blue -> viewModel.setFlag(Flag.BLUE)
+//            R.id.flag_pink -> viewModel.setFlag(Flag.PINK)
+//            R.id.flag_turquoise -> viewModel.setFlag(Flag.TURQUOISE)
+//            R.id.flag_purple -> viewModel.setFlag(Flag.PURPLE)
+            USER_ACTION_1 -> viewModel.userAction(1)
+            USER_ACTION_2 -> viewModel.userAction(2)
+            USER_ACTION_3 -> viewModel.userAction(3)
+            USER_ACTION_4 -> viewModel.userAction(4)
+            USER_ACTION_5 -> viewModel.userAction(5)
+            USER_ACTION_6 -> viewModel.userAction(6)
+            USER_ACTION_7 -> viewModel.userAction(7)
+            USER_ACTION_8 -> viewModel.userAction(8)
+            USER_ACTION_9 -> viewModel.userAction(9)
+            FLAG -> {
+                // TODO
+            }
         }
         return true
     }
@@ -252,18 +259,19 @@ class ReviewerFragment :
     }
 
     private fun setupMenuItems(menu: Menu) {
-        setupFlagMenu(menu)
+        ReviewerToolbarButtonsFragment.setConfiguredMenu(menu, requireContext())
+        // TODO setupFlagMenu(menu)
 
         // TODO show that the card is marked somehow when the menu item is overflowed or not shown
         val markItem = menu.findItem(R.id.action_mark)
         viewModel.isMarkedFlow.flowWithLifecycle(lifecycle)
             .collectLatestIn(lifecycleScope) { isMarked ->
                 if (isMarked) {
-                    markItem.setIcon(R.drawable.ic_star)
-                    markItem.setTitle(R.string.menu_unmark_note)
+                    markItem?.setIcon(R.drawable.ic_star)
+                    markItem?.setTitle(R.string.menu_unmark_note)
                 } else {
-                    markItem.setIcon(R.drawable.ic_star_border_white)
-                    markItem.setTitle(R.string.menu_mark_note)
+                    markItem?.setIcon(R.drawable.ic_star_border_white)
+                    markItem?.setTitle(R.string.menu_mark_note)
                 }
             }
 
@@ -272,11 +280,11 @@ class ReviewerFragment :
         viewModel.canBuryNoteFlow.flowWithLifecycle(lifecycle)
             .collectLatestIn(lifecycleScope) { canBuryNote ->
                 if (canBuryNote) {
-                    buryItem.isVisible = true
-                    buryCardItem.isVisible = false
+                    buryItem?.isVisible = true
+                    buryCardItem?.isVisible = false
                 } else {
-                    buryItem.isVisible = false
-                    buryCardItem.isVisible = true
+                    buryItem?.isVisible = false
+                    buryCardItem?.isVisible = true
                 }
             }
 
@@ -285,26 +293,26 @@ class ReviewerFragment :
         viewModel.canSuspendNoteFlow.flowWithLifecycle(lifecycle)
             .collectLatestIn(lifecycleScope) { canSuspendNote ->
                 if (canSuspendNote) {
-                    suspendItem.isVisible = true
-                    suspendCardItem.isVisible = false
+                    suspendItem?.isVisible = true
+                    suspendCardItem?.isVisible = false
                 } else {
-                    suspendItem.isVisible = false
-                    suspendItem.isVisible = true
+                    suspendItem?.isVisible = false
+                    suspendItem?.isVisible = true
                 }
             }
 
         val undoItem = menu.findItem(R.id.action_undo)
         viewModel.undoLabelFlow.flowWithLifecycle(lifecycle)
             .collectLatestIn(lifecycleScope) { label ->
-                undoItem.title = label ?: CollectionManager.TR.undoUndo()
-                undoItem.isEnabled = label != null
+                undoItem?.title = label ?: CollectionManager.TR.undoUndo()
+                undoItem?.isEnabled = label != null
             }
 
         val redoItem = menu.findItem(R.id.action_redo)
         viewModel.redoLabelFlow.flowWithLifecycle(lifecycle)
             .collectLatestIn(lifecycleScope) { label ->
-                redoItem.title = label ?: CollectionManager.TR.undoRedo()
-                redoItem.isEnabled = label != null
+                redoItem?.title = label ?: CollectionManager.TR.undoRedo()
+                redoItem?.isEnabled = label != null
             }
     }
 
