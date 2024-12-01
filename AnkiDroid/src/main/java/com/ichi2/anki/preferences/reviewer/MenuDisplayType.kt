@@ -15,7 +15,9 @@
  */
 package com.ichi2.anki.preferences.reviewer
 
+import android.content.SharedPreferences
 import androidx.annotation.StringRes
+import androidx.core.content.edit
 import com.ichi2.anki.R
 
 enum class MenuDisplayType(@StringRes val title: Int) {
@@ -24,4 +26,32 @@ enum class MenuDisplayType(@StringRes val title: Int) {
     DISABLED(R.string.disabled);
 
     fun toToolbarItem(): ToolbarItem.DisplayType = ToolbarItem.DisplayType(this)
+
+    private fun getPreferenceKey() = "ReviewerMenuDisplayType_$name"
+
+    private fun getActions(sharedPreferences: SharedPreferences): List<ReviewerAction> {
+        val prefValue = sharedPreferences.getString(getPreferenceKey(), null)
+        if (prefValue != null) {
+            val actionsNames = prefValue.split(SEPARATOR)
+            return actionsNames.mapNotNull { name ->
+                ReviewerAction.entries.firstOrNull { it.name == name }
+            }
+        } else {
+            return ReviewerAction.entries.filter { it.defaultDisplayType == this }
+        }
+    }
+
+    fun getToolbarActions(sharedPreferences: SharedPreferences) =
+        getActions(sharedPreferences).map { ToolbarItem.Action(it) }
+
+    fun setPreferenceValue(sharedPreferences: SharedPreferences, actions: List<ToolbarItem.Action>) {
+        val prefValue = actions.joinToString(SEPARATOR) { it.action.name }
+        sharedPreferences.edit {
+            putString(getPreferenceKey(), prefValue)
+        }
+    }
+
+    companion object {
+        private const val SEPARATOR = ","
+    }
 }
