@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.snackbar.Snackbar
 import com.ichi2.anki.R
 import com.ichi2.anki.preferences.reviewer.MenuDisplayType
 import com.ichi2.anki.preferences.reviewer.ToolbarItem
@@ -32,6 +33,7 @@ import com.ichi2.anki.preferences.reviewer.ToolbarItemsAdapter
 import com.ichi2.anki.preferences.reviewer.ToolbarItemsTouchHelperCallback
 import com.ichi2.anki.preferences.reviewer.ViewerAction
 import com.ichi2.anki.preferences.reviewer.ViewerActionMenu
+import com.ichi2.anki.snackbar.showSnackbar
 import com.ichi2.anki.utils.ext.sharedPrefs
 
 class ReviewerToolbarButtonsFragment : Fragment(R.layout.preferences_reviewer_toolbar_buttons) {
@@ -51,7 +53,12 @@ class ReviewerToolbarButtonsFragment : Fragment(R.layout.preferences_reviewer_to
             *disabledItems.toTypedArray()
         )
 
-        val menu = view.findViewById<MaterialToolbar>(R.id.toolbar).menu
+        val toolbar = view.findViewById<MaterialToolbar>(R.id.toolbar)
+        toolbar.setOnMenuItemClickListener { item ->
+            item.title?.let { showSnackbar(it, Snackbar.LENGTH_SHORT) }
+            true
+        }
+        val menu = toolbar.menu
         val callback = ToolbarItemsTouchHelperCallback(items).apply {
             setOnClearViewListener { items ->
                 val menuOnlyItemsIndex = items.indexOfFirst {

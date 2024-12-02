@@ -39,7 +39,7 @@ enum class ViewerAction(
     // Menu only
     MARK(R.id.action_mark, R.string.menu_mark_note, R.drawable.ic_star, MenuDisplayType.MENU_ONLY),
     REDO(R.id.action_redo, R.string.redo, R.drawable.ic_redo, MenuDisplayType.MENU_ONLY),
-    DELETE(R.id.action_delete, R.string.menu_delete_note, R.drawable.ic_delete, MenuDisplayType.MENU_ONLY),
+    DELETE(R.id.action_delete, R.string.menu_delete_note, R.drawable.ic_delete_white, MenuDisplayType.MENU_ONLY),
     EDIT_NOTE(R.id.action_edit_note, R.string.cardeditor_title_edit_card, R.drawable.ic_mode_edit_white, MenuDisplayType.MENU_ONLY),
     DECK_OPTIONS(R.id.action_deck_options, R.string.menu__deck_options, R.drawable.ic_tune_white, MenuDisplayType.MENU_ONLY),
 

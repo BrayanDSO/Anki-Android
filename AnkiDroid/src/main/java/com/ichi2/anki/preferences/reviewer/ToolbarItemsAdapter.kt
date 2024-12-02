@@ -47,9 +47,7 @@ class ToolbarItemsAdapter(private val items: List<ToolbarItem>) : RecyclerView.A
 
     override fun getItemCount(): Int = items.size
 
-    override fun getItemViewType(position: Int): Int {
-        return items[position].viewType
-    }
+    override fun getItemViewType(position: Int): Int = items[position].viewType
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val item = items[position]
