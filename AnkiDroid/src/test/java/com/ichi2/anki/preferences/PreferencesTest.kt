@@ -15,25 +15,24 @@
  */
 package com.ichi2.anki.preferences
 
-import android.content.Context
-import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commitNow
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ichi2.anki.R
 import com.ichi2.anki.RobolectricTest
+import com.ichi2.anki.SingleFragmentActivity
 import com.ichi2.anki.preferences.HeaderFragment.Companion.getHeaderKeyForFragment
 import com.ichi2.anki.preferences.PreferenceTestUtils.getAttrFromXml
 import com.ichi2.libanki.exception.ConfirmModSchemaException
 import com.ichi2.preferences.HeaderPreference
 import com.ichi2.testutils.getInstanceFromClassName
-import com.ichi2.testutils.getJavaMethodAsAccessible
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.equalTo
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric
 import org.robolectric.annotation.Config
 import kotlin.reflect.jvm.jvmName
 import kotlin.test.assertEquals
@@ -41,18 +40,14 @@ import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
 class PreferencesTest : RobolectricTest() {
-    private lateinit var preferences: PreferencesActivity
+    private lateinit var preferences: SingleFragmentActivity
 
     @Before
     override fun setUp() {
         super.setUp()
-        preferences = PreferencesActivity()
-        val attachBaseContext = getJavaMethodAsAccessible(
-            AppCompatActivity::class.java,
-            "attachBaseContext",
-            Context::class.java
-        )
-        attachBaseContext.invoke(preferences, targetContext)
+        val intent = PreferencesFragment.getIntent(targetContext)
+        preferences = Robolectric.buildActivity(SingleFragmentActivity::class.java, intent)
+            .create().start().resume().get()
     }
 
     @Test
@@ -79,7 +74,7 @@ class PreferencesTest : RobolectricTest() {
     /** checks if any of the Preferences fragments throws while being created */
     @Test
     fun fragmentsDoNotThrowOnCreation() {
-        val activityScenario = ActivityScenario.launch<PreferencesActivity>(PreferencesActivity.getIntent(targetContext))
+        val activityScenario = ActivityScenario.launch<SingleFragmentActivity>(PreferencesFragment.getIntent(targetContext))
 
         activityScenario.onActivity { activity ->
             PreferenceTestUtils.getAllPreferencesFragments(activity).forEach {

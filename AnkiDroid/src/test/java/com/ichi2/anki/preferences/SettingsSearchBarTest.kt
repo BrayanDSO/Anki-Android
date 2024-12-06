@@ -19,6 +19,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.bytehamster.lib.preferencesearch.PreferenceItem
 import com.bytehamster.lib.preferencesearch.SearchConfiguration
 import com.ichi2.anki.RobolectricTest
+import com.ichi2.anki.SingleFragmentActivity
 import com.ichi2.testutils.getJavaFieldAsAccessible
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.equalTo
@@ -35,11 +36,11 @@ class SettingsSearchBarTest : RobolectricTest() {
     fun `All indexed XML resIDs lead to the correct fragments on getFragmentFromXmlRes`() {
         // TODO try mocking the activity
         val preferencesActivity = getPreferencesActivity()
-        val searchConfig = SearchConfiguration(preferencesActivity)
+        val searchConfig = SearchConfiguration()
         HeaderFragment.configureSearchBar(preferencesActivity, searchConfig)
 
         // Use reflection to access some private fields
-        val filesToIndexField = getJavaFieldAsAccessible(SearchConfiguration::class.java, "filesToIndex")
+        val filesToIndexField = getJavaFieldAsAccessible(SearchConfiguration::class.java, "files")
         val searchItemResIdField = getJavaFieldAsAccessible(SearchConfiguration.SearchIndexItem::class.java, "resId")
         val preferencesToIndexField = getJavaFieldAsAccessible(SearchConfiguration::class.java, "preferencesToIndex")
         val prefItemResIdField = getJavaFieldAsAccessible(PreferenceItem::class.java, "resId")
@@ -73,9 +74,9 @@ class SettingsSearchBarTest : RobolectricTest() {
         }
     }
 
-    private fun getPreferencesActivity(): PreferencesActivity {
-        val intent = PreferencesActivity.getIntent(targetContext)
-        return Robolectric.buildActivity(PreferencesActivity::class.java, intent)
+    private fun getPreferencesActivity(): SingleFragmentActivity {
+        val intent = PreferencesFragment.getIntent(targetContext)
+        return Robolectric.buildActivity(SingleFragmentActivity::class.java, intent)
             .create().start().resume().get()
     }
 }
