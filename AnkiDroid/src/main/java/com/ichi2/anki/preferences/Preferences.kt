@@ -28,6 +28,7 @@ import androidx.annotation.XmlRes
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
+import androidx.fragment.app.replace
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.bytehamster.lib.preferencesearch.SearchPreferenceResult
@@ -102,6 +103,14 @@ class PreferencesFragment :
             pref.fragment ?: return true
         )
         fragment.arguments = pref.extras
+
+        if (fragment is ReviewerToolbarButtonsFragment && !resources.isWindowCompact()) {
+            parentFragmentManager.commit {
+                replace(R.id.fragment_container, fragment, fragment::class.jvmName)
+            }
+            return true
+        }
+
         childFragmentManager.commit {
             replace(R.id.settings_container, fragment, fragment::class.jvmName)
             addToBackStack(null)
