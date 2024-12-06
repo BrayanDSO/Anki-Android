@@ -30,7 +30,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
-import com.bytehamster.lib.preferencesearch.SearchConfiguration
 import com.bytehamster.lib.preferencesearch.SearchPreferenceResult
 import com.bytehamster.lib.preferencesearch.SearchPreferenceResultListener
 import com.google.android.material.appbar.AppBarLayout
@@ -113,7 +112,7 @@ class PreferencesFragment :
     override fun onSearchResultClicked(result: SearchPreferenceResult) {
         val fragment = getFragmentFromXmlRes(result.resourceFile) ?: return
 
-        parentFragmentManager.popBackStack() // clear the search fragment from the backstack
+        childFragmentManager.popBackStack() // clear the search fragment from the backstack
         childFragmentManager.commit {
             replace(R.id.settings_container, fragment, fragment.javaClass.name)
             addToBackStack(fragment.javaClass.name)
@@ -150,29 +149,11 @@ class PreferencesFragment :
             replace(R.id.settings_container, initialFragment, initialFragment::class.java.name)
         }
     }
-}
-
-/**
- * Host activity for [PreferencesFragment].
- *
- * Only necessary because [SearchConfiguration] demands an activity that implements
- * [SearchPreferenceResultListener].
- */
-class PreferencesActivity : SingleFragmentActivity(), SearchPreferenceResultListener {
-    override fun onSearchResultClicked(result: SearchPreferenceResult) {
-        val fragment = supportFragmentManager.findFragmentByTag(FRAGMENT_TAG)
-        if (fragment is SearchPreferenceResultListener) {
-            fragment.onSearchResultClicked(result)
-        }
-    }
 
     companion object {
         fun getIntent(context: Context, initialFragment: KClass<out SettingsFragment>? = null): Intent {
             val arguments = bundleOf(INITIAL_FRAGMENT_EXTRA to initialFragment?.jvmName)
-            return Intent(context, PreferencesActivity::class.java).apply {
-                putExtra(FRAGMENT_NAME_EXTRA, PreferencesFragment::class.jvmName)
-                putExtra(FRAGMENT_ARGS_EXTRA, arguments)
-            }
+            return SingleFragmentActivity.getIntent(context, PreferencesFragment::class, arguments)
         }
     }
 }

@@ -95,7 +95,7 @@ okhttp = "4.12.0"
 protobufKotlinLite = "4.29.0"
 # ../AnkiDroid/robolectricDownload.gradle may need changes - read instructions in that file
 robolectric = "4.14.1"
-searchpreference = "2.5.1"
+searchpreference = "3.0.2"
 seismic = "1.0.3"
 sharedPreferencesMock = "1.2.4"
 slackKeeper = "0.16.1"
@@ -158,7 +158,7 @@ android-lint-api = { module = "com.android.tools.lint:lint-api", version.ref = "
 android-lint = { module = "com.android.tools.lint:lint", version.ref = "lint" }
 android-lint-tests = { module = "com.android.tools.lint:lint-tests", version.ref = "lint" }
 protobuf-kotlin-lite = { module = "com.google.protobuf:protobuf-kotlin-lite", version.ref = "protobufKotlinLite" }
-search-preference = { module = "com.github.ByteHamster:SearchPreference", version.ref = "searchpreference" }
+search-preference = { module = "com.github.BrayanDSO:SearchPreference", version.ref = "searchpreference" }
 seismic = { module = "com.squareup:seismic", version.ref = "seismic" }
 slf4j-timber = { module = "com.arcao:slf4j-timber", version.ref = "slf4jTimber" }
 jakewharton-timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }

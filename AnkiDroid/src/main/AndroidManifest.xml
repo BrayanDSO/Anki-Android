@@ -346,15 +346,6 @@
             android:configChanges="orientation|screenSize"
             android:exported="false" />
         <activity
-            android:name="com.ichi2.anki.preferences.PreferencesActivity"
-            android:exported="false"
-            android:configChanges="screenSize"
-            >
-            <intent-filter>
-                <category android:name="android.intent.category.MONKEY" />
-            </intent-filter>
-        </activity>
-        <activity
             android:name=".FilteredDeckOptions"
             android:label="@string/deckpreferences_title"
             android:exported="false"

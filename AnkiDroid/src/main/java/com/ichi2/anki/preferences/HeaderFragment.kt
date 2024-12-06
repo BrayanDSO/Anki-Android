@@ -15,12 +15,14 @@
  */
 package com.ichi2.anki.preferences
 
+import android.content.Context
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.commit
+import androidx.fragment.app.replace
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.bytehamster.lib.preferencesearch.SearchConfiguration
@@ -57,7 +59,7 @@ class HeaderFragment : PreferenceFragmentCompat(), TitleProvider {
             .isVisible = DevOptionsFragment.isEnabled(requireContext())
 
         configureSearchBar(
-            requireActivity() as AppCompatActivity,
+            requireContext(),
             requirePreference<SearchPreference>(R.string.search_preference_key).searchConfiguration
         )
 
@@ -87,16 +89,20 @@ class HeaderFragment : PreferenceFragmentCompat(), TitleProvider {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         // use the same fragment container to search in case there is a navigation container
-        requirePreference<SearchPreference>(R.string.search_preference_key)
-            .searchConfiguration
-            .setFragmentContainerViewId((view.parent as? ViewGroup)?.id ?: R.id.settings_container)
+        requirePreference<SearchPreference>(R.string.search_preference_key).searchConfiguration
+            .setOnSearchListener { searchPreferenceFragment ->
+                parentFragmentManager.commit {
+                    val containerId = (view.parent as? ViewGroup)?.id ?: R.id.settings_container
+                    replace(containerId, searchPreferenceFragment)
+                    addToBackStack(null)
+                }
+            }
     }
 
     companion object {
-        fun configureSearchBar(activity: AppCompatActivity, searchConfiguration: SearchConfiguration) {
-            val setDuePreferenceTitle = TR.actionsSetDueDate().toSentenceCase(activity, R.string.sentence_set_due_date)
+        fun configureSearchBar(context: Context, searchConfiguration: SearchConfiguration) {
+            val setDuePreferenceTitle = TR.actionsSetDueDate().toSentenceCase(context, R.string.sentence_set_due_date)
             with(searchConfiguration) {
-                setActivity(activity)
                 setBreadcrumbsEnabled(true)
                 setFuzzySearchEnabled(false)
                 setHistoryEnabled(true)
@@ -105,20 +111,20 @@ class HeaderFragment : PreferenceFragmentCompat(), TitleProvider {
                 index(R.xml.preferences_reviewing)
                 index(R.xml.preferences_sync)
                 index(R.xml.preferences_custom_sync_server)
-                    .addBreadcrumb(R.string.pref_cat_sync)
+                    .addBreadcrumb(context.getString(R.string.pref_cat_sync))
                 index(R.xml.preferences_notifications)
                 index(R.xml.preferences_appearance)
                 index(R.xml.preferences_custom_buttons)
-                    .addBreadcrumb(R.string.pref_cat_appearance)
+                    .addBreadcrumb(context.getString(R.string.pref_cat_appearance))
                 index(R.xml.preferences_controls)
                 index(R.xml.preferences_accessibility)
                 index(R.xml.preferences_backup_limits)
-                ignorePreference(activity.getString(R.string.pref_backups_help_key))
+                ignorePreference(context.getString(R.string.pref_backups_help_key))
                 indexItem()
-                    .withKey(activity.getString(R.string.reschedule_command_key))
+                    .withKey(context.getString(R.string.reschedule_command_key))
                     .withTitle(setDuePreferenceTitle)
                     .withResId(R.xml.preferences_controls)
-                    .addBreadcrumb(activity.getString(R.string.pref_cat_controls))
+                    .addBreadcrumb(context.getString(R.string.pref_cat_controls))
                     .addBreadcrumb(setDuePreferenceTitle)
             }
 
@@ -126,11 +132,11 @@ class HeaderFragment : PreferenceFragmentCompat(), TitleProvider {
             // so they should be searchable based on the same conditions
 
             /** From [HeaderFragment.onCreatePreferences] */
-            if (DevOptionsFragment.isEnabled(activity)) {
+            if (DevOptionsFragment.isEnabled(context)) {
                 searchConfiguration.index(R.xml.preferences_dev_options)
                 /** From [DevOptionsFragment.initSubscreen] */
                 if (BuildConfig.DEBUG) {
-                    searchConfiguration.ignorePreference(activity.getString(R.string.dev_options_enabled_by_user_key))
+                    searchConfiguration.ignorePreference(context.getString(R.string.dev_options_enabled_by_user_key))
                 }
             }
 
@@ -141,16 +147,16 @@ class HeaderFragment : PreferenceFragmentCompat(), TitleProvider {
 
             /** From [NotificationsSettingsFragment.initSubscreen] */
             if (AdaptionUtil.isXiaomiRestrictedLearningDevice) {
-                searchConfiguration.ignorePreference(activity.getString(R.string.pref_notifications_vibrate_key))
-                searchConfiguration.ignorePreference(activity.getString(R.string.pref_notifications_blink_key))
+                searchConfiguration.ignorePreference(context.getString(R.string.pref_notifications_vibrate_key))
+                searchConfiguration.ignorePreference(context.getString(R.string.pref_notifications_blink_key))
             }
 
             /** From [AdvancedSettingsFragment.removeUnnecessaryAdvancedPrefs] */
             if (!CompatHelper.hasScrollKeys()) {
-                searchConfiguration.ignorePreference(activity.getString(R.string.double_scrolling_gap_key))
+                searchConfiguration.ignorePreference(context.getString(R.string.double_scrolling_gap_key))
             }
 
-            searchConfiguration.ignorePreference(activity.getString(R.string.user_actions_controls_category_key))
+            searchConfiguration.ignorePreference(context.getString(R.string.user_actions_controls_category_key))
         }
 
         /**

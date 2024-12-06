@@ -41,7 +41,6 @@ import com.ichi2.anki.StudyOptionsActivity
 import com.ichi2.anki.instantnoteeditor.InstantNoteEditorActivity
 import com.ichi2.anki.multimedia.MultimediaActivity
 import com.ichi2.anki.notetype.ManageNotetypes
-import com.ichi2.anki.preferences.PreferencesActivity
 import com.ichi2.anki.previewer.CardViewerActivity
 import com.ichi2.anki.services.ReminderService.Companion.getReviewDeckIntent
 import com.ichi2.anki.ui.windows.managespace.ManageSpaceActivity
@@ -74,7 +73,6 @@ object ActivityList {
             // Likely has unhandled intents
             get(Reviewer::class.java),
             get(MyAccount::class.java),
-            get(PreferencesActivity::class.java),
             get(FilteredDeckOptions::class.java),
             get(DrawingActivity::class.java),
             // Info has unhandled intents
