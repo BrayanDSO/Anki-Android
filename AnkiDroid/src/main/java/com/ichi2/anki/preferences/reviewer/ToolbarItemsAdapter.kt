@@ -22,6 +22,7 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.textview.MaterialTextView
 import com.ichi2.anki.R
 import com.ichi2.ui.FixedTextView
 import java.util.Collections
@@ -75,7 +76,7 @@ class ToolbarItemsAdapter(private val items: List<ToolbarItem>) : RecyclerView.A
     private class DisplayTypeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         /** @see [R.layout.reviewer_settings_action_category] */
         fun bind(displayCategory: MenuDisplayType) {
-            itemView.findViewById<FixedTextView>(R.id.title).setText(displayCategory.title)
+            itemView.findViewById<MaterialTextView>(R.id.title).setText(displayCategory.title)
         }
     }
 }

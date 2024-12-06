@@ -16,6 +16,7 @@
 package com.ichi2.anki.preferences
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -27,6 +28,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.snackbar.Snackbar
 import com.ichi2.anki.R
+import com.ichi2.anki.SingleFragmentActivity
 import com.ichi2.anki.preferences.reviewer.MenuDisplayType
 import com.ichi2.anki.preferences.reviewer.ToolbarItem
 import com.ichi2.anki.preferences.reviewer.ToolbarItemsAdapter
@@ -37,7 +39,6 @@ import com.ichi2.anki.snackbar.showSnackbar
 import com.ichi2.anki.utils.ext.sharedPrefs
 
 class ReviewerToolbarButtonsFragment : Fragment(R.layout.preferences_reviewer_toolbar_buttons) {
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val sharedPreferences = sharedPrefs()
         val alwaysItems = MenuDisplayType.ALWAYS.getToolbarActions(sharedPreferences)
@@ -57,6 +58,9 @@ class ReviewerToolbarButtonsFragment : Fragment(R.layout.preferences_reviewer_to
         toolbar.setOnMenuItemClickListener { item ->
             item.title?.let { showSnackbar(it, Snackbar.LENGTH_SHORT) }
             true
+        }
+        toolbar.setNavigationOnClickListener {
+            requireActivity().finish()
         }
         val menu = toolbar.menu
         val callback = ToolbarItemsTouchHelperCallback(items).apply {
@@ -141,6 +145,10 @@ class ReviewerToolbarButtonsFragment : Fragment(R.layout.preferences_reviewer_to
                     action.drawableRes?.let { setIcon(it) }
                 }
             }
+        }
+
+        fun getIntent(context: Context): Intent {
+            return SingleFragmentActivity.getIntent(context, ReviewerToolbarButtonsFragment::class)
         }
     }
 }

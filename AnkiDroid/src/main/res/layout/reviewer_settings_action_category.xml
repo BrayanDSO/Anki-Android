@@ -10,13 +10,14 @@
     android:layout_marginTop="16dp"
     android:padding="8dp">
 
-    <com.ichi2.ui.FixedTextView
+    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="start"
         android:textAlignment="viewStart"
-        style="@style/PreferenceCategoryTitleTextStyle"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body2"
+        android:textColor="?attr/preferenceCategoryTitleTextColor"
         tools:text="Menu only"/>
 
 </LinearLayout>

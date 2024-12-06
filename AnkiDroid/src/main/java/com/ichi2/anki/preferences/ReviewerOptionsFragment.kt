@@ -16,6 +16,7 @@
 package com.ichi2.anki.preferences
 
 import android.os.Bundle
+import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.ichi2.anki.R
 
@@ -28,5 +29,10 @@ import com.ichi2.anki.R
 class ReviewerOptionsFragment : PreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         addPreferencesFromResource(R.xml.preferences_reviewer)
+
+        requirePreference<Preference>(R.string.reviewer_toolbar_buttons_key).setOnPreferenceClickListener {
+            startActivity(ReviewerToolbarButtonsFragment.getIntent(requireContext()))
+            true
+        }
     }
 }
