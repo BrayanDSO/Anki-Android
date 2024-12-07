@@ -27,4 +27,9 @@
         android:key="@string/hide_hard_and_easy_key"
         android:title="@string/hide_hard_and_easy"
         />
+
+    <Preference
+        android:title="Menu actions"
+        android:key="@string/reviewer_menu_settings_key"
+        android:fragment="com.ichi2.anki.preferences.ReviewerMenuSettingsFragment"/>
 </androidx.preference.PreferenceScreen>
