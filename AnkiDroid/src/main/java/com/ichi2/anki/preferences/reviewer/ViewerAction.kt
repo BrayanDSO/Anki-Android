@@ -1,0 +1,85 @@
+/*
+ *  Copyright (c) 2024 Brayan Oliveira <brayandso.dev@gmail.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify it under
+ *  the terms of the GNU General Public License as published by the Free Software
+ *  Foundation; either version 3 of the License, or (at your option) any later
+ *  version.
+ *
+ *  This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ *  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ *  PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with
+ *  this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package com.ichi2.anki.preferences.reviewer
+
+import androidx.annotation.DrawableRes
+import androidx.annotation.IdRes
+import androidx.annotation.StringRes
+import com.ichi2.anki.Flag
+import com.ichi2.anki.R
+
+/**
+ * @param menuId menu Id of the action
+ *
+ * @param defaultDisplayType the default display type of the action in the toolbar.
+ * Use `null` if the action is restricted to gestures/controls and shouldn't be in the menu,
+ * or if the item has a [parentMenu].
+ */
+enum class ViewerAction(
+    @IdRes val menuId: Int,
+    @StringRes val titleRes: Int?,
+    @DrawableRes val drawableRes: Int?,
+    val defaultDisplayType: MenuDisplayType? = null,
+    val parentMenu: ViewerAction? = null
+) {
+    // Always
+    UNDO(R.id.action_undo, R.string.undo, R.drawable.ic_undo_white, MenuDisplayType.ALWAYS),
+
+    // Menu only
+    MARK(R.id.action_mark, R.string.menu_mark_note, R.drawable.ic_star, MenuDisplayType.MENU_ONLY),
+    REDO(R.id.action_redo, R.string.redo, R.drawable.ic_redo, MenuDisplayType.MENU_ONLY),
+    DELETE(R.id.action_delete, R.string.menu_delete_note, R.drawable.ic_delete_white, MenuDisplayType.MENU_ONLY),
+    EDIT_NOTE(R.id.action_edit_note, R.string.cardeditor_title_edit_card, R.drawable.ic_mode_edit_white, MenuDisplayType.MENU_ONLY),
+    DECK_OPTIONS(R.id.action_deck_options, R.string.menu__deck_options, R.drawable.ic_tune_white, MenuDisplayType.MENU_ONLY),
+
+    // Disabled
+    CARD_INFO(R.id.action_card_info, R.string.card_info_title, R.drawable.ic_dialog_info, MenuDisplayType.DISABLED),
+    ADD_NOTE(R.id.action_add_note, R.string.menu_add_note, R.drawable.ic_add, MenuDisplayType.DISABLED),
+    USER_ACTION_1(R.id.user_action_1, R.string.user_action_1, R.drawable.user_action_1, MenuDisplayType.DISABLED),
+    USER_ACTION_2(R.id.user_action_2, R.string.user_action_2, R.drawable.user_action_2, MenuDisplayType.DISABLED),
+    USER_ACTION_3(R.id.user_action_3, R.string.user_action_3, R.drawable.user_action_3, MenuDisplayType.DISABLED),
+    USER_ACTION_4(R.id.user_action_4, R.string.user_action_4, R.drawable.user_action_4, MenuDisplayType.DISABLED),
+    USER_ACTION_5(R.id.user_action_5, R.string.user_action_5, R.drawable.user_action_5, MenuDisplayType.DISABLED),
+    USER_ACTION_6(R.id.user_action_6, R.string.user_action_6, R.drawable.user_action_6, MenuDisplayType.DISABLED),
+    USER_ACTION_7(R.id.user_action_7, R.string.user_action_7, R.drawable.user_action_7, MenuDisplayType.DISABLED),
+    USER_ACTION_8(R.id.user_action_8, R.string.user_action_8, R.drawable.user_action_8, MenuDisplayType.DISABLED),
+    USER_ACTION_9(R.id.user_action_9, R.string.user_action_9, R.drawable.user_action_9, MenuDisplayType.DISABLED),
+
+    // Submenus
+    SUSPEND(R.id.action_suspend, R.string.menu_suspend, R.drawable.ic_suspend, MenuDisplayType.MENU_ONLY),
+    BURY(R.id.action_bury, R.string.menu_bury, R.drawable.ic_flip_to_back_white, MenuDisplayType.MENU_ONLY),
+    FLAG(R.id.action_flag, R.string.menu_flag, R.drawable.ic_flag_transparent, MenuDisplayType.MENU_ONLY),
+
+    // Child items
+    BURY_NOTE(R.id.action_bury_note, R.string.menu_bury_note, drawableRes = null, parentMenu = BURY),
+    BURY_CARD(R.id.action_bury_card, R.string.menu_bury_card, drawableRes = null, parentMenu = BURY),
+    SUSPEND_NOTE(R.id.action_suspend_note, R.string.menu_suspend_note, drawableRes = null, parentMenu = SUSPEND),
+    SUSPEND_CARD(R.id.action_suspend_card, R.string.menu_suspend_card, drawableRes = null, parentMenu = SUSPEND),
+    UNSET_FLAG(Flag.NONE.id, titleRes = null, Flag.NONE.drawableRes, parentMenu = FLAG),
+    FLAG_RED(Flag.RED.id, titleRes = null, Flag.RED.drawableRes, parentMenu = FLAG),
+    FLAG_ORANGE(Flag.ORANGE.id, titleRes = null, Flag.ORANGE.drawableRes, parentMenu = FLAG),
+    FLAG_BLUE(Flag.BLUE.id, titleRes = null, Flag.BLUE.drawableRes, parentMenu = FLAG),
+    FLAG_GREEN(Flag.GREEN.id, titleRes = null, Flag.GREEN.drawableRes, parentMenu = FLAG),
+    FLAG_PINK(Flag.PINK.id, titleRes = null, Flag.PINK.drawableRes, parentMenu = FLAG),
+    FLAG_TURQUOISE(Flag.TURQUOISE.id, titleRes = null, Flag.TURQUOISE.drawableRes, parentMenu = FLAG),
+    FLAG_PURPLE(Flag.PURPLE.id, titleRes = null, Flag.PURPLE.drawableRes, parentMenu = FLAG);
+
+    companion object {
+        fun fromId(@IdRes id: Int): ViewerAction {
+            return entries.first { it.menuId == id }
+        }
+    }
+}
