@@ -16,8 +16,11 @@
 package com.ichi2.anki.preferences
 
 import android.os.Bundle
+import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.ichi2.anki.R
+import com.ichi2.anki.SingleFragmentActivity
+import com.ichi2.anki.preferences.reviewer.ReviewerMenuSettingsFragment
 
 /**
  * Developer options to test some of the new reviewer settings and features
@@ -31,5 +34,12 @@ class ReviewerOptionsFragment : PreferenceFragmentCompat() {
         rootKey: String?,
     ) {
         addPreferencesFromResource(R.xml.preferences_reviewer)
+
+        // TODO launch the fragment inside PreferencesFragment instead of using a new activity
+        requirePreference<Preference>(R.string.reviewer_menu_settings_key).setOnPreferenceClickListener {
+            val intent = SingleFragmentActivity.getIntent(requireContext(), ReviewerMenuSettingsFragment::class)
+            startActivity(intent)
+            true
+        }
     }
 }
