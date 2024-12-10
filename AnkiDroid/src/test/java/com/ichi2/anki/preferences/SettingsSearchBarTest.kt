@@ -19,7 +19,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.bytehamster.lib.preferencesearch.PreferenceItem
 import com.bytehamster.lib.preferencesearch.SearchConfiguration
 import com.ichi2.anki.RobolectricTest
-import com.ichi2.testutils.getJavaFieldAsAccessible
+import com.ichi2.anki.utils.getJavaFieldAsAccessible
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.equalTo
 import org.junit.Test
@@ -44,17 +44,17 @@ class SettingsSearchBarTest : RobolectricTest() {
         val prefItemResIdField = getJavaFieldAsAccessible(PreferenceItem::class.java, "resId")
 
         // Get the resIds of the files indexed with `SearchConfiguration.index`
-        val filesToIndex = filesToIndexField.get(searchConfig) as ArrayList<SearchConfiguration.SearchIndexItem>
+        val filesToIndex = filesToIndexField?.get(searchConfig) as ArrayList<SearchConfiguration.SearchIndexItem>
         val filesResIds =
             filesToIndex.map {
-                searchItemResIdField.get(it)
+                searchItemResIdField?.get(it)
             }
 
         // Get the resIds of preferences indexed with `SearchConfiguration.indexItem`
-        val preferencesToIndex = preferencesToIndexField.get(searchConfig) as ArrayList<PreferenceItem>
+        val preferencesToIndex = preferencesToIndexField?.get(searchConfig) as ArrayList<PreferenceItem>
         val prefItemsResIds =
             preferencesToIndex.map {
-                prefItemResIdField.get(it)
+                prefItemResIdField?.get(it)
             }
 
         // Join both lists

@@ -26,19 +26,6 @@ inline fun <reified T> KCallable<*>.isType() = returnType == T::class.createType
 
 /**
  * @param clazz Java class to get the field
- * @param fieldName name of the field
- * @return a [Field] object with `isAccessible` set to true
- */
-fun getJavaFieldAsAccessible(
-    clazz: Class<*>,
-    fieldName: String,
-): Field =
-    clazz.getDeclaredField(fieldName).apply {
-        isAccessible = true
-    }
-
-/**
- * @param clazz Java class to get the field
  * @param methodName name of the method
  * @return a [Field] object with `isAccessible` set to true
  */
