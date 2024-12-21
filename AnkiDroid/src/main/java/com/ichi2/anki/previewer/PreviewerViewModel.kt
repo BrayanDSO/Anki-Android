@@ -236,9 +236,10 @@ class PreviewerViewModel(
     /** From the [desktop code](https://github.com/ankitects/anki/blob/1ff55475b93ac43748d513794bcaabd5d7df6d9d/qt/aqt/reviewer.py#L671) */
     override suspend fun typeAnsFilter(text: String): String =
         if (showingAnswer.value) {
-            typeAnsAnswerFilter(currentCard.await(), text)
+            val typeInAnswer = TypeInAnswer.getInstance(currentCard.await(), text)
+            typeInAnswer?.answerFilter() ?: text
         } else {
-            removeTypeInAnswerTags(text)
+            TypeInAnswer.removeTypeAnswerTags(text)
         }
 
     companion object {
