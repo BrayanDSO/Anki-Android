@@ -184,7 +184,10 @@ class TemplatePreviewerViewModel(
     }
 
     // https://github.com/ankitects/anki/blob/df70564079f53e587dc44f015c503fdf6a70924f/qt/aqt/clayout.py#L579
-    override suspend fun typeAnsFilter(text: String): String =
+    override suspend fun typeAnsFilter(
+        text: String,
+        typedAnswer: String?,
+    ): String =
         if (showingAnswer.value) {
             val typeInAnswer = TypeInAnswer.getInstance(currentCard.await(), text)
             if (typeInAnswer?.expectedAnswer?.isEmpty() == true) {
