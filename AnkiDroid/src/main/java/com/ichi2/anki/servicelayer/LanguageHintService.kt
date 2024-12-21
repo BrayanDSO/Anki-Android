@@ -36,7 +36,8 @@ typealias LanguageHint = Locale
 
 object LanguageHintService {
     @CheckResult
-    fun getLanguageHintForField(field: JSONObject): LanguageHint? {
+    fun getLanguageHintForField(field: JSONObject?): LanguageHint? {
+        if (field == null) return null
         if (!field.has("ad-hint-locale")) {
             return null
         }
