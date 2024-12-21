@@ -17,6 +17,7 @@ package com.ichi2.anki.utils.ext
 
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.view.Window
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import com.ichi2.anki.preferences.sharedPrefs
@@ -33,3 +34,6 @@ val Fragment.packageManager: PackageManager
  * @see showDialogFragmentImpl
  */
 fun Fragment.showDialogFragment(newFragment: DialogFragment) = requireActivity().showDialogFragment(newFragment)
+
+val Fragment.window: Window
+    get() = requireActivity().window
