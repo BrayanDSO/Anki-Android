@@ -40,6 +40,7 @@ import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.textview.MaterialTextView
 import com.ichi2.anki.AbstractFlashcardViewer.Companion.RESULT_NO_MORE_CARDS
 import com.ichi2.anki.CollectionManager
@@ -84,6 +85,8 @@ import com.ichi2.anki.preferences.reviewer.ViewerAction.USER_ACTION_8
 import com.ichi2.anki.preferences.reviewer.ViewerAction.USER_ACTION_9
 import com.ichi2.anki.previewer.CardViewerActivity
 import com.ichi2.anki.previewer.CardViewerFragment
+import com.ichi2.anki.servicelayer.LanguageHintService
+import com.ichi2.anki.servicelayer.LanguageHintService.applyLanguageHint
 import com.ichi2.anki.snackbar.BaseSnackbarBuilderProvider
 import com.ichi2.anki.snackbar.SnackbarBuilder
 import com.ichi2.anki.snackbar.showSnackbar
@@ -93,6 +96,7 @@ import com.ichi2.anki.utils.ext.menu
 import com.ichi2.anki.utils.ext.removeSubMenu
 import com.ichi2.anki.utils.ext.sharedPrefs
 import com.ichi2.libanki.sched.Counts
+import com.ichi2.utils.AndroidUiUtils
 import kotlinx.coroutines.launch
 
 class ReviewerFragment :
@@ -236,10 +240,26 @@ class ReviewerFragment :
                 easyButton.setAnswerButtonNextTime(R.string.ease_button_easy, times?.easy)
             }
 
+        val typeAnswerLayout = view.findViewById<TextInputLayout>(R.id.type_answer_layout)
+        val autoFocusTypeAnswer = sharedPrefs().getBoolean(getString(R.string.type_in_answer_focus_key), true)
+        viewModel.showTypeAnswerBoxForField.collectLatestIn(lifecycleScope) { typeAnswerField ->
+            typeAnswerLayout.isVisible = typeAnswerField != null
+            if (typeAnswerField == null) return@collectLatestIn
+            typeAnswerLayout.editText?.apply {
+                text = null
+                val languageHint = LanguageHintService.getLanguageHintForField(typeAnswerField)
+                applyLanguageHint(languageHint)
+                if (autoFocusTypeAnswer) {
+                    AndroidUiUtils.setFocusAndOpenKeyboard(this)
+                }
+            }
+        }
+
         val showAnswerButton =
             view.findViewById<MaterialButton>(R.id.show_answer).apply {
                 setOnClickListener {
-                    viewModel.onShowAnswer()
+                    val typedAnswer = typeAnswerLayout.editText?.text?.toString()
+                    viewModel.onShowAnswer(typedAnswer = typedAnswer)
                 }
             }
         val answerButtonsLayout = view.findViewById<ConstraintLayout>(R.id.answer_buttons)

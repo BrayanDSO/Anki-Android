@@ -37,6 +37,7 @@ import com.ichi2.anki.pages.CardInfoDestination
 import com.ichi2.anki.pages.DeckOptionsDestination
 import com.ichi2.anki.preferences.getShowIntervalOnButtons
 import com.ichi2.anki.previewer.CardViewerViewModel
+import com.ichi2.anki.previewer.TypeInAnswer
 import com.ichi2.anki.reviewer.CardSide
 import com.ichi2.anki.servicelayer.MARKED_TAG
 import com.ichi2.anki.servicelayer.NoteService
@@ -55,6 +56,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.json.JSONObject
 
 class ReviewerViewModel(
     cardMediaPlayer: CardMediaPlayer,
@@ -78,6 +80,7 @@ class ReviewerViewModel(
     val undoLabelFlow = MutableStateFlow<String?>(null)
     val redoLabelFlow = MutableStateFlow<String?>(null)
     val countsFlow = MutableStateFlow(Counts() to Counts.Queue.NEW)
+    val showTypeAnswerBoxForField = MutableStateFlow<JSONObject?>(null)
 
     override val server = AnkiServer(this).also { it.start() }
     private val stateMutationKey = TimeManager.time.intTimeMS().toString()
@@ -141,13 +144,13 @@ class ReviewerViewModel(
         }
     }
 
-    fun onShowAnswer() {
+    fun onShowAnswer(typedAnswer: String? = null) {
         launchCatchingIO {
             while (!statesMutated) {
                 delay(50)
             }
             updateNextTimes()
-            showAnswer()
+            showAnswer(typedAnswer)
             loadAndPlaySounds(CardSide.ANSWER)
             if (!autoAdvance.shouldWaitForAudio()) {
                 autoAdvance.onShowAnswer()
@@ -417,11 +420,19 @@ class ReviewerViewModel(
         countsFlow.emit(state.counts to state.countsIndex)
     }
 
-    // TODO
     override suspend fun typeAnsFilter(
         text: String,
         typedAnswer: String?,
-    ): String = text
+    ): String {
+        val typeInAnswer = TypeInAnswer.getInstance(currentCard.await(), text)
+        return if (showingAnswer.value) {
+            showTypeAnswerBoxForField.emit(null)
+            typeInAnswer.answerFilter(typedAnswer ?: "")
+        } else {
+            showTypeAnswerBoxForField.emit(typeInAnswer.field)
+            TypeInAnswer.removeTypeAnswerTags(text)
+        }
+    }
 
     private suspend fun updateUndoAndRedoLabels() {
         undoLabelFlow.emit(withCol { undoLabel() })
