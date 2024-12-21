@@ -132,7 +132,7 @@ abstract class CardViewerViewModel(
         eval.emit("_showQuestion(${Json.encodeToString(question)}, ${Json.encodeToString(answer)}, '${bodyClass()}');")
     }
 
-    protected open suspend fun showAnswerInternal() {
+    protected open suspend fun showAnswer() {
         Timber.v("showAnswer()")
         showingAnswer.emit(true)
 
