@@ -16,6 +16,7 @@
 package com.ichi2.anki.previewer
 
 import android.content.Context
+import androidx.annotation.ColorInt
 import com.google.android.material.color.MaterialColors
 import com.ichi2.anki.AnkiDroidApp
 import com.ichi2.anki.LanguageUtils
@@ -46,26 +47,13 @@ fun stdHtml(
         baseTheme = "light"
     }
 
+    val canvasColor = getCanvasColor(context, nightMode).toRGBHex()
     val colors =
         if (!nightMode) {
-            val canvasColor =
-                MaterialColors
-                    .getColor(
-                        context,
-                        android.R.attr.colorBackground,
-                        android.R.color.white,
-                    ).toRGBHex()
             val fgColor =
                 MaterialColors.getColor(context, android.R.attr.textColor, android.R.color.black).toRGBHex()
             ":root { --canvas: $canvasColor ; --fg: $fgColor; }"
         } else {
-            val canvasColor =
-                MaterialColors
-                    .getColor(
-                        context,
-                        android.R.attr.colorBackground,
-                        android.R.color.black,
-                    ).toRGBHex()
             val fgColor =
                 MaterialColors.getColor(context, android.R.attr.textColor, android.R.color.white).toRGBHex()
             ":root[class*=night-mode] { --canvas: $canvasColor; --fg: $fgColor; }"
@@ -109,3 +97,12 @@ fun bodyClassForCardOrd(
 ): String = "card card${cardOrd + 1} ${bodyClass(nightMode)}"
 
 private fun bodyClass(nightMode: Boolean = Themes.currentTheme.isNightMode): String = if (nightMode) "nightMode night_mode" else ""
+
+@ColorInt
+private fun getCanvasColor(
+    context: Context,
+    nightMode: Boolean,
+): Int {
+    val defaultValue = if (nightMode) android.R.color.black else android.R.color.white
+    return MaterialColors.getColor(context, android.R.attr.colorBackground, defaultValue)
+}
