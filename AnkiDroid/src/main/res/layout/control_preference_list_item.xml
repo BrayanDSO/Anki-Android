@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.ichi2.ui.FixedTextView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -7,5 +7,7 @@
     android:paddingStart="?android:attr/listPreferredItemPaddingStart"
     android:paddingEnd="?android:attr/listPreferredItemPaddingEnd"
     android:minHeight="?android:attr/listPreferredItemHeight"
-    android:textAppearance="?attr/textAppearanceListItemSecondary"
-    tools:text="Remove ‘\u2328 Space’"/>
+    android:textAppearance="?attr/textAppearanceBodyLarge"
+    tools:text="Remove ‘\u2328 Space’"
+    android:drawableStart="@drawable/ic_remove_outline"
+    android:drawablePadding="16dp"/>

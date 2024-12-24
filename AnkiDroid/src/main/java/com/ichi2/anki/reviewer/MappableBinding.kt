@@ -121,6 +121,23 @@ sealed class MappableBinding(
         }
 
         @CheckResult
+        fun getPreferenceBindingStrings(string: String): List<String> {
+            if (string.isEmpty()) return emptyList()
+            try {
+                val version = string.takeWhile { x -> x != '/' }
+                val remainder = string.substring(version.length + 1) // skip the /
+                if (version != "1") {
+                    Timber.w("cannot handle version '$version'")
+                    return emptyList()
+                }
+                return remainder.split(PREF_SEPARATOR)
+            } catch (e: Exception) {
+                Timber.w(e, "Failed to deserialize preference")
+                return emptyList()
+            }
+        }
+
+        @CheckResult
         fun fromPreferenceString(string: String?): MutableList<MappableBinding> {
             if (string.isNullOrEmpty()) return ArrayList()
             try {
@@ -201,7 +218,7 @@ class ReviewerBinding(
     }
 
     companion object {
-        fun fromString(s: String): MappableBinding {
+        fun fromString(s: String): ReviewerBinding {
             val binding = s.substring(0, s.length - 1)
             val b = Binding.fromString(binding)
             val side =
@@ -211,6 +228,16 @@ class ReviewerBinding(
                     else -> CardSide.BOTH
                 }
             return ReviewerBinding(b, side)
+        }
+
+        fun fromPreferenceString(prefString: String?): List<ReviewerBinding> {
+            try {
+                if (prefString.isNullOrEmpty()) return emptyList()
+                val strings = getPreferenceBindingStrings(prefString)
+                return strings.map { fromString(it.substring(1)) }
+            } catch (_: Throwable) {
+                return emptyList()
+            }
         }
 
         @CheckResult

@@ -23,6 +23,7 @@ import com.ichi2.anki.reviewer.MappableBinding.Companion.toPreferenceString
 import com.ichi2.anki.ui.internationalization.toSentenceCase
 import com.ichi2.annotations.NeedsTest
 import com.ichi2.preferences.ControlPreference
+import com.ichi2.preferences.ReviewerControlPreference
 
 class ControlsSettingsFragment : SettingsFragment() {
     override val preferenceResource: Int
@@ -39,6 +40,11 @@ class ControlsSettingsFragment : SettingsFragment() {
             .filterIsInstance<ControlPreference>()
             .filter { pref -> pref.value == null }
             .forEach { pref -> pref.value = commands[pref.key]?.defaultValue?.toPreferenceString() }
+
+        allPreferences()
+            .filterIsInstance<ReviewerControlPreference>()
+            .filter { pref -> pref.getValue() == null }
+            .forEach { pref -> commands[pref.key]?.defaultValue?.toPreferenceString()?.let { pref.setValue(it) } }
 
         setTitlesFromBackend()
     }

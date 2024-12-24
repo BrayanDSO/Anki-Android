@@ -17,6 +17,7 @@ package com.ichi2.anki.cardviewer
 
 import android.content.SharedPreferences
 import android.view.KeyEvent
+import androidx.annotation.LayoutRes
 import androidx.core.content.edit
 import com.ichi2.anki.R
 import com.ichi2.anki.reviewer.Binding.Companion.keyCode
@@ -31,6 +32,10 @@ import com.ichi2.anki.reviewer.MappableBinding.Companion.toPreferenceString
 import com.ichi2.anki.reviewer.ReviewerBinding
 
 interface ScreenAction<B : MappableBinding> {
+    @get:LayoutRes
+    val nameRes: Int
+    val preferenceKey: String
+
     fun getBindings(prefs: SharedPreferences): List<B>
 }
 
@@ -95,7 +100,7 @@ enum class ViewerCommand(
         fun fromPreferenceKey(key: String) = entries.first { it.preferenceKey == key }
     }
 
-    val preferenceKey: String
+    override val preferenceKey: String
         get() = "binding_$name"
 
     fun addBinding(
@@ -138,7 +143,12 @@ enum class ViewerCommand(
         preferences.edit { putString(preferenceKey, newValue) }
     }
 
-    override fun getBindings(prefs: SharedPreferences): List<ReviewerBinding> = defaultValue
+    override fun getBindings(prefs: SharedPreferences): List<ReviewerBinding> {
+        val prefValue = prefs.getString(preferenceKey, null) ?: return defaultValue
+        return ReviewerBinding.fromPreferenceString(prefValue)
+    }
+
+    override val nameRes: Int get() = resourceId
 
     // If we use the serialised format, then this adds additional coupling to the properties.
     val defaultValue: List<ReviewerBinding>
