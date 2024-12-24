@@ -38,6 +38,7 @@ import com.ichi2.anki.dialogs.GestureSelectionDialogUtils.onGestureChanged
 import com.ichi2.anki.dialogs.KeySelectionDialogUtils
 import com.ichi2.anki.preferences.SettingsFragment
 import com.ichi2.anki.preferences.requirePreference
+import com.ichi2.anki.preferences.sharedPrefs
 import com.ichi2.anki.reviewer.Binding
 import com.ichi2.anki.reviewer.MappableBinding
 import com.ichi2.anki.reviewer.MappableBinding.Companion.toPreferenceString
@@ -85,6 +86,81 @@ abstract class ControlPreference2<T : MappableBinding>
         }
 
         override fun makeDialogFragment(): DialogFragment = ControlPreferenceDialogFragment<T>()
+
+        fun addMappableBinding(mappableBinding: MappableBinding) {
+            val bindings = action.getBindings(context.sharedPrefs()).toMutableList()
+            bindings.add(mappableBinding as ReviewerBinding)
+            value = bindings.toPreferenceString()
+        }
+
+        fun showGesturePickerDialog() {
+            AlertDialog.Builder(context).show {
+                setTitle(title)
+                val gesturePicker = GestureSelectionDialogUtils.getGesturePicker(context)
+                positiveButton(R.string.dialog_ok) {
+                    val gesture = gesturePicker.getGesture() ?: return@positiveButton
+                    val mappableBinding = ReviewerBinding.fromGesture(gesture)
+                    addMappableBinding(mappableBinding)
+                    it.dismiss()
+                }
+                negativeButton(R.string.dialog_cancel) { it.dismiss() }
+                customView(view = gesturePicker)
+                gesturePicker.onGestureChanged { _ ->
+                }
+            }
+        }
+
+        fun showKeyPickerDialog() {
+            AlertDialog.Builder(context).show {
+                val keyPicker: KeyPicker = KeyPicker.inflate(context)
+                customView(view = keyPicker.rootLayout)
+                setTitle(title)
+
+                // When the user presses a key
+                keyPicker.setBindingChangedListener { _ ->
+                }
+                positiveButton(R.string.dialog_ok) {
+                    val binding = keyPicker.getBinding() ?: return@positiveButton
+                    CardSideSelectionDialog.displayInstance(context) { side ->
+                        val currentCommand = getViewerCommandAssociatedTo(binding)
+                        if (currentCommand != null && currentCommand != action) {
+                            it.dismiss()
+                        } else {
+                            val reviewerBinding = ReviewerBinding(binding, side)
+                            addMappableBinding(reviewerBinding)
+                            it.dismiss()
+                        }
+                    }
+                }
+                negativeButton(R.string.dialog_cancel) { it.dismiss() }
+                keyPicker.setKeycodeValidation(KeySelectionDialogUtils.disallowModifierKeyCodes())
+            }
+        }
+
+        fun showAddAxisDialog() {
+            val axisPicker: AxisPicker = AxisPicker.inflate(context)
+
+            val dialog =
+                AlertDialog
+                    .Builder(context)
+                    .customView(view = axisPicker.rootLayout)
+                    .setTitle(title)
+                    .negativeButton(R.string.dialog_cancel) { it.dismiss() }
+                    .create()
+
+            axisPicker.setBindingChangedListener { _ ->
+            }
+
+            dialog.show()
+        }
+
+        private fun getViewerCommandAssociatedTo(binding: Binding): ViewerCommand? {
+            val mappings = ViewerCommand.entries.associateWith { it.getBindings(sharedPreferences!!) }
+            return mappings.entries
+                .firstOrNull { x ->
+                    x.value.any { reviewerBinding -> reviewerBinding.binding == binding }
+                }?.key
+        }
     }
 
 class ControlPreferenceDialogFragment<T : MappableBinding> : DialogFragment() {
@@ -118,19 +194,19 @@ class ControlPreferenceDialogFragment<T : MappableBinding> : DialogFragment() {
     private fun setupAddBindingDialogs(view: View) {
         view.findViewById<View>(R.id.add_gesture).apply {
             setOnClickListener {
-                showGesturePickerDialog()
+                preference.showGesturePickerDialog()
                 dismiss()
             }
             isVisible = sharedPrefs().getBoolean(GestureProcessor.PREF_KEY, false)
         }
 
         view.findViewById<View>(R.id.add_key).setOnClickListener {
-            showKeyPickerDialog()
+            preference.showKeyPickerDialog()
             dismiss()
         }
 
         view.findViewById<View>(R.id.add_axis).setOnClickListener {
-            showAddAxisDialog()
+            preference.showAddAxisDialog()
             dismiss()
         }
     }
@@ -154,88 +230,6 @@ class ControlPreferenceDialogFragment<T : MappableBinding> : DialogFragment() {
                 dismiss()
             }
         }
-    }
-
-    private fun showGesturePickerDialog() {
-        AlertDialog.Builder(requireContext()).show {
-            setTitle(title)
-            val gesturePicker = GestureSelectionDialogUtils.getGesturePicker(context)
-            positiveButton(R.string.dialog_ok) {
-                val gesture = gesturePicker.getGesture() ?: return@positiveButton
-                if (preference.action is ViewerCommand) {
-                    val mappableBinding = ReviewerBinding.fromGesture(gesture)
-                    addMappableBinding(mappableBinding)
-                    it.dismiss()
-                }
-            }
-            negativeButton(R.string.dialog_cancel) { it.dismiss() }
-            customView(view = gesturePicker)
-            gesturePicker.onGestureChanged { _ ->
-            }
-        }
-    }
-
-    private fun showKeyPickerDialog() {
-        AlertDialog.Builder(requireContext()).show {
-            val keyPicker: KeyPicker = KeyPicker.inflate(context)
-            customView(view = keyPicker.rootLayout)
-            setTitle(title)
-
-            // When the user presses a key
-            keyPicker.setBindingChangedListener { _ ->
-            }
-            positiveButton(R.string.dialog_ok) {
-                val binding = keyPicker.getBinding() ?: return@positiveButton
-                when (preference.action) {
-                    is ViewerCommand -> {
-                        CardSideSelectionDialog.displayInstance(context) { side ->
-                            val currentCommand = getViewerCommandAssociatedTo(binding)
-                            if (currentCommand != null && currentCommand != preference.action) {
-                                it.dismiss()
-                            } else {
-                                val reviewerBinding = ReviewerBinding(binding, side)
-                                addMappableBinding(reviewerBinding)
-                                it.dismiss()
-                            }
-                        }
-                    }
-                    else -> {}
-                }
-            }
-            negativeButton(R.string.dialog_cancel) { it.dismiss() }
-            keyPicker.setKeycodeValidation(KeySelectionDialogUtils.disallowModifierKeyCodes())
-        }
-    }
-
-    private fun showAddAxisDialog() {
-        val axisPicker: AxisPicker = AxisPicker.inflate(requireContext())
-
-        val dialog =
-            AlertDialog
-                .Builder(requireContext())
-                .customView(view = axisPicker.rootLayout)
-                .setTitle(title)
-                .negativeButton(R.string.dialog_cancel) { it.dismiss() }
-                .create()
-
-        axisPicker.setBindingChangedListener { _ ->
-        }
-
-        dialog.show()
-    }
-
-    private fun addMappableBinding(mappableBinding: MappableBinding) {
-        val bindings = preference.action.getBindings(preferences).toMutableList()
-        bindings.add(mappableBinding as ReviewerBinding)
-        preference.value = bindings.toPreferenceString()
-    }
-
-    private fun getViewerCommandAssociatedTo(binding: Binding): ViewerCommand? {
-        val mappings = ViewerCommand.entries.associateWith { it.getBindings(preferences) }
-        return mappings.entries
-            .firstOrNull { x ->
-                x.value.any { reviewerBinding -> reviewerBinding.binding == binding }
-            }?.key
     }
 }
 
