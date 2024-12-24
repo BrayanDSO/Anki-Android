@@ -16,13 +16,13 @@
 package com.ichi2.anki.preferences
 
 import androidx.annotation.StringRes
+import androidx.preference.Preference
 import com.ichi2.anki.CollectionManager.TR
 import com.ichi2.anki.R
 import com.ichi2.anki.cardviewer.ViewerCommand
 import com.ichi2.anki.reviewer.MappableBinding.Companion.toPreferenceString
 import com.ichi2.anki.ui.internationalization.toSentenceCase
 import com.ichi2.annotations.NeedsTest
-import com.ichi2.preferences.ControlPreference
 import com.ichi2.preferences.ReviewerControlPreference
 
 class ControlsSettingsFragment : SettingsFragment() {
@@ -37,11 +37,6 @@ class ControlsSettingsFragment : SettingsFragment() {
         // set defaultValue in the prefs creation.
         // if a preference is empty, it has a value like "1/"
         allPreferences()
-            .filterIsInstance<ControlPreference>()
-            .filter { pref -> pref.value == null }
-            .forEach { pref -> pref.value = commands[pref.key]?.defaultValue?.toPreferenceString() }
-
-        allPreferences()
             .filterIsInstance<ReviewerControlPreference>()
             .filter { pref -> pref.getValue() == null }
             .forEach { pref -> commands[pref.key]?.defaultValue?.toPreferenceString()?.let { pref.setValue(it) } }
@@ -50,39 +45,38 @@ class ControlsSettingsFragment : SettingsFragment() {
     }
 
     private fun setTitlesFromBackend() {
-        findPreference<ControlPreference>(getString(R.string.reschedule_command_key))?.let {
+        findPreference<Preference>(getString(R.string.reschedule_command_key))?.let {
             val preferenceTitle = TR.actionsSetDueDate().toSentenceCase(R.string.sentence_set_due_date)
             it.title = preferenceTitle
-            it.dialogTitle = preferenceTitle
         }
-        findPreference<ControlPreference>(getString(R.string.toggle_whiteboard_command_key))?.let {
+        findPreference<Preference>(getString(R.string.toggle_whiteboard_command_key))?.let {
             it.title = getString(R.string.gesture_toggle_whiteboard).toSentenceCase(R.string.sentence_gesture_toggle_whiteboard)
         }
-        findPreference<ControlPreference>(getString(R.string.abort_and_sync_command_key))?.let {
+        findPreference<Preference>(getString(R.string.abort_and_sync_command_key))?.let {
             it.title = getString(R.string.gesture_abort_sync).toSentenceCase(R.string.sentence_gesture_abort_sync)
         }
-        findPreference<ControlPreference>(getString(R.string.flag_red_command_key))?.let {
+        findPreference<Preference>(getString(R.string.flag_red_command_key))?.let {
             it.title = getString(R.string.gesture_flag_red).toSentenceCase(R.string.sentence_gesture_flag_red)
         }
-        findPreference<ControlPreference>(getString(R.string.flag_orange_command_key))?.let {
+        findPreference<Preference>(getString(R.string.flag_orange_command_key))?.let {
             it.title = getString(R.string.gesture_flag_orange).toSentenceCase(R.string.sentence_gesture_flag_orange)
         }
-        findPreference<ControlPreference>(getString(R.string.flag_green_command_key))?.let {
+        findPreference<Preference>(getString(R.string.flag_green_command_key))?.let {
             it.title = getString(R.string.gesture_flag_green).toSentenceCase(R.string.sentence_gesture_flag_green)
         }
-        findPreference<ControlPreference>(getString(R.string.flag_blue_command_key))?.let {
+        findPreference<Preference>(getString(R.string.flag_blue_command_key))?.let {
             it.title = getString(R.string.gesture_flag_blue).toSentenceCase(R.string.sentence_gesture_flag_blue)
         }
-        findPreference<ControlPreference>(getString(R.string.flag_pink_command_key))?.let {
+        findPreference<Preference>(getString(R.string.flag_pink_command_key))?.let {
             it.title = getString(R.string.gesture_flag_pink).toSentenceCase(R.string.sentence_gesture_flag_pink)
         }
-        findPreference<ControlPreference>(getString(R.string.flag_turquoise_command_key))?.let {
+        findPreference<Preference>(getString(R.string.flag_turquoise_command_key))?.let {
             it.title = getString(R.string.gesture_flag_turquoise).toSentenceCase(R.string.sentence_gesture_flag_turquoise)
         }
-        findPreference<ControlPreference>(getString(R.string.flag_purple_command_key))?.let {
+        findPreference<Preference>(getString(R.string.flag_purple_command_key))?.let {
             it.title = getString(R.string.gesture_flag_purple).toSentenceCase(R.string.sentence_gesture_flag_purple)
         }
-        findPreference<ControlPreference>(getString(R.string.remove_flag_command_key))?.let {
+        findPreference<Preference>(getString(R.string.remove_flag_command_key))?.let {
             it.title = getString(R.string.gesture_flag_remove).toSentenceCase(R.string.sentence_gesture_flag_remove)
         }
     }
