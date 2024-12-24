@@ -40,10 +40,10 @@ class ControlsSettingsFragment : SettingsFragment() {
             .filter { pref -> pref.value == null }
             .forEach { pref -> pref.value = commands[pref.key]?.defaultValue?.toPreferenceString() }
 
-        setDynamicTitle()
+        setTitlesFromBackend()
     }
 
-    private fun setDynamicTitle() {
+    private fun setTitlesFromBackend() {
         findPreference<ControlPreference>(getString(R.string.reschedule_command_key))?.let {
             val preferenceTitle = TR.actionsSetDueDate().toSentenceCase(R.string.sentence_set_due_date)
             it.title = preferenceTitle

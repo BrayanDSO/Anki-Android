@@ -49,25 +49,24 @@
         android:valueFrom="20"
         android:valueTo="180"
         app:displayValue="true"/>
-
     <PreferenceCategory android:title="@string/answer_buttons">
-        <com.ichi2.preferences.ControlPreference
+        <com.ichi2.preferences.ControlPreference2
             android:key="@string/show_answer_command_key"
             android:title="@string/show_answer"
             />
-        <com.ichi2.preferences.ControlPreference
+        <com.ichi2.preferences.ControlPreference2
             android:key="@string/answer_again_command_key"
             android:title="@string/answer_again"
             />
-        <com.ichi2.preferences.ControlPreference
+        <com.ichi2.preferences.ControlPreference2
             android:key="@string/answer_hard_command_key"
             android:title="@string/answer_hard"
             />
-        <com.ichi2.preferences.ControlPreference
+        <com.ichi2.preferences.ControlPreference2
             android:key="@string/answer_good_command_key"
             android:title="@string/answer_good"
             />
-        <com.ichi2.preferences.ControlPreference
+        <com.ichi2.preferences.ControlPreference2
             android:key="@string/answer_easy_command_key"
             android:title="@string/answer_easy"
             />

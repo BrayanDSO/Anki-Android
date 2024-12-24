@@ -30,10 +30,14 @@ import com.ichi2.anki.reviewer.MappableBinding.Companion.fromPreference
 import com.ichi2.anki.reviewer.MappableBinding.Companion.toPreferenceString
 import com.ichi2.anki.reviewer.ReviewerBinding
 
+interface ScreenAction<B : MappableBinding> {
+    fun getBindings(prefs: SharedPreferences): List<B>
+}
+
 /** Abstraction: Discuss moving many of these to 'Reviewer'  */
 enum class ViewerCommand(
     val resourceId: Int,
-) {
+) : ScreenAction<ReviewerBinding> {
     SHOW_ANSWER(R.string.show_answer),
     FLIP_OR_ANSWER_EASE1(R.string.answer_again),
     FLIP_OR_ANSWER_EASE2(R.string.answer_hard),
@@ -134,8 +138,10 @@ enum class ViewerCommand(
         preferences.edit { putString(preferenceKey, newValue) }
     }
 
+    override fun getBindings(prefs: SharedPreferences): List<ReviewerBinding> = defaultValue
+
     // If we use the serialised format, then this adds additional coupling to the properties.
-    val defaultValue: List<MappableBinding>
+    val defaultValue: List<ReviewerBinding>
         get() {
             return when (this) {
                 FLIP_OR_ANSWER_EASE1 ->

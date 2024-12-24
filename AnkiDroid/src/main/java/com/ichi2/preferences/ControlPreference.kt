@@ -145,8 +145,7 @@ class ControlPreference : ListPreference {
 
                     // When the user presses a key
                     keyPicker.setBindingChangedListener { binding ->
-                        val mappableBinding =
-                            ReviewerBinding(binding, CardSide.BOTH)
+                        val mappableBinding = ReviewerBinding(binding, CardSide.BOTH)
                         warnIfBindingIsUsed(mappableBinding, keyPicker)
                     }
 
