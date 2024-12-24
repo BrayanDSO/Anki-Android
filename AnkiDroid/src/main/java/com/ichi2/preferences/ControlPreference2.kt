@@ -191,7 +191,8 @@ class ControlPreferenceDialogFragment<M : MappableBinding> : DialogFragment() {
 
         return AlertDialog.Builder(requireContext()).create {
             setTitle(preference.title)
-            customView(view, paddingTop = 32)
+            setIcon(preference.icon)
+            customView(view, paddingTop = 24)
             negativeButton(R.string.dialog_cancel)
         }
     }
