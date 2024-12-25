@@ -17,6 +17,7 @@ package com.ichi2.anki.cardviewer
 
 import android.content.SharedPreferences
 import android.view.KeyEvent
+import androidx.annotation.LayoutRes
 import androidx.core.content.edit
 import com.ichi2.anki.R
 import com.ichi2.anki.reviewer.Binding.Companion.keyCode
@@ -26,14 +27,21 @@ import com.ichi2.anki.reviewer.Binding.ModifierKeys.Companion.ctrl
 import com.ichi2.anki.reviewer.Binding.ModifierKeys.Companion.shift
 import com.ichi2.anki.reviewer.CardSide
 import com.ichi2.anki.reviewer.MappableBinding
-import com.ichi2.anki.reviewer.MappableBinding.Companion.fromPreference
 import com.ichi2.anki.reviewer.MappableBinding.Companion.toPreferenceString
-import com.ichi2.anki.reviewer.MappableBinding.Screen
+import com.ichi2.anki.reviewer.ReviewerBinding
+
+interface ScreenAction<B : MappableBinding> {
+    @get:LayoutRes
+    val nameRes: Int
+    val preferenceKey: String
+
+    fun getBindings(prefs: SharedPreferences): List<B>
+}
 
 /** Abstraction: Discuss moving many of these to 'Reviewer'  */
 enum class ViewerCommand(
     val resourceId: Int,
-) {
+) : ScreenAction<ReviewerBinding> {
     SHOW_ANSWER(R.string.show_answer),
     FLIP_OR_ANSWER_EASE1(R.string.answer_again),
     FLIP_OR_ANSWER_EASE2(R.string.answer_hard),
@@ -91,7 +99,7 @@ enum class ViewerCommand(
         fun fromPreferenceKey(key: String) = entries.first { it.preferenceKey == key }
     }
 
-    val preferenceKey: String
+    override val preferenceKey: String
         get() = "binding_$name"
 
     fun addBinding(
@@ -128,26 +136,22 @@ enum class ViewerCommand(
         binding: MappableBinding,
         performAdd: (MutableList<MappableBinding>, MappableBinding) -> Boolean,
     ) {
-        val bindings: MutableList<MappableBinding> = fromPreference(preferences, this)
+        val bindings: MutableList<MappableBinding> = this.getBindings(preferences).toMutableList()
         performAdd(bindings, binding)
         val newValue: String = bindings.toPreferenceString()
         preferences.edit { putString(preferenceKey, newValue) }
     }
 
-    // If we use the serialised format, then this adds additional coupling to the properties.
-    val defaultValue: List<MappableBinding>
-        get() {
-            // all of the default commands are currently for the Reviewer
-            fun keyCode(
-                keycode: Int,
-                side: CardSide,
-                modifierKeys: ModifierKeys = ModifierKeys.none(),
-            ) = keyCode(keycode, Screen.Reviewer(side), modifierKeys)
+    override fun getBindings(prefs: SharedPreferences): List<ReviewerBinding> {
+        val prefValue = prefs.getString(preferenceKey, null) ?: return defaultValue
+        return ReviewerBinding.fromPreferenceString(prefValue)
+    }
 
-            fun unicode(
-                c: Char,
-                side: CardSide,
-            ) = unicode(c, Screen.Reviewer(side))
+    override val nameRes: Int get() = resourceId
+
+    // If we use the serialised format, then this adds additional coupling to the properties.
+    val defaultValue: List<ReviewerBinding>
+        get() {
             return when (this) {
                 FLIP_OR_ANSWER_EASE1 ->
                     listOf(
@@ -256,14 +260,14 @@ enum class ViewerCommand(
 
     private fun keyCode(
         keycode: Int,
-        screen: Screen,
+        side: CardSide,
         keys: ModifierKeys = ModifierKeys.none(),
-    ): MappableBinding = MappableBinding(keyCode(keys, keycode), screen)
+    ): ReviewerBinding = ReviewerBinding(keyCode(keys, keycode), side)
 
     private fun unicode(
         c: Char,
-        screen: Screen,
-    ): MappableBinding = MappableBinding(unicode(c), screen)
+        side: CardSide,
+    ): ReviewerBinding = ReviewerBinding(unicode(c), side)
 
     fun interface CommandProcessor {
         /**

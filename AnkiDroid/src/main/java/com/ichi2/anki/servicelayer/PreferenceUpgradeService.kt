@@ -34,9 +34,8 @@ import com.ichi2.anki.reviewer.Binding
 import com.ichi2.anki.reviewer.Binding.Companion.keyCode
 import com.ichi2.anki.reviewer.CardSide
 import com.ichi2.anki.reviewer.FullScreenMode
-import com.ichi2.anki.reviewer.MappableBinding
 import com.ichi2.anki.reviewer.MappableBinding.Companion.toPreferenceString
-import com.ichi2.anki.reviewer.screenBuilder
+import com.ichi2.anki.reviewer.ReviewerBinding
 import com.ichi2.libanki.Consts
 import com.ichi2.utils.HashUtil.hashSetInit
 import timber.log.Timber
@@ -385,7 +384,7 @@ object PreferenceUpgradeService {
                 Timber.i("Moving preference from '%s' to '%s'", oldGesturePreferenceKey, command.preferenceKey)
 
                 // add to the binding_COMMANDNAME preference
-                val mappableBinding = MappableBinding(binding, command.screenBuilder(CardSide.BOTH))
+                val mappableBinding = ReviewerBinding(binding, CardSide.BOTH)
                 command.addBindingAtEnd(preferences, mappableBinding)
             }
         }
@@ -483,8 +482,8 @@ object PreferenceUpgradeService {
                 val destinyPrefValue = preferences.getString(destinyPrefKey, null)
 
                 val joinedBindings =
-                    MappableBinding.fromPreferenceString(destinyPrefValue) +
-                        MappableBinding.fromPreferenceString(sourcePrefValue)
+                    ReviewerBinding.fromPreferenceString(destinyPrefValue) +
+                        ReviewerBinding.fromPreferenceString(sourcePrefValue)
                 preferences.edit {
                     putString(destinyPrefKey, joinedBindings.toPreferenceString())
                     remove(sourcePrefKey)

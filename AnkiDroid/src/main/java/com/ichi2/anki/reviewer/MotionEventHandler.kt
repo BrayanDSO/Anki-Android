@@ -112,14 +112,20 @@ class MotionEventHandler(
             return MotionEventHandler(viewer, handlers)
         }
 
-        private fun getAxisButtonBindings(context: Context) =
-            sequence {
-                for ((command, bindings) in MappableBinding.allMappings(context.sharedPrefs())) {
+        private fun getAxisButtonBindings(context: Context): Sequence<SingleAxisDetector> {
+            val prefs = context.sharedPrefs()
+            val mappings =
+                ViewerCommand.entries.map {
+                    Pair(it, it.getBindings(prefs))
+                }
+            return sequence {
+                for ((command, bindings) in mappings) {
                     for (binding in bindings.map { it.binding }.filterIsInstance<Binding.AxisButtonBinding>()) {
                         yield(SingleAxisDetector(command, binding))
                     }
                 }
             }
+        }
     }
 }
 
