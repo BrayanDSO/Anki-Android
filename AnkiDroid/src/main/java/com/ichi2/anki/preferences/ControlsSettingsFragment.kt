@@ -15,34 +15,84 @@
  */
 package com.ichi2.anki.preferences
 
+import android.os.Bundle
+import android.view.View
 import androidx.annotation.StringRes
+import androidx.annotation.XmlRes
 import androidx.preference.Preference
+import androidx.preference.get
+import com.google.android.material.tabs.TabLayout
 import com.ichi2.anki.CollectionManager.TR
 import com.ichi2.anki.R
 import com.ichi2.anki.cardviewer.ViewerCommand
 import com.ichi2.anki.reviewer.MappableBinding.Companion.toPreferenceString
 import com.ichi2.anki.ui.internationalization.toSentenceCase
 import com.ichi2.annotations.NeedsTest
-import com.ichi2.preferences.ReviewerControlPreference
+import com.ichi2.preferences.ControlPreference
+import timber.log.Timber
 
-class ControlsSettingsFragment : SettingsFragment() {
+class ControlsSettingsFragment :
+    SettingsFragment(),
+    TabLayout.OnTabSelectedListener {
     override val preferenceResource: Int
         get() = R.xml.preferences_controls
     override val analyticsScreenNameConstant: String
         get() = "prefs.controls"
 
+    private var staticPreferencesCount: Int = 0
+
     @NeedsTest("Keys and titles in the XML layout are the same of the ViewerCommands")
     override fun initSubscreen() {
+        requirePreference<Preference>(R.string.pref_controls_tab_layout_key).setViewId(R.id.tab_layout)
+        staticPreferencesCount = preferenceScreen.preferenceCount
+    }
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+
+        listView.post {
+            val tabLayout = listView.findViewById<TabLayout>(R.id.tab_layout)
+            setupTabLayout(tabLayout)
+        }
+    }
+
+    private fun setupTabLayout(tabLayout: TabLayout) {
+        tabLayout.addOnTabSelectedListener(this)
+        for (screen in ControlPreferenceScreen.entries) {
+            val tab =
+                tabLayout.newTab().apply {
+                    setText(screen.titleRes)
+                }
+            tabLayout.addTab(tab)
+        }
+    }
+
+    private fun getScreen(tab: TabLayout.Tab): ControlPreferenceScreen = ControlPreferenceScreen.entries[tab.position]
+
+    override fun onTabSelected(tab: TabLayout.Tab) {
+        val screen = getScreen(tab)
+        Timber.v("Selected tab %d - %s", tab.position, screen.name)
+        addPreferencesFromResource(screen.xmlRes)
+
         val commands = ViewerCommand.entries.associateBy { it.preferenceKey }
         // set defaultValue in the prefs creation.
         // if a preference is empty, it has a value like "1/"
         allPreferences()
-            .filterIsInstance<ReviewerControlPreference>()
+            .filterIsInstance<ControlPreference<*>>()
             .filter { pref -> pref.getValue() == null }
             .forEach { pref -> commands[pref.key]?.defaultValue?.toPreferenceString()?.let { pref.setValue(it) } }
-
-        setTitlesFromBackend()
     }
+
+    override fun onTabUnselected(tab: TabLayout.Tab?) {
+        for (i in staticPreferencesCount until preferenceScreen.preferenceCount) {
+            preferenceScreen.removePreference(preferenceScreen[staticPreferencesCount])
+        }
+    }
+
+    override fun onTabReselected(tab: TabLayout.Tab?) = Unit
 
     private fun setTitlesFromBackend() {
         findPreference<Preference>(getString(R.string.reschedule_command_key))?.let {
@@ -84,4 +134,12 @@ class ControlsSettingsFragment : SettingsFragment() {
     private fun String.toSentenceCase(
         @StringRes resId: Int,
     ): String = this.toSentenceCase(this@ControlsSettingsFragment, resId)
+}
+
+enum class ControlPreferenceScreen(
+    @XmlRes val xmlRes: Int,
+    @StringRes val titleRes: Int,
+) {
+    REVIEWER(R.xml.preferences_reviewer_controls, R.string.pref_cat_reviewer),
+    PREVIEWER(R.xml.preferences_accessibility, R.string.accessibility),
 }
