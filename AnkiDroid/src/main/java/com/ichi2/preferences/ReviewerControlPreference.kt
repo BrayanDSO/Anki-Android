@@ -102,8 +102,9 @@ class ReviewerControlPreference : ControlPreference2<ReviewerBinding> {
         side: CardSide,
     ) {
         val reviewerBinding = ReviewerBinding(binding, side)
-        val bindings = ReviewerBinding.fromPreferenceString(getValue() ?: "").toMutableList()
+        val bindings = ReviewerBinding.fromPreferenceString(getValue()).toMutableList()
         bindings.add(reviewerBinding)
-        setValue(bindings.toPreferenceString())
+        val newPrefValue = bindings.toPreferenceString()
+        setValue(newPrefValue)
     }
 }

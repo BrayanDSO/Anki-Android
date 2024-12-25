@@ -128,7 +128,7 @@ sealed class MappableBinding(
                 Timber.w("cannot handle version of string %s", string)
                 return emptyList()
             }
-            return string.substring(VERSION_PREFIX.length).split(PREF_SEPARATOR)
+            return string.substring(VERSION_PREFIX.length).split(PREF_SEPARATOR).filter { it.isNotEmpty() }
         }
 
         @CheckResult
@@ -179,24 +179,15 @@ class ReviewerBinding(
             side === other.side
     }
 
-    override fun hashCode(): Int = Objects.hash(getBindingHash(), 'r')
+    override fun hashCode(): Int = Objects.hash(getBindingHash(), PREFIX)
 
     override fun toPreferenceString(): String? {
-        if (!binding.isValid) {
-            return null
-        }
-        val s =
-            StringBuilder()
-                .append('r')
-                .append(binding.toString())
-        // don't serialise problematic bindings
-        if (s.isEmpty()) {
-            return null
-        }
+        if (!binding.isValid) return null
+        val s = StringBuilder().append(PREFIX).append(binding.toString())
         when (side) {
-            CardSide.QUESTION -> s.append('0')
-            CardSide.ANSWER -> s.append('1')
-            CardSide.BOTH -> s.append('2')
+            CardSide.QUESTION -> s.append(QUESTION_SUFFIX)
+            CardSide.ANSWER -> s.append(ANSWER_SUFFIX)
+            CardSide.BOTH -> s.append(QUESTION_AND_ANSWER_SUFFIX)
         }
         return s.toString()
     }
@@ -212,14 +203,19 @@ class ReviewerBinding(
     }
 
     companion object {
+        private const val PREFIX = "r"
+        private const val QUESTION_SUFFIX = '0'
+        private const val ANSWER_SUFFIX = '1'
+        private const val QUESTION_AND_ANSWER_SUFFIX = '2'
+
         fun fromString(string: String): ReviewerBinding? {
             if (string.isEmpty()) return null
             val bindingString = string.substring(0, string.length - 1)
             val binding = Binding.fromString(bindingString)
             val side =
                 when (string.last()) {
-                    '0' -> CardSide.QUESTION
-                    '1' -> CardSide.ANSWER
+                    QUESTION_SUFFIX -> CardSide.QUESTION
+                    ANSWER_SUFFIX -> CardSide.ANSWER
                     else -> CardSide.BOTH
                 }
             return ReviewerBinding(binding, side)
@@ -228,7 +224,10 @@ class ReviewerBinding(
         fun fromPreferenceString(prefString: String?): List<ReviewerBinding> {
             if (prefString.isNullOrEmpty()) return emptyList()
             val strings = getPreferenceBindingStrings(prefString) // TODO
-            return strings.mapNotNull { fromString(it.substring(1)) }
+            return strings.mapNotNull {
+                if (it.isEmpty()) return@mapNotNull null
+                fromString(it.substring(1))
+            }
         }
 
         @CheckResult
