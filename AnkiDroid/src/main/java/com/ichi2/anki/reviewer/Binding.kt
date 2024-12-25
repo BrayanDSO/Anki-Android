@@ -23,6 +23,7 @@ import com.ichi2.anki.utils.ext.ifNotZero
 import com.ichi2.utils.StringUtil
 import com.ichi2.utils.lastIndexOfOrNull
 import timber.log.Timber
+import java.util.Objects
 
 sealed interface Binding {
     data class GestureInput(
@@ -35,6 +36,10 @@ sealed interface Binding {
                 append(GESTURE_PREFIX)
                 append(gesture)
             }
+
+        override fun equals(other: Any?): Boolean = other is GestureInput && gesture == other.gesture
+
+        override fun hashCode(): Int = Objects.hash(gesture)
     }
 
     /**
@@ -85,6 +90,15 @@ sealed interface Binding {
                 else -> KEY_PREFIX.toString()
             }
 
+        override fun equals(other: Any?): Boolean {
+            if (other !is KeyCode) return false
+            if (keycode != other.keycode) return false
+            if (modifierKeys != other.modifierKeys) return false
+            return true
+        }
+
+        override fun hashCode(): Int = Objects.hash(keycode, modifierKeys)
+
         override fun toDisplayString(context: Context): String =
             buildString {
                 append(getKeyCodePrefix())
@@ -121,6 +135,10 @@ sealed interface Binding {
                 append(modifierKeys.toString())
                 append(unicodeCharacter)
             }
+
+        override fun equals(other: Any?): Boolean = super.equals(other)
+
+        override fun hashCode(): Int = Objects.hash(unicodeCharacter, modifierKeys)
     }
 
     data object UnknownBinding : Binding {
@@ -167,6 +185,13 @@ sealed interface Binding {
                 if (alt) append("Alt+")
                 if (shift) append("Shift+")
             }
+
+        override fun equals(other: Any?): Boolean {
+            if (other !is ModifierKeys) return false
+            return semiStructuralEquals(other)
+        }
+
+        override fun hashCode(): Int = Objects.hash(shift, ctrl, alt, semiStructuralEquals(this))
 
         fun semiStructuralEquals(keys: ModifierKeys): Boolean {
             if (this.alt != keys.alt || this.ctrl != keys.ctrl) {
@@ -250,9 +275,9 @@ sealed interface Binding {
         /**
          * This returns multiple bindings due to the "default" implementation not knowing what the keycode for a button is
          */
-        fun possibleKeyBindings(event: KeyEvent): List<KeyBinding> {
+        fun possibleKeyBindings(event: KeyEvent): Set<KeyBinding> {
             val modifiers = ModifierKeys(event.isShiftPressed, event.isCtrlPressed, event.isAltPressed)
-            val ret: MutableList<KeyBinding> = ArrayList()
+            val ret = mutableSetOf<KeyBinding>()
             event.keyCode.ifNotZero { keyCode -> ret.add(keyCode(keyCode, modifiers)) }
 
             // passing in metaState: 0 means that Ctrl+1 returns '1' instead of '\0'
@@ -267,7 +292,6 @@ sealed interface Binding {
                         Timber.w(e)
                     }
                 }
-
             return ret
         }
 

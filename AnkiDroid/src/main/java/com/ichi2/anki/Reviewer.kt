@@ -79,12 +79,14 @@ import com.ichi2.anki.reviewer.AnswerButtons.Companion.getBackgroundColors
 import com.ichi2.anki.reviewer.AnswerButtons.Companion.getTextColors
 import com.ichi2.anki.reviewer.AnswerTimer
 import com.ichi2.anki.reviewer.AutomaticAnswerAction
+import com.ichi2.anki.reviewer.BindingProcessor
 import com.ichi2.anki.reviewer.CardMarker
 import com.ichi2.anki.reviewer.FullScreenMode
 import com.ichi2.anki.reviewer.FullScreenMode.Companion.fromPreference
 import com.ichi2.anki.reviewer.FullScreenMode.Companion.isFullScreenReview
-import com.ichi2.anki.reviewer.PeripheralKeymap
+import com.ichi2.anki.reviewer.ReviewerBinding
 import com.ichi2.anki.reviewer.ReviewerUi
+import com.ichi2.anki.reviewer.ScreenKeyMap
 import com.ichi2.anki.scheduling.ForgetCardsDialog
 import com.ichi2.anki.scheduling.SetDueDateDialog
 import com.ichi2.anki.scheduling.registerOnForgetHandler
@@ -133,7 +135,8 @@ import kotlin.coroutines.resume
 @NeedsTest("#14709: Timebox shouldn't appear instantly when the Reviewer is opened")
 open class Reviewer :
     AbstractFlashcardViewer(),
-    ReviewerUi {
+    ReviewerUi,
+    BindingProcessor<ReviewerBinding, ViewerCommand> {
     private var queueState: CurrentQueueState? = null
     private val customSchedulingKey = TimeManager.time.intTimeMS().toString()
     private var hasDrawerSwipeConflicts = false
@@ -197,7 +200,7 @@ open class Reviewer :
     private lateinit var toolbar: Toolbar
 
     @VisibleForTesting
-    protected val processor = PeripheralKeymap(this, this)
+    protected lateinit var processor: ScreenKeyMap<ReviewerBinding, ViewerCommand>
 
     private val addNoteLauncher =
         registerForActivityResult(
@@ -222,6 +225,7 @@ open class Reviewer :
         textBarReview = findViewById(R.id.review_number)
         toolbar = findViewById(R.id.toolbar)
         micToolBarLayer = findViewById(R.id.mic_tool_bar_layer)
+        processor = ScreenKeyMap(sharedPrefs(), ViewerCommand.entries, this)
         if (sharedPrefs().getString("answerButtonPosition", "bottom") == "bottom" && !navBarNeedsScrim) {
             setNavigationBarColor(R.attr.showAnswerColor)
         }
@@ -912,21 +916,11 @@ open class Reviewer :
         if (answerFieldIsFocused()) {
             return super.onKeyDown(keyCode, event)
         }
-        if (processor.onKeyDown(keyCode, event) || super.onKeyDown(keyCode, event)) {
+        if (processor.onKeyDown(event) || super.onKeyDown(keyCode, event)) {
             return true
         }
         return false
     }
-
-    override fun onKeyUp(
-        keyCode: Int,
-        event: KeyEvent,
-    ): Boolean =
-        if (processor.onKeyUp(keyCode, event)) {
-            true
-        } else {
-            super.onKeyUp(keyCode, event)
-        }
 
     override fun onGenericMotionEvent(event: MotionEvent?): Boolean {
         if (motionEventHandler.onGenericMotionEvent(event)) {
@@ -983,7 +977,6 @@ open class Reviewer :
         val preferences = super.restorePreferences()
         prefHideDueCount = preferences.getBoolean("hideDueCount", false)
         prefShowETA = preferences.getBoolean("showETA", false)
-        processor.setup()
         prefFullscreenReview = isFullScreenReview(preferences)
         actionButtons.setup(preferences)
         return preferences
@@ -1671,4 +1664,6 @@ open class Reviewer :
         /** Default (500ms) time for action snackbars, such as undo, bury and suspend */
         const val ACTION_SNACKBAR_TIME = 500
     }
+
+    override fun executeAction(action: ViewerCommand): Boolean = executeCommand(action, null)
 }

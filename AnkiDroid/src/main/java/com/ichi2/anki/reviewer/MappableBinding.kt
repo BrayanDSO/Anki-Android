@@ -30,8 +30,8 @@ import com.ichi2.utils.hash
 import timber.log.Timber
 import java.util.Objects
 
-interface BindingProcessor<B : MappableBinding, A : ScreenAction<B>> {
-    fun executeAction(action: A)
+fun interface BindingProcessor<B : MappableBinding, A : ScreenAction<B>> {
+    fun executeAction(action: A): Boolean
 }
 
 /**
