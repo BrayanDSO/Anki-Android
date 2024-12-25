@@ -31,7 +31,6 @@ import com.ichi2.anki.preferences.sharedPrefs
 import com.ichi2.anki.reviewer.Binding
 import com.ichi2.anki.reviewer.FullScreenMode
 import com.ichi2.anki.reviewer.FullScreenMode.Companion.setPreference
-import com.ichi2.anki.reviewer.MappableBinding
 import com.ichi2.anki.reviewer.MappableBinding.Companion.toPreferenceString
 import com.ichi2.anki.reviewer.ReviewerBinding
 import com.ichi2.libanki.Consts
@@ -297,7 +296,7 @@ class ReviewerNoParamTest : RobolectricTest() {
     private fun disableGestures(vararg gestures: Gesture) {
         val prefs = targetContext.sharedPrefs()
         for (command in ViewerCommand.entries) {
-            for (mappableBinding in MappableBinding.fromPreference(prefs, command)) {
+            for (mappableBinding in command.getBindings(prefs)) {
                 val gestureBinding = mappableBinding.binding as? Binding.GestureInput? ?: continue
                 if (gestureBinding.gesture in gestures) {
                     val bindings: MutableList<ReviewerBinding> =

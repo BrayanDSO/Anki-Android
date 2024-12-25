@@ -22,7 +22,6 @@ import com.ichi2.anki.AbstractFlashcardViewer
 import com.ichi2.anki.AnkiDroidApp
 import com.ichi2.anki.cardviewer.ViewerCommand
 import com.ichi2.anki.preferences.sharedPrefs
-import com.ichi2.anki.reviewer.MappableBinding.Companion.fromPreference
 import com.ichi2.compat.CompatHelper
 import timber.log.Timber
 
@@ -117,7 +116,7 @@ class MotionEventHandler(
             val prefs = context.sharedPrefs()
             val mappings =
                 ViewerCommand.entries.map {
-                    Pair(it, fromPreference(prefs, it))
+                    Pair(it, it.getBindings(prefs))
                 }
             return sequence {
                 for ((command, bindings) in mappings) {

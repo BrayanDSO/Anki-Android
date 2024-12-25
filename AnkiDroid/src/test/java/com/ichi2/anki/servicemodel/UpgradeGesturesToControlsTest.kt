@@ -71,7 +71,7 @@ class UpgradeGesturesToControlsTest(
 
         assertThat(prefs.contains(testData.affectedPreferenceKey), equalTo(true))
         assertThat(prefs.contains(testData.unaffectedPreferenceKey), equalTo(false))
-        assertThat("example command should have no defaults", MappableBinding.fromPreference(prefs, command), empty())
+        assertThat("example command should have no defaults", command.getBindings(prefs), empty())
 
         upgradeAllGestures()
 
@@ -83,7 +83,7 @@ class UpgradeGesturesToControlsTest(
         assertThat("legacy preference removed", prefs.contains(testData.affectedPreferenceKey), equalTo(false))
         assertThat("new preference added", prefs.contains(command.preferenceKey), equalTo(true))
 
-        val fromPreference = MappableBinding.fromPreference(prefs, command)
+        val fromPreference = command.getBindings(prefs)
         assertThat(fromPreference, hasSize(1))
         val binding = fromPreference.first()
 
@@ -102,7 +102,7 @@ class UpgradeGesturesToControlsTest(
         assertThat(prefs.contains(testData.affectedPreferenceKey), equalTo(true))
         assertThat(prefs.contains(testData.unaffectedPreferenceKey), equalTo(false))
         assertThat("new preference does not exist", prefs.contains(command.preferenceKey), equalTo(false))
-        val previousCommands = MappableBinding.fromPreference(prefs, command)
+        val previousCommands = command.getBindings(prefs)
         assertThat("example command should have defaults", previousCommands, not(empty()))
 
         upgradeAllGestures()
@@ -115,7 +115,7 @@ class UpgradeGesturesToControlsTest(
         assertThat("legacy preference removed", prefs.contains(testData.affectedPreferenceKey), equalTo(false))
         assertThat("new preference exists", prefs.contains(command.preferenceKey), equalTo(true))
 
-        val currentCommands = MappableBinding.fromPreference(prefs, command)
+        val currentCommands = command.getBindings(prefs)
         assertThat("a binding was added to '${command.preferenceKey}'", currentCommands, hasSize(previousCommands.size + 1))
 
         // ensure that the order was not changed - the last element is not included in the zip
@@ -142,7 +142,7 @@ class UpgradeGesturesToControlsTest(
         assertThat(prefs.contains(testData.affectedPreferenceKey), equalTo(true))
         assertThat(prefs.contains(testData.unaffectedPreferenceKey), equalTo(false))
         assertThat("new preference exists", prefs.contains(command.preferenceKey), equalTo(true))
-        val previousCommands = MappableBinding.fromPreference(prefs, command)
+        val previousCommands = command.getBindings(prefs)
         assertThat("example command should have defaults", previousCommands, hasSize(2))
         assertThat(previousCommands.first(), equalTo(testData.binding))
 

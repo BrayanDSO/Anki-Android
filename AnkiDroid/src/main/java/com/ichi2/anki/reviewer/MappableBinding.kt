@@ -149,19 +149,10 @@ sealed class MappableBinding(
         }
 
         @CheckResult
-        fun fromPreference(
-            prefs: SharedPreferences,
-            command: ViewerCommand,
-        ): MutableList<MappableBinding> {
-            val value = prefs.getString(command.preferenceKey, null) ?: return command.defaultValue.toMutableList()
-            return fromPreferenceString(value)
-        }
-
-        @CheckResult
         fun allMappings(prefs: SharedPreferences): MutableList<Pair<ViewerCommand, MutableList<MappableBinding>>> =
             ViewerCommand.entries
                 .map {
-                    Pair(it, fromPreference(prefs, it))
+                    Pair(it, it.getBindings(prefs).toMutableList<MappableBinding>())
                 }.toMutableList()
     }
 }
@@ -210,7 +201,10 @@ class ReviewerBinding(
 
         fun fromString(string: String): ReviewerBinding? {
             if (string.isEmpty()) return null
-            val bindingString = string.substring(0, string.length - 1)
+            val bindingString =
+                StringBuilder(string)
+                    .substring(0, string.length - 1)
+                    .removePrefix(PREFIX)
             val binding = Binding.fromString(bindingString)
             val side =
                 when (string.last()) {
@@ -223,11 +217,8 @@ class ReviewerBinding(
 
         fun fromPreferenceString(prefString: String?): List<ReviewerBinding> {
             if (prefString.isNullOrEmpty()) return emptyList()
-            val strings = getPreferenceBindingStrings(prefString) // TODO
-            return strings.mapNotNull {
-                if (it.isEmpty()) return@mapNotNull null
-                fromString(it.substring(1))
-            }
+            val strings = getPreferenceBindingStrings(prefString)
+            return strings.mapNotNull { fromString(it) }
         }
 
         @CheckResult
