@@ -20,7 +20,7 @@
         android:icon="@drawable/ic_star_border_white"
         />
     <com.ichi2.preferences.PreviewerControlPreference
-        android:key="@string/previewer_replay_audio_key"
+        android:key="@string/previewer_edit_key"
         android:title="@string/cardeditor_title_edit_card"
         android:icon="@drawable/ic_popup_menu_item_editor"
         />

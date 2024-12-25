@@ -174,7 +174,7 @@
     <string name="reset">Reset</string>
     <string name="thirdparty_apps_title" maxLength="41">Third-party API apps</string>
     <string name="thirdparty_apps_summary">See a list of applications which make use of the AnkiDroid API such as dictionaries, utilities.</string>
-
+    <string name="review" maxLength="41">Review</string>
     <!-- Appearance settings -->
     <string name="pref_cat_reviewer" maxLength="41">Reviewer</string>
     <string name="show_deck_title" maxLength="41">Show deck title</string>
@@ -250,7 +250,6 @@
 
     <!-- Controls -->
     <string name="binding_add_gesture">Add gesture</string>
-    <string name="binding_replace_gesture">Replace gesture</string>
     <string name="binding_add_key">Add key</string>
     <string name="key_picker_default_press_key">Press a key</string>
     <string name="binding_add_axis">Add joystick/motion controller</string>

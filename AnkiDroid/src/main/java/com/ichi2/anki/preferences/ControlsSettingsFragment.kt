@@ -145,7 +145,7 @@ enum class ControlPreferenceScreen(
     @XmlRes val xmlRes: Int,
     @StringRes val titleRes: Int,
 ) {
-    REVIEWER(R.xml.preferences_reviewer_controls, R.string.pref_cat_reviewer),
+    REVIEWER(R.xml.preferences_reviewer_controls, R.string.review),
     PREVIEWER(R.xml.preferences_previewer_controls, R.string.card_editor_preview_card),
     ;
 

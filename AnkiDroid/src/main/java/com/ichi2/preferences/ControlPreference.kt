@@ -31,7 +31,6 @@ import androidx.fragment.app.DialogFragment
 import androidx.preference.DialogPreference
 import androidx.preference.PreferenceFragmentCompat
 import com.ichi2.anki.R
-import com.ichi2.anki.cardviewer.GestureProcessor
 import com.ichi2.anki.dialogs.GestureSelectionDialogUtils
 import com.ichi2.anki.dialogs.GestureSelectionDialogUtils.onGestureChanged
 import com.ichi2.anki.dialogs.KeySelectionDialogUtils
@@ -41,7 +40,6 @@ import com.ichi2.anki.preferences.requirePreference
 import com.ichi2.anki.reviewer.Binding
 import com.ichi2.anki.reviewer.MappableBinding
 import com.ichi2.anki.reviewer.MappableBinding.Companion.toPreferenceString
-import com.ichi2.anki.utils.ext.sharedPrefs
 import com.ichi2.ui.AxisPicker
 import com.ichi2.ui.KeyPicker
 import com.ichi2.utils.create
@@ -205,7 +203,7 @@ class ControlPreferenceDialogFragment : DialogFragment() {
                 preference.showGesturePickerDialog()
                 dismiss()
             }
-            isVisible = sharedPrefs().getBoolean(GestureProcessor.PREF_KEY, false)
+            isVisible = preference.areGesturesEnabled
         }
 
         view.findViewById<View>(R.id.add_key).setOnClickListener {
