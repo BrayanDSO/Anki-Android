@@ -45,6 +45,7 @@ import com.ichi2.anki.reviewer.Binding.Companion.keyCode
 import com.ichi2.anki.reviewer.Binding.ModifierKeys
 import com.ichi2.anki.reviewer.CardSide
 import com.ichi2.anki.reviewer.ReviewerBinding
+import com.ichi2.anki.reviewer.ScreenKeyMap
 import com.ichi2.libanki.Card
 import kotlinx.coroutines.Job
 import org.hamcrest.MatcherAssert.assertThat
@@ -55,6 +56,10 @@ import org.mockito.ArgumentMatchers
 import org.mockito.Mockito
 import org.mockito.kotlin.whenever
 import timber.log.Timber
+
+// ReviewerKeyboardInputTest
+// PreferencesAnalyticsTest
+// PeripheralKeymapTest
 
 @RunWith(AndroidJUnit4::class)
 class ReviewerKeyboardInputTest : RobolectricTest() {
@@ -249,6 +254,9 @@ class ReviewerKeyboardInputTest : RobolectricTest() {
             private set
         var replayAudioCalled = false
             private set
+
+        override var processor: ScreenKeyMap<ReviewerBinding, ViewerCommand> =
+            ScreenKeyMap(sharedPrefs(), ViewerCommand.entries, this)
 
         private val cardFlips = mutableListOf<String>()
         override val isDrawerOpen: Boolean

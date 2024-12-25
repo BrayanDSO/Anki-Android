@@ -136,7 +136,8 @@ sealed interface Binding {
                 append(unicodeCharacter)
             }
 
-        override fun equals(other: Any?): Boolean = super.equals(other)
+        override fun equals(other: Any?): Boolean =
+            (other is UnicodeCharacter && unicodeCharacter == other.unicodeCharacter && modifierKeys == other.modifierKeys)
 
         override fun hashCode(): Int = Objects.hash(unicodeCharacter, modifierKeys)
     }

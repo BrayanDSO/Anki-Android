@@ -79,6 +79,7 @@ import com.ichi2.anki.reviewer.AnswerButtons.Companion.getBackgroundColors
 import com.ichi2.anki.reviewer.AnswerButtons.Companion.getTextColors
 import com.ichi2.anki.reviewer.AnswerTimer
 import com.ichi2.anki.reviewer.AutomaticAnswerAction
+import com.ichi2.anki.reviewer.Binding
 import com.ichi2.anki.reviewer.BindingProcessor
 import com.ichi2.anki.reviewer.CardMarker
 import com.ichi2.anki.reviewer.CardSide
@@ -201,7 +202,7 @@ open class Reviewer :
     private lateinit var toolbar: Toolbar
 
     @VisibleForTesting
-    protected lateinit var processor: ScreenKeyMap<ReviewerBinding, ViewerCommand>
+    protected open lateinit var processor: ScreenKeyMap<ReviewerBinding, ViewerCommand>
 
     private val addNoteLauncher =
         registerForActivityResult(
@@ -1671,6 +1672,7 @@ open class Reviewer :
         binding: ReviewerBinding,
     ): Boolean {
         if (binding.side != CardSide.BOTH && CardSide.fromAnswer(isDisplayingAnswer) != binding.side) return false
-        return executeCommand(action, null)
+        val gesture = (binding.binding as? Binding.GestureInput)?.gesture
+        return executeCommand(action, gesture)
     }
 }
