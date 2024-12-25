@@ -75,6 +75,8 @@ class PreferencesAnalyticsTest : RobolectricTest() {
             "widgetVibrate",
             // Blink light
             "widgetBlink",
+            // Special views
+            "controlsTabLayout",
             // potential personal data
             "syncAccount",
             "syncBaseUrl",

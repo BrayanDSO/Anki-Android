@@ -113,11 +113,19 @@ object PreferenceTestUtils {
         @XmlRes xml: Int,
     ): List<String> = getAttrFromXml(context, xml, "key").map { attrValueToString(it, context) }
 
-    fun getAllPreferenceKeys(context: Context): Set<String> =
-        getAllPreferencesFragments(context)
-            .filterIsInstance<SettingsFragment>()
-            .map { it.preferenceResource }
-            .flatMapTo(hashSetOf()) { getKeysFromXml(context, it) }
+    fun getAllPreferenceKeys(context: Context): Set<String> {
+        val controlPreferencesKeys =
+            ControlPreferenceScreen.entries.flatMap {
+                getKeysFromXml(context, it.xmlRes)
+            }
+        val staticPreferencesKeys =
+            getAllPreferencesFragments(context)
+                .filterIsInstance<SettingsFragment>()
+                .map { it.preferenceResource }
+                .flatMapTo(hashSetOf()) { getKeysFromXml(context, it) }
+
+        return staticPreferencesKeys + controlPreferencesKeys
+    }
 
     fun getAllCustomButtonKeys(context: Context): Set<String> {
         val keys = getKeysFromXml(context, R.xml.preferences_custom_buttons).toMutableSet()
