@@ -52,7 +52,9 @@ class ControlsSettingsFragment :
     override fun initSubscreen() {
         requirePreference<Preference>(R.string.pref_controls_tab_layout_key).setViewId(R.id.tab_layout)
         staticPreferencesCount = preferenceScreen.preferenceCount
-        addPreferencesFromResource(ControlPreferenceScreen.entries.first().xmlRes)
+        val initialScreen = ControlPreferenceScreen.entries.first()
+        addPreferencesFromResource(initialScreen.xmlRes)
+        setControlPreferencesDefaultValues(initialScreen)
     }
 
     override fun onViewCreated(
@@ -77,19 +79,21 @@ class ControlsSettingsFragment :
 
     private fun getScreen(tab: TabLayout.Tab): ControlPreferenceScreen = ControlPreferenceScreen.entries[tab.position]
 
-    override fun onTabSelected(tab: TabLayout.Tab) {
-        val screen = getScreen(tab)
-        Timber.v("Selected tab %d - %s", tab.position, screen.name)
-        addPreferencesFromResource(screen.xmlRes)
-
+    private fun setControlPreferencesDefaultValues(screen: ControlPreferenceScreen) {
         val commands = screen.getActions().associateBy { it.preferenceKey }
-        // set defaultValue in the prefs creation.
-        // if a preference is empty, it has a value like "1/"
         val prefs = sharedPrefs()
         allPreferences()
             .filterIsInstance<ControlPreference<*>>()
             .filter { pref -> pref.getValue() == null }
             .forEach { pref -> commands[pref.key]?.getBindings(prefs)?.toPreferenceString()?.let { pref.setValue(it) } }
+        setTitlesFromBackend()
+    }
+
+    override fun onTabSelected(tab: TabLayout.Tab) {
+        val screen = getScreen(tab)
+        Timber.v("Selected tab %d - %s", tab.position, screen.name)
+        addPreferencesFromResource(screen.xmlRes)
+        setControlPreferencesDefaultValues(screen)
     }
 
     override fun onTabUnselected(tab: TabLayout.Tab?) {
