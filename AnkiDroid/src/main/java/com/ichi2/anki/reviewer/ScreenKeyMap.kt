@@ -26,13 +26,13 @@ class ScreenKeyMap<M : MappableBinding, A : ScreenAction<M>>(
     actions: List<A>,
     private val processor: BindingProcessor<M, A>,
 ) {
-    private val bindingMap = HashMap<M, A>()
+    private val bindingMap = HashMap<Binding, Pair<M, A>>()
 
     init {
         for (action in actions) {
-            val bindings = action.getBindings(sharedPrefs)
-            for (binding in bindings) {
-                bindingMap[binding] = action
+            val mappableBindings = action.getBindings(sharedPrefs)
+            for (mappableBinding in mappableBindings) {
+                bindingMap[mappableBinding.binding] = mappableBinding to action
             }
         }
     }
@@ -42,16 +42,12 @@ class ScreenKeyMap<M : MappableBinding, A : ScreenAction<M>>(
             return false
         }
         var ret = false
-        val possibleKeyBindings = Binding.possibleKeyBindings(event)
-        for ((mappableBinding, action) in bindingMap) {
-            if (possibleKeyBindings.contains(mappableBinding.binding)) {
-                ret = ret or processor.executeAction(action)
-            }
+        val bindings = Binding.possibleKeyBindings(event)
+        for (binding in bindings) {
+            val (mappableBinding, action) = bindingMap[binding] ?: continue
+            ret = ret or processor.executeAction(action, mappableBinding)
         }
-//        val mds = bindingMap.filterKeys { m -> possibleKeyBindings.any { it == m.binding } }
-//        for ((mappableBinding, action) in mds) {
-//            ret = ret or processor.executeAction(action)
-//        }
+
         return ret
     }
 }

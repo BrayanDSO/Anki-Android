@@ -1665,5 +1665,8 @@ open class Reviewer :
         const val ACTION_SNACKBAR_TIME = 500
     }
 
-    override fun executeAction(action: ViewerCommand): Boolean = executeCommand(action, null)
+    override fun executeAction(
+        action: ViewerCommand,
+        forBinding: ReviewerBinding,
+    ): Boolean = executeCommand(action, null)
 }
