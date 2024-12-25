@@ -81,9 +81,11 @@ abstract class ControlPreference2<M : MappableBinding> :
 
     abstract fun onKeySelected(binding: Binding)
 
-    abstract fun onGestureSelected(gesture: Gesture)
-
     abstract fun onAxisSelected(binding: Binding)
+
+    abstract val areGesturesEnabled: Boolean
+
+    protected open fun onGestureSelected(gesture: Gesture) {}
 
     /** @return whether the binding is used in another action */
     abstract fun warnIfUsed(
@@ -102,7 +104,7 @@ abstract class ControlPreference2<M : MappableBinding> :
 
     override fun getSummary(): CharSequence = getMappableBindings().joinToString(", ") { it.toDisplayString(context) }
 
-    override fun makeDialogFragment(): DialogFragment = ControlPreferenceDialogFragment<M>()
+    override fun makeDialogFragment(): DialogFragment = ControlPreferenceDialogFragment()
 
     fun showGesturePickerDialog() {
         AlertDialog.Builder(context).show {
@@ -169,8 +171,8 @@ abstract class ControlPreference2<M : MappableBinding> :
     }
 }
 
-class ControlPreferenceDialogFragment<M : MappableBinding> : DialogFragment() {
-    private lateinit var preference: ControlPreference2<M>
+class ControlPreferenceDialogFragment : DialogFragment() {
+    private lateinit var preference: ControlPreference2<MappableBinding>
 
     @Suppress("DEPRECATION") // targetFragment
     override fun onCreate(savedInstanceState: Bundle?) {

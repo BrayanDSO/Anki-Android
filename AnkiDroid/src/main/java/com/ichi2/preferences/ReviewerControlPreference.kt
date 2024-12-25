@@ -19,6 +19,7 @@ import android.content.Context
 import android.util.AttributeSet
 import com.ichi2.anki.R
 import com.ichi2.anki.cardviewer.Gesture
+import com.ichi2.anki.cardviewer.GestureProcessor
 import com.ichi2.anki.cardviewer.ViewerCommand
 import com.ichi2.anki.dialogs.CardSideSelectionDialog
 import com.ichi2.anki.dialogs.WarningDisplay
@@ -46,6 +47,9 @@ class ReviewerControlPreference : ControlPreference2<ReviewerBinding> {
 
     @Suppress("unused")
     constructor(context: Context) : super(context)
+
+    override val areGesturesEnabled: Boolean
+        get() = sharedPreferences?.getBoolean(GestureProcessor.PREF_KEY, false) ?: false
 
     override fun getMappableBindings(): List<ReviewerBinding> = ReviewerBinding.fromPreferenceString(getValue())
 
