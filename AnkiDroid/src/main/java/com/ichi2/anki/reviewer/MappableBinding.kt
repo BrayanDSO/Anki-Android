@@ -96,12 +96,13 @@ sealed class MappableBinding(
 
     companion object {
         const val PREF_SEPARATOR = '|'
+        private const val VERSION_PREFIX = "1/"
 
         @CheckResult
         fun List<MappableBinding>.toPreferenceString(): String =
             this
                 .mapNotNull { it.toPreferenceString() }
-                .joinToString(prefix = "1/", separator = PREF_SEPARATOR.toString())
+                .joinToString(prefix = VERSION_PREFIX, separator = PREF_SEPARATOR.toString())
 
         @CheckResult
         fun fromString(s: String): MappableBinding? {
@@ -123,18 +124,11 @@ sealed class MappableBinding(
         @CheckResult
         fun getPreferenceBindingStrings(string: String): List<String> {
             if (string.isEmpty()) return emptyList()
-            try {
-                val version = string.takeWhile { x -> x != '/' }
-                val remainder = string.substring(version.length + 1) // skip the /
-                if (version != "1") {
-                    Timber.w("cannot handle version '$version'")
-                    return emptyList()
-                }
-                return remainder.split(PREF_SEPARATOR)
-            } catch (e: Exception) {
-                Timber.w(e, "Failed to deserialize preference")
+            if (!string.startsWith(VERSION_PREFIX)) {
+                Timber.w("cannot handle version of string %s", string)
                 return emptyList()
             }
+            return string.substring(VERSION_PREFIX.length).split(PREF_SEPARATOR)
         }
 
         @CheckResult
@@ -218,26 +212,23 @@ class ReviewerBinding(
     }
 
     companion object {
-        fun fromString(s: String): ReviewerBinding {
-            val binding = s.substring(0, s.length - 1)
-            val b = Binding.fromString(binding)
+        fun fromString(string: String): ReviewerBinding? {
+            if (string.isEmpty()) return null
+            val bindingString = string.substring(0, string.length - 1)
+            val binding = Binding.fromString(bindingString)
             val side =
-                when (s[s.length - 1]) {
+                when (string.last()) {
                     '0' -> CardSide.QUESTION
                     '1' -> CardSide.ANSWER
                     else -> CardSide.BOTH
                 }
-            return ReviewerBinding(b, side)
+            return ReviewerBinding(binding, side)
         }
 
         fun fromPreferenceString(prefString: String?): List<ReviewerBinding> {
-            try {
-                if (prefString.isNullOrEmpty()) return emptyList()
-                val strings = getPreferenceBindingStrings(prefString) // TODO
-                return strings.map { fromString(it.substring(1)) }
-            } catch (_: Throwable) {
-                return emptyList()
-            }
+            if (prefString.isNullOrEmpty()) return emptyList()
+            val strings = getPreferenceBindingStrings(prefString) // TODO
+            return strings.mapNotNull { fromString(it.substring(1)) }
         }
 
         @CheckResult
