@@ -81,6 +81,7 @@ import com.ichi2.anki.reviewer.AnswerTimer
 import com.ichi2.anki.reviewer.AutomaticAnswerAction
 import com.ichi2.anki.reviewer.BindingProcessor
 import com.ichi2.anki.reviewer.CardMarker
+import com.ichi2.anki.reviewer.CardSide
 import com.ichi2.anki.reviewer.FullScreenMode
 import com.ichi2.anki.reviewer.FullScreenMode.Companion.fromPreference
 import com.ichi2.anki.reviewer.FullScreenMode.Companion.isFullScreenReview
@@ -1668,5 +1669,8 @@ open class Reviewer :
     override fun executeAction(
         action: ViewerCommand,
         forBinding: ReviewerBinding,
-    ): Boolean = executeCommand(action, null)
+    ): Boolean {
+        if (CardSide.fromAnswer(isDisplayingAnswer) != forBinding.side) return false
+        return executeCommand(action, null)
+    }
 }
