@@ -30,7 +30,7 @@ import com.ichi2.anki.reviewer.MappableBinding.Companion.toPreferenceString
 import com.ichi2.anki.reviewer.ReviewerBinding
 import com.ichi2.anki.showThemedToast
 
-class ReviewerControlPreference : ControlPreference2<ReviewerBinding> {
+class ReviewerControlPreference : ControlPreference<ReviewerBinding> {
     @Suppress("unused")
     constructor(
         context: Context,
