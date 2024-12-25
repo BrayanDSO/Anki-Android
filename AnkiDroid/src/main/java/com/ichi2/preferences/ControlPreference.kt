@@ -23,7 +23,6 @@ import android.text.TextUtils
 import android.util.AttributeSet
 import android.view.View
 import android.widget.ArrayAdapter
-import android.widget.LinearLayout
 import android.widget.ListView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
@@ -219,15 +218,16 @@ class ControlPreferenceDialogFragment : DialogFragment() {
 
     private fun setupRemoveControlEntries(view: View) {
         val bindings = preference.getMappableBindings().toMutableList()
+        val listView = view.findViewById<ListView>(R.id.list_view)
         if (bindings.isEmpty()) {
-            view.findViewById<LinearLayout>(R.id.remove_layout).isVisible = false
+            listView.isVisible = false
             return
         }
         val titles =
             bindings.map {
                 getString(R.string.binding_remove_binding, it.toDisplayString(requireContext()))
             }
-        view.findViewById<ListView>(R.id.list_view).apply {
+        listView.apply {
             adapter = ArrayAdapter(requireContext(), R.layout.control_preference_list_item, titles)
             setOnItemClickListener { _, _, index, _ ->
                 bindings.removeAt(index)
