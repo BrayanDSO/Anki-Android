@@ -42,12 +42,17 @@ class ControlsSettingsFragment :
     override val analyticsScreenNameConstant: String
         get() = "prefs.controls"
 
+    /**
+     * The number of preferences defined statically at the [preferenceResource].
+     * It is used to keep them while trying to remove all of the others in [onTabUnselected].
+     */
     private var staticPreferencesCount: Int = 0
 
     @NeedsTest("Keys and titles in the XML layout are the same of the ViewerCommands")
     override fun initSubscreen() {
         requirePreference<Preference>(R.string.pref_controls_tab_layout_key).setViewId(R.id.tab_layout)
         staticPreferencesCount = preferenceScreen.preferenceCount
+        addPreferencesFromResource(ControlPreferenceScreen.entries.first().xmlRes)
     }
 
     override fun onViewCreated(
@@ -63,14 +68,11 @@ class ControlsSettingsFragment :
     }
 
     private fun setupTabLayout(tabLayout: TabLayout) {
-        tabLayout.addOnTabSelectedListener(this)
         for (screen in ControlPreferenceScreen.entries) {
-            val tab =
-                tabLayout.newTab().apply {
-                    setText(screen.titleRes)
-                }
+            val tab = tabLayout.newTab().setText(screen.titleRes)
             tabLayout.addTab(tab)
         }
+        tabLayout.addOnTabSelectedListener(this)
     }
 
     private fun getScreen(tab: TabLayout.Tab): ControlPreferenceScreen = ControlPreferenceScreen.entries[tab.position]
