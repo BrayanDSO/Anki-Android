@@ -17,12 +17,10 @@
 package com.ichi2.anki.reviewer
 
 import android.content.Context
-import android.content.SharedPreferences
 import androidx.annotation.CheckResult
 import com.ichi2.anki.R
 import com.ichi2.anki.cardviewer.Gesture
 import com.ichi2.anki.cardviewer.ScreenAction
-import com.ichi2.anki.cardviewer.ViewerCommand
 import com.ichi2.anki.reviewer.Binding.AxisButtonBinding
 import com.ichi2.anki.reviewer.Binding.GestureInput
 import com.ichi2.anki.reviewer.Binding.KeyBinding
@@ -105,23 +103,6 @@ sealed class MappableBinding(
                 .joinToString(prefix = VERSION_PREFIX, separator = PREF_SEPARATOR.toString())
 
         @CheckResult
-        fun fromString(s: String): MappableBinding? {
-            if (s.isEmpty()) {
-                return null
-            }
-            return try {
-                // the prefix of the serialized
-                when (s[0]) {
-                    'r' -> ReviewerBinding.fromString(s.substring(1))
-                    else -> null
-                }
-            } catch (e: Exception) {
-                Timber.w(e, "failed to deserialize binding")
-                null
-            }
-        }
-
-        @CheckResult
         fun getPreferenceBindingStrings(string: String): List<String> {
             if (string.isEmpty()) return emptyList()
             if (!string.startsWith(VERSION_PREFIX)) {
@@ -130,30 +111,6 @@ sealed class MappableBinding(
             }
             return string.substring(VERSION_PREFIX.length).split(PREF_SEPARATOR).filter { it.isNotEmpty() }
         }
-
-        @CheckResult
-        fun fromPreferenceString(string: String?): MutableList<MappableBinding> {
-            if (string.isNullOrEmpty()) return ArrayList()
-            try {
-                val version = string.takeWhile { x -> x != '/' }
-                val remainder = string.substring(version.length + 1) // skip the /
-                if (version != "1") {
-                    Timber.w("cannot handle version '$version'")
-                    return ArrayList()
-                }
-                return remainder.split(PREF_SEPARATOR).mapNotNull { fromString(it) }.toMutableList()
-            } catch (e: Exception) {
-                Timber.w(e, "Failed to deserialize preference")
-                return ArrayList()
-            }
-        }
-
-        @CheckResult
-        fun allMappings(prefs: SharedPreferences): MutableList<Pair<ViewerCommand, MutableList<MappableBinding>>> =
-            ViewerCommand.entries
-                .map {
-                    Pair(it, it.getBindings(prefs).toMutableList<MappableBinding>())
-                }.toMutableList()
     }
 }
 
@@ -199,24 +156,25 @@ class ReviewerBinding(
         private const val ANSWER_SUFFIX = '1'
         private const val QUESTION_AND_ANSWER_SUFFIX = '2'
 
-        fun fromString(string: String): ReviewerBinding? {
-            if (string.isEmpty()) return null
-            val bindingString =
-                StringBuilder(string)
-                    .substring(0, string.length - 1)
-                    .removePrefix(PREFIX)
-            val binding = Binding.fromString(bindingString)
-            val side =
-                when (string.last()) {
-                    QUESTION_SUFFIX -> CardSide.QUESTION
-                    ANSWER_SUFFIX -> CardSide.ANSWER
-                    else -> CardSide.BOTH
-                }
-            return ReviewerBinding(binding, side)
-        }
-
         fun fromPreferenceString(prefString: String?): List<ReviewerBinding> {
             if (prefString.isNullOrEmpty()) return emptyList()
+
+            fun fromString(string: String): ReviewerBinding? {
+                if (string.isEmpty()) return null
+                val bindingString =
+                    StringBuilder(string)
+                        .substring(0, string.length - 1)
+                        .removePrefix(PREFIX)
+                val binding = Binding.fromString(bindingString)
+                val side =
+                    when (string.last()) {
+                        QUESTION_SUFFIX -> CardSide.QUESTION
+                        ANSWER_SUFFIX -> CardSide.ANSWER
+                        else -> CardSide.BOTH
+                    }
+                return ReviewerBinding(binding, side)
+            }
+
             val strings = getPreferenceBindingStrings(prefString)
             return strings.mapNotNull { fromString(it) }
         }
