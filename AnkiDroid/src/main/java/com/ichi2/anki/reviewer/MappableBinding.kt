@@ -233,7 +233,7 @@ class ReviewerBinding(
         fun fromPreferenceString(prefString: String?): List<ReviewerBinding> {
             try {
                 if (prefString.isNullOrEmpty()) return emptyList()
-                val strings = getPreferenceBindingStrings(prefString)
+                val strings = getPreferenceBindingStrings(prefString) // TODO
                 return strings.map { fromString(it.substring(1)) }
             } catch (_: Throwable) {
                 return emptyList()
