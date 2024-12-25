@@ -20,6 +20,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.SpannableString
 import android.text.style.UnderlineSpan
+import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -43,6 +44,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.textview.MaterialTextView
 import com.ichi2.anki.AbstractFlashcardViewer.Companion.RESULT_NO_MORE_CARDS
 import com.ichi2.anki.CollectionManager
+import com.ichi2.anki.DispatchKeyEventListener
 import com.ichi2.anki.Flag
 import com.ichi2.anki.NoteEditor
 import com.ichi2.anki.R
@@ -57,7 +59,7 @@ import com.ichi2.anki.preferences.reviewer.ViewerAction.BURY_NOTE
 import com.ichi2.anki.preferences.reviewer.ViewerAction.CARD_INFO
 import com.ichi2.anki.preferences.reviewer.ViewerAction.DECK_OPTIONS
 import com.ichi2.anki.preferences.reviewer.ViewerAction.DELETE
-import com.ichi2.anki.preferences.reviewer.ViewerAction.EDIT_NOTE
+import com.ichi2.anki.preferences.reviewer.ViewerAction.EDIT
 import com.ichi2.anki.preferences.reviewer.ViewerAction.FLAG_BLUE
 import com.ichi2.anki.preferences.reviewer.ViewerAction.FLAG_GREEN
 import com.ichi2.anki.preferences.reviewer.ViewerAction.FLAG_MENU
@@ -84,6 +86,10 @@ import com.ichi2.anki.preferences.reviewer.ViewerAction.USER_ACTION_8
 import com.ichi2.anki.preferences.reviewer.ViewerAction.USER_ACTION_9
 import com.ichi2.anki.previewer.CardViewerActivity
 import com.ichi2.anki.previewer.CardViewerFragment
+import com.ichi2.anki.reviewer.BindingProcessor
+import com.ichi2.anki.reviewer.CardSide
+import com.ichi2.anki.reviewer.ReviewerBinding
+import com.ichi2.anki.reviewer.ScreenKeyMap
 import com.ichi2.anki.snackbar.BaseSnackbarBuilderProvider
 import com.ichi2.anki.snackbar.SnackbarBuilder
 import com.ichi2.anki.snackbar.showSnackbar
@@ -98,7 +104,9 @@ import kotlinx.coroutines.launch
 class ReviewerFragment :
     CardViewerFragment(R.layout.reviewer2),
     BaseSnackbarBuilderProvider,
-    ActionMenuView.OnMenuItemClickListener {
+    ActionMenuView.OnMenuItemClickListener,
+    BindingProcessor<ReviewerBinding, ViewerAction>,
+    DispatchKeyEventListener {
     override val viewModel: ReviewerViewModel by viewModels {
         ReviewerViewModel.factory(CardMediaPlayer())
     }
@@ -109,6 +117,8 @@ class ReviewerFragment :
     override val baseSnackbarBuilder: SnackbarBuilder = {
         anchorView = this@ReviewerFragment.view?.findViewById(R.id.buttons_area)
     }
+
+    private lateinit var keyMap: ScreenKeyMap<ReviewerBinding, ViewerAction>
 
     override fun onStop() {
         super.onStop()
@@ -122,6 +132,7 @@ class ReviewerFragment :
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
+        keyMap = ScreenKeyMap(sharedPrefs(), ViewerAction.entries, this)
 
         view.findViewById<MaterialToolbar>(R.id.toolbar).apply {
             setNavigationOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
@@ -154,15 +165,12 @@ class ReviewerFragment :
         }
     }
 
-    // TODO
-    override fun onMenuItemClick(item: MenuItem): Boolean {
-        if (item.hasSubMenu()) return false
-        val action = ViewerAction.fromId(item.itemId)
+    private fun executeAction(action: ViewerAction): Boolean {
         when (action) {
             ADD_NOTE -> launchAddNote()
             CARD_INFO -> launchCardInfo()
             DECK_OPTIONS -> launchDeckOptions()
-            EDIT_NOTE -> launchEditNote()
+            EDIT -> launchEditNote()
             DELETE -> viewModel.deleteNote()
             MARK -> viewModel.toggleMark()
             REDO -> viewModel.redo()
@@ -193,6 +201,25 @@ class ReviewerFragment :
             FLAG_MENU -> return false
         }
         return true
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.action != KeyEvent.ACTION_DOWN) return false
+        return keyMap.onKeyDown(event)
+    }
+
+    override fun processAction(
+        action: ViewerAction,
+        binding: ReviewerBinding,
+    ): Boolean {
+        if (binding.side != CardSide.BOTH && CardSide.fromAnswer(viewModel.showingAnswer.value) != binding.side) return false
+        return executeAction(action)
+    }
+
+    override fun onMenuItemClick(item: MenuItem): Boolean {
+        if (item.hasSubMenu()) return false
+        val action = ViewerAction.fromId(item.itemId)
+        return executeAction(action)
     }
 
     private fun setupAnswerButtons(view: View) {

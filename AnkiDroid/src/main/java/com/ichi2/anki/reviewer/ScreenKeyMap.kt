@@ -45,9 +45,8 @@ class ScreenKeyMap<M : MappableBinding, A : ScreenAction<M>>(
         val bindings = Binding.possibleKeyBindings(event)
         for (binding in bindings) {
             val (mappableBinding, action) = bindingMap[binding] ?: continue
-            ret = ret or processor.executeAction(action, mappableBinding)
+            ret = ret or processor.processAction(action, mappableBinding)
         }
-
         return ret
     }
 }

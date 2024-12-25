@@ -1666,11 +1666,11 @@ open class Reviewer :
         const val ACTION_SNACKBAR_TIME = 500
     }
 
-    override fun executeAction(
+    override fun processAction(
         action: ViewerCommand,
-        forBinding: ReviewerBinding,
+        binding: ReviewerBinding,
     ): Boolean {
-        if (CardSide.fromAnswer(isDisplayingAnswer) != forBinding.side) return false
+        if (binding.side != CardSide.BOTH && CardSide.fromAnswer(isDisplayingAnswer) != binding.side) return false
         return executeCommand(action, null)
     }
 }

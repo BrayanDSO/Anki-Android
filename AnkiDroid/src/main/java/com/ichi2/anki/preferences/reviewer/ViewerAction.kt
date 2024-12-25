@@ -15,14 +15,22 @@
  */
 package com.ichi2.anki.preferences.reviewer
 
+import android.content.SharedPreferences
+import android.view.KeyEvent
 import androidx.annotation.DrawableRes
 import androidx.annotation.IdRes
 import androidx.annotation.StringRes
 import com.ichi2.anki.Flag
 import com.ichi2.anki.R
+import com.ichi2.anki.cardviewer.ScreenAction
 import com.ichi2.anki.preferences.reviewer.MenuDisplayType.ALWAYS
 import com.ichi2.anki.preferences.reviewer.MenuDisplayType.DISABLED
 import com.ichi2.anki.preferences.reviewer.MenuDisplayType.MENU_ONLY
+import com.ichi2.anki.reviewer.Binding
+import com.ichi2.anki.reviewer.Binding.ModifierKeys
+import com.ichi2.anki.reviewer.Binding.ModifierKeys.Companion.ctrl
+import com.ichi2.anki.reviewer.CardSide
+import com.ichi2.anki.reviewer.ReviewerBinding
 
 /**
  * @param menuId menu Id of the action
@@ -34,10 +42,10 @@ import com.ichi2.anki.preferences.reviewer.MenuDisplayType.MENU_ONLY
 enum class ViewerAction(
     @IdRes val menuId: Int,
     @DrawableRes val drawableRes: Int?,
-    @StringRes val titleRes: Int = R.string.empty_string,
+    @StringRes override val titleRes: Int = R.string.empty_string,
     val defaultDisplayType: MenuDisplayType? = null,
     val parentMenu: ViewerAction? = null,
-) {
+) : ScreenAction<ReviewerBinding> {
     // Always
     UNDO(R.id.action_undo, R.drawable.ic_undo_white, R.string.undo, ALWAYS),
 
@@ -45,7 +53,7 @@ enum class ViewerAction(
     REDO(R.id.action_redo, R.drawable.ic_redo, R.string.redo, MENU_ONLY),
     FLAG_MENU(R.id.action_flag, R.drawable.ic_flag_transparent, R.string.menu_flag, MENU_ONLY),
     MARK(R.id.action_mark, R.drawable.ic_star, R.string.menu_mark_note, MENU_ONLY),
-    EDIT_NOTE(R.id.action_edit_note, R.drawable.ic_mode_edit_white, R.string.cardeditor_title_edit_card, MENU_ONLY),
+    EDIT(R.id.action_edit_note, R.drawable.ic_mode_edit_white, R.string.cardeditor_title_edit_card, MENU_ONLY),
     BURY_MENU(R.id.action_bury, R.drawable.ic_flip_to_back_white, R.string.menu_bury, MENU_ONLY),
     SUSPEND_MENU(R.id.action_suspend, R.drawable.ic_suspend, R.string.menu_suspend, MENU_ONLY),
     DELETE(R.id.action_delete, R.drawable.ic_delete_white, R.string.menu_delete_note, MENU_ONLY),
@@ -79,7 +87,72 @@ enum class ViewerAction(
     FLAG_PURPLE(Flag.PURPLE.id, Flag.PURPLE.drawableRes, parentMenu = FLAG_MENU),
     ;
 
+    override val preferenceKey: String get() = "binding_$name"
+
+    override fun getBindings(prefs: SharedPreferences): List<ReviewerBinding> {
+        val prefValue = prefs.getString(preferenceKey, null) ?: return defaultBindings
+        return ReviewerBinding.fromPreferenceString(prefValue)
+    }
+
+    private val defaultBindings: List<ReviewerBinding> get() =
+        when (this) {
+            UNDO -> listOf(keycode(KeyEvent.KEYCODE_Z, ctrl()))
+            REDO -> listOf(keycode(KeyEvent.KEYCODE_Z, ModifierKeys(shift = true, ctrl = true, alt = false)))
+            MARK -> listOf(unicode('*'))
+            EDIT -> listOf(keycode(KeyEvent.KEYCODE_E))
+            ADD_NOTE -> listOf(keycode(KeyEvent.KEYCODE_A))
+            BURY_NOTE -> listOf(unicode('='))
+            BURY_CARD -> listOf(unicode('-'))
+            SUSPEND_NOTE -> listOf(unicode('!'))
+            SUSPEND_CARD -> listOf(unicode('@'))
+            // No default gestures
+            DELETE,
+            CARD_INFO,
+            USER_ACTION_1,
+            USER_ACTION_2,
+            USER_ACTION_3,
+            USER_ACTION_4,
+            USER_ACTION_5,
+            USER_ACTION_6,
+            USER_ACTION_7,
+            USER_ACTION_8,
+            USER_ACTION_9,
+            // Menu flag actions. They set the flag, but don't toggle it
+            UNSET_FLAG,
+            FLAG_RED,
+            FLAG_ORANGE,
+            FLAG_BLUE,
+            FLAG_GREEN,
+            FLAG_PINK,
+            FLAG_TURQUOISE,
+            FLAG_PURPLE,
+            // Menu only
+            DECK_OPTIONS,
+            BURY_MENU,
+            SUSPEND_MENU,
+            FLAG_MENU,
+            -> emptyList()
+        }
+
     fun isSubMenu() = ViewerAction.entries.any { it.parentMenu == this }
+
+    private fun keycode(
+        keycode: Int,
+        keys: ModifierKeys = ModifierKeys.none(),
+        side: CardSide = CardSide.BOTH,
+    ): ReviewerBinding {
+        val binding = Binding.keyCode(keycode, keys)
+        return ReviewerBinding(binding = binding, side = side)
+    }
+
+    private fun unicode(
+        unicodeChar: Char,
+        keys: ModifierKeys = ModifierKeys.none(),
+        side: CardSide = CardSide.BOTH,
+    ): ReviewerBinding {
+        val binding = Binding.unicode(unicodeChar, keys)
+        return ReviewerBinding(binding = binding, side = side)
+    }
 
     companion object {
         fun fromId(

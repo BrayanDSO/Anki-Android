@@ -36,9 +36,9 @@ import timber.log.Timber
 import java.util.Objects
 
 fun interface BindingProcessor<B : MappableBinding, A : ScreenAction<B>> {
-    fun executeAction(
+    fun processAction(
         action: A,
-        forBinding: B,
+        binding: B,
     ): Boolean
 }
 

@@ -220,9 +220,9 @@ class PreviewerFragment :
         return true
     }
 
-    override fun executeAction(
+    override fun processAction(
         action: PreviewerAction,
-        forBinding: PreviewerBinding,
+        binding: PreviewerBinding,
     ): Boolean {
         when (action) {
             PreviewerAction.MARK -> viewModel.toggleMark()
