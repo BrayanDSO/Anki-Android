@@ -447,7 +447,6 @@ class ReviewerKeyboardInputTest : RobolectricTest() {
             fun displayingAnswer(): KeyboardInputTestReviewer {
                 val keyboardInputTestReviewer = KeyboardInputTestReviewer()
                 displayAnswer = true
-                keyboardInputTestReviewer.processor.setup()
                 return keyboardInputTestReviewer
             }
 
@@ -455,7 +454,6 @@ class ReviewerKeyboardInputTest : RobolectricTest() {
             fun displayingQuestion(): KeyboardInputTestReviewer {
                 val keyboardInputTestReviewer = KeyboardInputTestReviewer()
                 displayAnswer = false
-                keyboardInputTestReviewer.processor.setup()
                 return keyboardInputTestReviewer
             }
         }
