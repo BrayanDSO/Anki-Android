@@ -24,9 +24,12 @@ import androidx.preference.get
 import com.google.android.material.tabs.TabLayout
 import com.ichi2.anki.CollectionManager.TR
 import com.ichi2.anki.R
+import com.ichi2.anki.cardviewer.ScreenAction
 import com.ichi2.anki.cardviewer.ViewerCommand
 import com.ichi2.anki.reviewer.MappableBinding.Companion.toPreferenceString
+import com.ichi2.anki.reviewer.PreviewerAction
 import com.ichi2.anki.ui.internationalization.toSentenceCase
+import com.ichi2.anki.utils.ext.sharedPrefs
 import com.ichi2.annotations.NeedsTest
 import com.ichi2.preferences.ControlPreference
 import timber.log.Timber
@@ -77,18 +80,20 @@ class ControlsSettingsFragment :
         Timber.v("Selected tab %d - %s", tab.position, screen.name)
         addPreferencesFromResource(screen.xmlRes)
 
-        val commands = ViewerCommand.entries.associateBy { it.preferenceKey }
+        val commands = screen.getActions().associateBy { it.preferenceKey }
         // set defaultValue in the prefs creation.
         // if a preference is empty, it has a value like "1/"
+        val prefs = sharedPrefs()
         allPreferences()
             .filterIsInstance<ControlPreference<*>>()
             .filter { pref -> pref.getValue() == null }
-            .forEach { pref -> commands[pref.key]?.defaultValue?.toPreferenceString()?.let { pref.setValue(it) } }
+            .forEach { pref -> commands[pref.key]?.getBindings(prefs)?.toPreferenceString()?.let { pref.setValue(it) } }
     }
 
     override fun onTabUnselected(tab: TabLayout.Tab?) {
         for (i in staticPreferencesCount until preferenceScreen.preferenceCount) {
-            preferenceScreen.removePreference(preferenceScreen[staticPreferencesCount])
+            val pref = preferenceScreen[staticPreferencesCount]
+            preferenceScreen.removePreference(pref)
         }
     }
 
@@ -141,5 +146,12 @@ enum class ControlPreferenceScreen(
     @StringRes val titleRes: Int,
 ) {
     REVIEWER(R.xml.preferences_reviewer_controls, R.string.pref_cat_reviewer),
-    PREVIEWER(R.xml.preferences_accessibility, R.string.accessibility),
+    PREVIEWER(R.xml.preferences_previewer_controls, R.string.card_editor_preview_card),
+    ;
+
+    fun getActions(): List<ScreenAction<*>> =
+        when (this) {
+            REVIEWER -> ViewerCommand.entries
+            PREVIEWER -> PreviewerAction.entries
+        }
 }

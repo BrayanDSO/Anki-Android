@@ -18,18 +18,15 @@ package com.ichi2.preferences
 import android.content.Context
 import android.util.AttributeSet
 import com.ichi2.anki.R
-import com.ichi2.anki.cardviewer.GestureProcessor
-import com.ichi2.anki.cardviewer.ViewerCommand
-import com.ichi2.anki.dialogs.CardSideSelectionDialog
 import com.ichi2.anki.dialogs.WarningDisplay
 import com.ichi2.anki.preferences.sharedPrefs
 import com.ichi2.anki.reviewer.Binding
-import com.ichi2.anki.reviewer.CardSide
 import com.ichi2.anki.reviewer.MappableBinding.Companion.toPreferenceString
-import com.ichi2.anki.reviewer.ReviewerBinding
+import com.ichi2.anki.reviewer.PreviewerAction
+import com.ichi2.anki.reviewer.PreviewerBinding
 import com.ichi2.anki.showThemedToast
 
-class ReviewerControlPreference : ControlPreference<ReviewerBinding> {
+class PreviewerControlPreference : ControlPreference<PreviewerBinding> {
     @Suppress("unused")
     constructor(
         context: Context,
@@ -47,33 +44,24 @@ class ReviewerControlPreference : ControlPreference<ReviewerBinding> {
     @Suppress("unused")
     constructor(context: Context) : super(context)
 
-    override val areGesturesEnabled: Boolean
-        get() = sharedPreferences?.getBoolean(GestureProcessor.PREF_KEY, false) ?: false
+    override val areGesturesEnabled: Boolean = false
 
-    override fun getMappableBindings(): List<ReviewerBinding> = ReviewerBinding.fromPreferenceString(getValue())
+    override fun getMappableBindings(): List<PreviewerBinding> = PreviewerBinding.fromPreferenceValue(getValue())
 
-    override fun onKeySelected(binding: Binding) {
-        CardSideSelectionDialog.displayInstance(context) { side ->
-            addBinding(binding, side)
-        }
-    }
+    override fun onKeySelected(binding: Binding) = addBinding(binding)
 
-    override fun onGestureSelected(binding: Binding) = addBinding(binding, CardSide.BOTH)
+    override fun onGestureSelected(binding: Binding) = addBinding(binding)
 
-    override fun onAxisSelected(binding: Binding) {
-        CardSideSelectionDialog.displayInstance(context) { side ->
-            addBinding(binding, side)
-        }
-    }
+    override fun onAxisSelected(binding: Binding) = addBinding(binding)
 
     override fun warnIfUsed(
         binding: Binding,
         warningDisplay: WarningDisplay?,
     ): Boolean {
         val prefs = context.sharedPrefs()
-        val mappableBinding = ReviewerBinding(binding, CardSide.BOTH)
+        val mappableBinding = PreviewerBinding(binding)
         val actionsMap =
-            ViewerCommand.entries
+            PreviewerAction.entries
                 .associateWith { a -> a.getBindings(prefs) }
                 .filterValues { it.isNotEmpty() }
         val commandWithBinding =
@@ -94,14 +82,10 @@ class ReviewerControlPreference : ControlPreference<ReviewerBinding> {
         return true
     }
 
-    private fun addBinding(
-        binding: Binding,
-        side: CardSide,
-    ) {
-        val reviewerBinding = ReviewerBinding(binding, side)
-        val bindings = ReviewerBinding.fromPreferenceString(getValue()).toMutableList()
-        bindings.add(reviewerBinding)
-        val newPrefValue = bindings.toPreferenceString()
-        setValue(newPrefValue)
+    private fun addBinding(binding: Binding) {
+        val previewerBinding = PreviewerBinding(binding)
+        val bindings = getMappableBindings().toMutableList()
+        bindings.add(previewerBinding)
+        setValue(bindings.toPreferenceString())
     }
 }

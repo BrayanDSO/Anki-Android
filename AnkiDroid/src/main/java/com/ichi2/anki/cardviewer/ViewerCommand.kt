@@ -32,7 +32,7 @@ import com.ichi2.anki.reviewer.ReviewerBinding
 
 interface ScreenAction<B : MappableBinding> {
     @get:LayoutRes
-    val nameRes: Int
+    val titleRes: Int
     val preferenceKey: String
 
     fun getBindings(prefs: SharedPreferences): List<B>
@@ -147,7 +147,7 @@ enum class ViewerCommand(
         return ReviewerBinding.fromPreferenceString(prefValue)
     }
 
-    override val nameRes: Int get() = resourceId
+    override val titleRes: Int get() = resourceId
 
     // If we use the serialised format, then this adds additional coupling to the properties.
     val defaultValue: List<ReviewerBinding>

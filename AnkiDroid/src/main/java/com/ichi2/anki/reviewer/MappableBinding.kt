@@ -17,14 +17,19 @@
 package com.ichi2.anki.reviewer
 
 import android.content.Context
+import android.content.SharedPreferences
+import android.view.KeyEvent
 import androidx.annotation.CheckResult
 import com.ichi2.anki.R
 import com.ichi2.anki.cardviewer.Gesture
 import com.ichi2.anki.cardviewer.ScreenAction
 import com.ichi2.anki.reviewer.Binding.AxisButtonBinding
+import com.ichi2.anki.reviewer.Binding.Companion.keyCode
+import com.ichi2.anki.reviewer.Binding.Companion.unicode
 import com.ichi2.anki.reviewer.Binding.GestureInput
 import com.ichi2.anki.reviewer.Binding.KeyBinding
 import com.ichi2.anki.reviewer.Binding.KeyCode
+import com.ichi2.anki.reviewer.Binding.ModifierKeys.Companion.ctrl
 import com.ichi2.anki.reviewer.Binding.UnicodeCharacter
 import com.ichi2.utils.hash
 import timber.log.Timber
@@ -130,7 +135,7 @@ class ReviewerBinding(
             side === other.side
     }
 
-    override fun hashCode(): Int = Objects.hash(getBindingHash(), PREFIX)
+    override fun hashCode(): Int = Objects.hash(getBindingHash(), PREFIX, side)
 
     override fun toPreferenceString(): String? {
         if (!binding.isValid) return null
@@ -184,5 +189,80 @@ class ReviewerBinding(
 
         @CheckResult
         fun fromGesture(gesture: Gesture): ReviewerBinding = ReviewerBinding(GestureInput(gesture), CardSide.BOTH)
+    }
+}
+
+class PreviewerBinding(
+    binding: Binding,
+) : MappableBinding(binding) {
+    override fun toDisplayString(context: Context): String = binding.toDisplayString(context)
+
+    override fun toPreferenceString(): String = binding.toString()
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        if (!super.equals(other)) return false
+        return true
+    }
+
+    override fun hashCode(): Int = Objects.hash(binding, 'p')
+
+    companion object {
+        fun fromPreferenceValue(prefValue: String?): List<PreviewerBinding> {
+            if (prefValue.isNullOrEmpty()) return emptyList()
+            return getPreferenceBindingStrings(prefValue).map {
+                val binding = Binding.fromString(it)
+                PreviewerBinding(binding)
+            }
+        }
+    }
+}
+
+enum class PreviewerAction(
+    override val titleRes: Int,
+) : ScreenAction<PreviewerBinding> {
+    BACK(R.string.previewer_back),
+    NEXT(R.string.previewer_next),
+    MARK(R.string.menu_mark_note),
+    EDIT(R.string.cardeditor_title_edit_card),
+    TOGGLE_BACKSIDE_ONLY(R.string.toggle_backside_only),
+    REPLAY_AUDIO(R.string.replay_audio),
+    TOGGLE_FLAG_RED(R.string.gesture_flag_red),
+    TOGGLE_FLAG_ORANGE(R.string.gesture_flag_orange),
+    TOGGLE_FLAG_GREEN(R.string.gesture_flag_green),
+    TOGGLE_FLAG_BLUE(R.string.gesture_flag_blue),
+    TOGGLE_FLAG_PINK(R.string.gesture_flag_pink),
+    TOGGLE_FLAG_TURQUOISE(R.string.gesture_flag_turquoise),
+    TOGGLE_FLAG_PURPLE(R.string.gesture_flag_purple),
+    UNSET_FLAG(R.string.gesture_flag_purple),
+    ;
+
+    override val preferenceKey = "previewer_$name"
+
+    override fun getBindings(prefs: SharedPreferences): List<PreviewerBinding> {
+        val prefValue = prefs.getString(preferenceKey, null) ?: return defaultBindings
+        return PreviewerBinding.fromPreferenceValue(prefValue)
+    }
+
+    private val defaultBindings: List<PreviewerBinding> get() {
+        val binding =
+            when (this) {
+                BACK -> keyCode(KeyEvent.KEYCODE_DPAD_LEFT)
+                NEXT -> keyCode(KeyEvent.KEYCODE_DPAD_RIGHT)
+                MARK -> unicode('*')
+                REPLAY_AUDIO -> keyCode(KeyEvent.KEYCODE_R)
+                EDIT -> keyCode(KeyEvent.KEYCODE_E)
+                TOGGLE_BACKSIDE_ONLY -> keyCode(KeyEvent.KEYCODE_B)
+                TOGGLE_FLAG_RED -> keyCode(KeyEvent.KEYCODE_1, ctrl())
+                TOGGLE_FLAG_ORANGE -> keyCode(KeyEvent.KEYCODE_2, ctrl())
+                TOGGLE_FLAG_GREEN -> keyCode(KeyEvent.KEYCODE_3, ctrl())
+                TOGGLE_FLAG_BLUE -> keyCode(KeyEvent.KEYCODE_4, ctrl())
+                TOGGLE_FLAG_PINK -> keyCode(KeyEvent.KEYCODE_5, ctrl())
+                TOGGLE_FLAG_TURQUOISE -> keyCode(KeyEvent.KEYCODE_6, ctrl())
+                TOGGLE_FLAG_PURPLE -> keyCode(KeyEvent.KEYCODE_7, ctrl())
+                UNSET_FLAG -> return emptyList()
+            }
+        return listOf(PreviewerBinding(binding))
     }
 }

@@ -31,7 +31,6 @@ import androidx.fragment.app.DialogFragment
 import androidx.preference.DialogPreference
 import androidx.preference.PreferenceFragmentCompat
 import com.ichi2.anki.R
-import com.ichi2.anki.cardviewer.Gesture
 import com.ichi2.anki.cardviewer.GestureProcessor
 import com.ichi2.anki.dialogs.GestureSelectionDialogUtils
 import com.ichi2.anki.dialogs.GestureSelectionDialogUtils.onGestureChanged
@@ -85,7 +84,7 @@ abstract class ControlPreference<M : MappableBinding> :
 
     abstract val areGesturesEnabled: Boolean
 
-    protected open fun onGestureSelected(gesture: Gesture) {}
+    protected open fun onGestureSelected(binding: Binding) {}
 
     /** @return whether the binding is used in another action */
     abstract fun warnIfUsed(
@@ -113,7 +112,8 @@ abstract class ControlPreference<M : MappableBinding> :
             val gesturePicker = GestureSelectionDialogUtils.getGesturePicker(context)
             positiveButton(R.string.dialog_ok) {
                 val gesture = gesturePicker.getGesture() ?: return@positiveButton
-                onGestureSelected(gesture)
+                val binding = Binding.GestureInput(gesture)
+                onGestureSelected(binding)
                 it.dismiss()
             }
             negativeButton(R.string.dialog_cancel) { it.dismiss() }
