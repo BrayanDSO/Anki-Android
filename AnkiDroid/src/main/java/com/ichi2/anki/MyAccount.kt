@@ -150,7 +150,7 @@ open class MyAccount : AnkiActivity() {
 
     private fun logout() {
         launchCatchingTask {
-            syncLogout(baseContext)
+            syncLogout()
             switchToState(STATE_LOG_IN)
         }
     }

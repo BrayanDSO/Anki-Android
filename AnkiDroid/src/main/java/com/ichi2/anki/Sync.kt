@@ -87,7 +87,7 @@ fun DeckPicker.syncAuth(): SyncAuth? {
 
     val hkey = Prefs.hkey
     if (hkey.isEmpty()) return null
-    val resolvedEndpoint = getEndpoint(this)
+    val resolvedEndpoint = getEndpoint()
     return syncAuth {
         this.hkey = hkey
         if (resolvedEndpoint != null) {
@@ -96,8 +96,8 @@ fun DeckPicker.syncAuth(): SyncAuth? {
     }
 }
 
-fun getEndpoint(context: Context): String? {
-    val preferences = context.sharedPrefs()
+fun getEndpoint(): String? {
+    val preferences = AnkiDroidApp.sharedPrefs()
     val currentEndpoint = preferences.getString(SyncPreferences.CURRENT_SYNC_URI, null)
     val customEndpoint =
         if (preferences.getBoolean(SyncPreferences.CUSTOM_SYNC_ENABLED, false)) {
@@ -120,8 +120,8 @@ fun customSyncBase(preferences: SharedPreferences): String? =
         null
     }
 
-suspend fun syncLogout(context: Context) {
-    val preferences = context.sharedPrefs()
+suspend fun syncLogout() {
+    val preferences = AnkiDroidApp.sharedPrefs()
     preferences.edit {
         remove(PrefKey.HKEY)
         remove(PrefKey.USERNAME)
@@ -174,7 +174,7 @@ fun MyAccount.handleNewLogin(
     password: String,
     resultLauncher: ActivityResultLauncher<String>,
 ) {
-    val endpoint = getEndpoint(this)
+    val endpoint = getEndpoint()
     launchCatchingTask {
         val auth =
             try {
