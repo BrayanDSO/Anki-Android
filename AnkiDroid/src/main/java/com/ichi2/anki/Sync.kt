@@ -31,8 +31,8 @@ import com.ichi2.anki.CollectionManager.TR
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.dialogs.SyncErrorDialog
 import com.ichi2.anki.preferences.sharedPrefs
-import com.ichi2.anki.settings.SettingKey
-import com.ichi2.anki.settings.Settings
+import com.ichi2.anki.settings.PrefKey
+import com.ichi2.anki.settings.Prefs
 import com.ichi2.anki.snackbar.showSnackbar
 import com.ichi2.anki.worker.SyncMediaWorker
 import com.ichi2.libanki.ChangeManager.notifySubscribersAllValuesChanged
@@ -85,7 +85,7 @@ fun DeckPicker.syncAuth(): SyncAuth? {
     val currentSyncCertificate = preferences.getString(SyncPreferences.CUSTOM_SYNC_CERTIFICATE, "") ?: ""
     CollectionManager.updateCustomCertificate(currentSyncCertificate)
 
-    val hkey = Settings.hkey
+    val hkey = Prefs.hkey
     if (hkey.isEmpty()) return null
     val resolvedEndpoint = getEndpoint(this)
     return syncAuth {
@@ -123,8 +123,8 @@ fun customSyncBase(preferences: SharedPreferences): String? =
 suspend fun syncLogout(context: Context) {
     val preferences = context.sharedPrefs()
     preferences.edit {
-        remove(SettingKey.HKEY)
-        remove(SettingKey.USERNAME)
+        remove(PrefKey.HKEY)
+        remove(PrefKey.USERNAME)
         remove(SyncPreferences.CURRENT_SYNC_URI)
         remove(SyncPreferences.HOSTNUM)
     }
@@ -138,7 +138,7 @@ suspend fun syncLogout(context: Context) {
  * Returning true does not guarantee that the user actually synced recently,
  * or even that the ankiweb account is still valid.
  */
-fun isLoggedIn() = Settings.hkey.isNotEmpty()
+fun isLoggedIn() = Prefs.hkey.isNotEmpty()
 
 fun millisecondsSinceLastSync(preferences: SharedPreferences) = TimeManager.time.intTimeMS() - preferences.getLong("lastSyncTime", 0)
 
@@ -204,8 +204,8 @@ private fun updateLogin(
     username: String,
     hkey: String,
 ) {
-    Settings.username = username
-    Settings.hkey = hkey
+    Prefs.username = username
+    Prefs.hkey = hkey
 }
 
 fun cancelSync(backend: Backend) {

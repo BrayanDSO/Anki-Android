@@ -23,9 +23,8 @@ import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.R
 import com.ichi2.anki.customSyncBase
 import com.ichi2.anki.launchCatchingTask
-import com.ichi2.anki.settings.Settings
+import com.ichi2.anki.settings.Prefs
 import com.ichi2.anki.snackbar.showSnackbar
-import com.ichi2.anki.utils.ext.sharedPrefs
 import com.ichi2.utils.show
 
 /**
@@ -74,11 +73,11 @@ class SyncSettingsFragment : SettingsFragment() {
     private fun updateSyncAccountSummary() {
         requirePreference<Preference>(R.string.sync_account_key)
             .summary =
-            Settings.username.ifEmpty { getString(R.string.sync_account_summ_logged_out) }
+            Prefs.username.ifEmpty { getString(R.string.sync_account_summ_logged_out) }
     }
 
     private fun updateOneWaySyncEnabledState() {
-        val isLoggedIn = Settings.username.isNotEmpty()
+        val isLoggedIn = Prefs.username.isNotEmpty()
         requirePreference<Preference>(R.string.one_way_sync_key).isEnabled = isLoggedIn
     }
 
