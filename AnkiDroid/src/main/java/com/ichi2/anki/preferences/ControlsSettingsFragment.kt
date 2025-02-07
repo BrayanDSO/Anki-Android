@@ -25,6 +25,7 @@ import com.google.android.material.tabs.TabLayout
 import com.ichi2.anki.CollectionManager.TR
 import com.ichi2.anki.R
 import com.ichi2.anki.cardviewer.ViewerCommand
+import com.ichi2.anki.previewer.PreviewerAction
 import com.ichi2.anki.reviewer.MappableAction
 import com.ichi2.anki.reviewer.MappableBinding.Companion.toPreferenceString
 import com.ichi2.anki.ui.internationalization.toSentenceCase
@@ -142,10 +143,12 @@ enum class ControlPreferenceScreen(
     @StringRes val titleRes: Int,
 ) {
     REVIEWER(R.xml.preferences_reviewer_controls, R.string.reviews),
+    PREVIEWER(R.xml.preferences_previewer_controls, R.string.previews),
     ;
 
     fun getActions(): List<MappableAction<*>> =
         when (this) {
             REVIEWER -> ViewerCommand.entries
+            PREVIEWER -> PreviewerAction.entries
         }
 }
