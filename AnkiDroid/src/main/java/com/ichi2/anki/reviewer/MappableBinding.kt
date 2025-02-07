@@ -52,23 +52,6 @@ open class MappableBinding(
                 .joinToString(prefix = VERSION_PREFIX, separator = PREF_SEPARATOR.toString())
 
         @CheckResult
-        private fun fromString(s: String): MappableBinding? {
-            if (s.isEmpty()) {
-                return null
-            }
-            return try {
-                // the prefix of the serialized
-                when (s[0]) {
-                    ReviewerBinding.PREFIX -> ReviewerBinding.fromString(s.substring(1))
-                    else -> null
-                }
-            } catch (e: Exception) {
-                Timber.w(e, "failed to deserialize binding")
-                null
-            }
-        }
-
-        @CheckResult
         fun getPreferenceSubstrings(string: String): List<String> {
             if (string.isEmpty()) return emptyList()
             if (!string.startsWith(VERSION_PREFIX)) {
@@ -79,9 +62,12 @@ open class MappableBinding(
         }
 
         @CheckResult
-        fun fromPreferenceString(string: String?): MutableList<MappableBinding> {
+        fun fromPreferenceString(string: String?): List<MappableBinding> {
             if (string.isNullOrEmpty()) return ArrayList()
-            return getPreferenceSubstrings(string).mapNotNull { fromString(it) }.toMutableList()
+            return getPreferenceSubstrings(string).map {
+                val binding = Binding.fromString(it)
+                MappableBinding(binding)
+            }
         }
 
         @CheckResult
@@ -90,7 +76,7 @@ open class MappableBinding(
             command: ViewerCommand,
         ): MutableList<MappableBinding> {
             val value = prefs.getString(command.preferenceKey, null) ?: return command.defaultValue.toMutableList()
-            return fromPreferenceString(value)
+            return ReviewerBinding.fromPreferenceString(value).toMutableList()
         }
     }
 }
