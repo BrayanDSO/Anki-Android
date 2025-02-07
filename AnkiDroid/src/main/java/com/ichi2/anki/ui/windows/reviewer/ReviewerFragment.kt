@@ -535,13 +535,13 @@ class ReviewerFragment :
 
     private fun launchEditNote() {
         lifecycleScope.launch {
-            val intent = viewModel.getEditNoteDestination().getIntent(requireContext())
+            val intent = viewModel.getEditNoteDestination().toIntent(requireContext())
             noteEditorLauncher.launch(intent)
         }
     }
 
     private fun launchAddNote() {
-        val intent = NoteEditorLauncher.AddNoteFromReviewer().getIntent(requireContext())
+        val intent = NoteEditorLauncher.AddNoteFromReviewer().toIntent(requireContext())
         noteEditorLauncher.launch(intent)
     }
 
@@ -559,7 +559,7 @@ class ReviewerFragment :
 
     private fun launchDeckOptions() {
         lifecycleScope.launch {
-            val intent = viewModel.getDeckOptionsDestination().getIntent(requireContext())
+            val intent = viewModel.getDeckOptionsDestination().toIntent(requireContext())
             deckOptionsLauncher.launch(intent)
         }
     }
