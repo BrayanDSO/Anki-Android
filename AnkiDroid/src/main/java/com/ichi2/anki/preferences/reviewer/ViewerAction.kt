@@ -22,6 +22,10 @@ import androidx.annotation.IdRes
 import androidx.annotation.StringRes
 import com.ichi2.anki.Flag
 import com.ichi2.anki.R
+import com.ichi2.anki.cardviewer.ViewerCommand.FLIP_OR_ANSWER_EASE1
+import com.ichi2.anki.cardviewer.ViewerCommand.FLIP_OR_ANSWER_EASE2
+import com.ichi2.anki.cardviewer.ViewerCommand.FLIP_OR_ANSWER_EASE3
+import com.ichi2.anki.cardviewer.ViewerCommand.FLIP_OR_ANSWER_EASE4
 import com.ichi2.anki.preferences.reviewer.MenuDisplayType.ALWAYS
 import com.ichi2.anki.preferences.reviewer.MenuDisplayType.DISABLED
 import com.ichi2.anki.preferences.reviewer.MenuDisplayType.MENU_ONLY
@@ -41,8 +45,8 @@ import com.ichi2.anki.reviewer.ReviewerBinding
  * or if the item has a [parentMenu].
  */
 enum class ViewerAction(
-    @IdRes val menuId: Int,
-    @DrawableRes val drawableRes: Int?,
+    @IdRes val menuId: Int = 0,
+    @DrawableRes val drawableRes: Int? = null,
     @StringRes val titleRes: Int = R.string.empty_string,
     val defaultDisplayType: MenuDisplayType? = null,
     val parentMenu: ViewerAction? = null,
@@ -87,6 +91,13 @@ enum class ViewerAction(
     FLAG_PINK(Flag.PINK.id, Flag.PINK.drawableRes, parentMenu = FLAG_MENU),
     FLAG_TURQUOISE(Flag.TURQUOISE.id, Flag.TURQUOISE.drawableRes, parentMenu = FLAG_MENU),
     FLAG_PURPLE(Flag.PURPLE.id, Flag.PURPLE.drawableRes, parentMenu = FLAG_MENU),
+
+    // Command only
+    SHOW_ANSWER,
+    FLIP_OR_ANSWER_EASE1,
+    FLIP_OR_ANSWER_EASE2,
+    FLIP_OR_ANSWER_EASE3,
+    FLIP_OR_ANSWER_EASE4,
     ;
 
     override val preferenceKey: String get() = "binding_$name"
@@ -108,7 +119,36 @@ enum class ViewerAction(
             SUSPEND_NOTE -> listOf(unicode('!'))
             SUSPEND_CARD -> listOf(unicode('@'))
             TOGGLE_AUTO_ADVANCE -> listOf(keycode(KeyEvent.KEYCODE_A, shift()))
+            FLIP_OR_ANSWER_EASE1 ->
+                listOf(
+                    keycode(KeyEvent.KEYCODE_BUTTON_Y),
+                    keycode(KeyEvent.KEYCODE_1, side = CardSide.ANSWER),
+                    keycode(KeyEvent.KEYCODE_NUMPAD_1, side = CardSide.ANSWER),
+                )
+            FLIP_OR_ANSWER_EASE2 ->
+                listOf(
+                    keycode(KeyEvent.KEYCODE_BUTTON_X),
+                    keycode(KeyEvent.KEYCODE_2, side = CardSide.ANSWER),
+                    keycode(KeyEvent.KEYCODE_NUMPAD_2, side = CardSide.ANSWER),
+                )
+            FLIP_OR_ANSWER_EASE3 ->
+                listOf(
+                    keycode(KeyEvent.KEYCODE_BUTTON_B),
+                    keycode(KeyEvent.KEYCODE_3, side = CardSide.ANSWER),
+                    keycode(KeyEvent.KEYCODE_NUMPAD_3, side = CardSide.ANSWER),
+                    keycode(KeyEvent.KEYCODE_DPAD_CENTER),
+                    keycode(KeyEvent.KEYCODE_SPACE, side = CardSide.BOTH),
+                    keycode(KeyEvent.KEYCODE_ENTER, side = CardSide.ANSWER),
+                    keycode(KeyEvent.KEYCODE_NUMPAD_ENTER, side = CardSide.ANSWER),
+                )
+            FLIP_OR_ANSWER_EASE4 ->
+                listOf(
+                    keycode(KeyEvent.KEYCODE_BUTTON_A),
+                    keycode(KeyEvent.KEYCODE_4, side = CardSide.ANSWER),
+                    keycode(KeyEvent.KEYCODE_NUMPAD_4, side = CardSide.ANSWER),
+                )
             // No default gestures
+            SHOW_ANSWER,
             DELETE,
             CARD_INFO,
             USER_ACTION_1,
