@@ -31,7 +31,7 @@ class PeripheralKeymapTest {
         val processed: MutableList<ViewerCommand> = ArrayList()
 
         val sharedPrefs = SPMockBuilder().createSharedPreferences()
-        val peripheralKeymap = PeripheralKeymap(sharedPrefs, ViewerCommand.entries) { e: ViewerCommand, _ -> processed.add(e) }
+        val peripheralKeymap = BindingMap(sharedPrefs, ViewerCommand.entries) { e: ViewerCommand, _ -> processed.add(e) }
         val event = mock(KeyEvent::class.java)
         whenever(event.unicodeChar).thenReturn(0)
         whenever(event.isCtrlPressed).thenReturn(true)

@@ -27,7 +27,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class PeripheralKeymapTest : InstrumentedTest() {
+class BindingMapTest : InstrumentedTest() {
     @Test
     fun testNumpadAction() {
         // #7736 Ensures that a numpad key is passed through (mostly testing num lock)
@@ -35,7 +35,7 @@ class PeripheralKeymapTest : InstrumentedTest() {
 
         val sharedPrefs = testContext.sharedPrefs()
         val peripheralKeymap =
-            PeripheralKeymap(sharedPrefs, ViewerCommand.entries) { e: ViewerCommand, _ -> processed.add(e) }
+            BindingMap(sharedPrefs, ViewerCommand.entries) { e: ViewerCommand, _ -> processed.add(e) }
 
         peripheralKeymap.onKeyDown(
             getNumpadEvent(KeyEvent.KEYCODE_NUMPAD_1),

@@ -18,22 +18,30 @@ package com.ichi2.anki.reviewer
 
 import android.content.SharedPreferences
 import android.view.KeyEvent
-import com.ichi2.anki.preferences.sharedPrefs
+import com.ichi2.anki.cardviewer.Gesture
 import com.ichi2.anki.reviewer.Binding.Companion.possibleKeyBindings
 
-class PeripheralKeymap<B : MappableBinding, A : MappableAction<B>>(
+class BindingMap<B : MappableBinding, A : MappableAction<B>>(
     sharedPrefs: SharedPreferences,
     actions: List<A>,
     private var processor: BindingProcessor<B, A>? = null,
 ) {
-    private val bindingMap = HashMap<Binding, Pair<B, A>>()
+    private val keyMap = HashMap<Binding.KeyBinding, Pair<B, A>>()
+    private val gestureMap = HashMap<Gesture, Pair<B, A>>()
 
     init {
         for (action in actions) {
             val mappableBindings = action.getBindings(sharedPrefs)
             for (mappableBinding in mappableBindings) {
-                if (!mappableBinding.isKey) continue
-                bindingMap[mappableBinding.binding] = mappableBinding to action
+                when (val binding = mappableBinding.binding) {
+                    is Binding.KeyBinding -> {
+                        keyMap[binding] = mappableBinding to action
+                    }
+                    is Binding.GestureInput -> {
+                        gestureMap[binding.gesture] = mappableBinding to action
+                    }
+                    else -> continue
+                }
             }
         }
     }
@@ -48,9 +56,28 @@ class PeripheralKeymap<B : MappableBinding, A : MappableAction<B>>(
         }
         val bindings = possibleKeyBindings(event)
         for (binding in bindings) {
-            val (mappableBinding, action) = bindingMap[binding] ?: continue
+            val (mappableBinding, action) = keyMap[binding] ?: continue
             if (processor?.processAction(action, mappableBinding) == true) return true
         }
         return false
+    }
+
+    fun onTap(code: String) {
+        val gesture =
+            when (code) {
+                "double" -> Gesture.DOUBLE_TAP
+                "topLeft" -> Gesture.TAP_TOP_LEFT
+                "topCenter" -> Gesture.TAP_TOP
+                "topRight" -> Gesture.TAP_TOP_RIGHT
+                "midLeft" -> Gesture.TAP_LEFT
+                "midCenter" -> Gesture.TAP_CENTER
+                "midRight" -> Gesture.TAP_RIGHT
+                "bottomLeft" -> Gesture.TAP_BOTTOM_LEFT
+                "bottomCenter" -> Gesture.TAP_BOTTOM
+                "bottomRight" -> Gesture.TAP_BOTTOM_RIGHT
+                else -> return
+            }
+        val (mappableBinding, action) = gestureMap[gesture] ?: return
+        processor?.processAction(action, mappableBinding)
     }
 }
