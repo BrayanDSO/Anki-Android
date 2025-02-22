@@ -162,59 +162,6 @@ abstract class CardViewerFragment(
                 return handleUrl(url.toUri())
             }
 
-            private fun handleUrl(url: Uri): Boolean {
-                when (url.scheme) {
-                    "playsound" -> viewModel.playSoundFromUrl(url.toString())
-                    "videoended" -> viewModel.onVideoFinished()
-                    "videopause" -> viewModel.onVideoPaused()
-                    "tts-voices" -> TtsVoicesDialogFragment().show(childFragmentManager, null)
-                    "android-app" -> handleIntentUrl(url, Intent.URI_ANDROID_APP_SCHEME)
-                    "intent" -> handleIntentUrl(url, Intent.URI_INTENT_SCHEME)
-                    "missing-user-action" -> {
-                        val actionNumber = url.toString().substringAfter(":")
-                        val message = getString(R.string.missing_user_action_dialog_message, actionNumber)
-                        AlertDialog.Builder(requireContext()).show {
-                            setMessage(message)
-                            setPositiveButton(R.string.dialog_ok) { _, _ -> }
-                            setNeutralButton(R.string.help) { _, _ ->
-                                openUrl(R.string.link_user_actions_help)
-                            }
-                        }
-                    }
-                    else -> {
-                        try {
-                            openUrl(url)
-                        } catch (_: Throwable) {
-                            Timber.w("Could not open url")
-                            return false
-                        }
-                    }
-                }
-                return true
-            }
-
-            private fun handleIntentUrl(
-                url: Uri,
-                flags: Int,
-            ) {
-                try {
-                    val intent = Intent.parseUri(url.toString(), flags)
-                    if (packageManager.resolveActivityCompat(intent) != null) {
-                        startActivity(intent)
-                    } else {
-                        val packageName = intent.getPackage() ?: return
-                        val marketUri = "market://details?id=$packageName".toUri()
-                        val marketIntent = Intent(Intent.ACTION_VIEW, marketUri)
-                        Timber.d("Trying to open market uri %s", marketUri)
-                        if (packageManager.resolveActivityCompat(marketIntent) != null) {
-                            startActivity(marketIntent)
-                        }
-                    }
-                } catch (t: Throwable) {
-                    Timber.w("Unable to parse intent uri: %s because: %s", url, t.message)
-                }
-            }
-
             override fun onReceivedError(
                 view: WebView,
                 request: WebResourceRequest,
@@ -224,6 +171,41 @@ abstract class CardViewerFragment(
                     showMediaErrorSnackbar(filename)
                 }
             }
+        }
+    }
+
+    protected open fun handleUrl(url: Uri): Boolean {
+        when (url.scheme) {
+            "playsound" -> viewModel.playSoundFromUrl(url.toString())
+            "videoended" -> viewModel.onVideoFinished()
+            "videopause" -> viewModel.onVideoPaused()
+            "tts-voices" -> TtsVoicesDialogFragment().show(childFragmentManager, null)
+            "android-app" -> handleIntentUrl(url, Intent.URI_ANDROID_APP_SCHEME)
+            "intent" -> handleIntentUrl(url, Intent.URI_INTENT_SCHEME)
+            else -> openUrl(url)
+        }
+        return true
+    }
+
+    private fun handleIntentUrl(
+        url: Uri,
+        flags: Int,
+    ) {
+        try {
+            val intent = Intent.parseUri(url.toString(), flags)
+            if (packageManager.resolveActivityCompat(intent) != null) {
+                startActivity(intent)
+            } else {
+                val packageName = intent.getPackage() ?: return
+                val marketUri = "market://details?id=$packageName".toUri()
+                val marketIntent = Intent(Intent.ACTION_VIEW, marketUri)
+                Timber.d("Trying to open market uri %s", marketUri)
+                if (packageManager.resolveActivityCompat(marketIntent) != null) {
+                    startActivity(marketIntent)
+                }
+            }
+        } catch (t: Throwable) {
+            Timber.w("Unable to parse intent uri: %s because: %s", url, t.message)
         }
     }
 

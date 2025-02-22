@@ -17,6 +17,7 @@ package com.ichi2.anki.ui.windows.reviewer
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.text.SpannableString
 import android.text.style.UnderlineSpan
@@ -31,6 +32,7 @@ import android.webkit.WebView
 import android.widget.LinearLayout
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.view.menu.SubMenuBuilder
 import androidx.appcompat.widget.ActionMenuView
 import androidx.appcompat.widget.AppCompatImageButton
@@ -86,8 +88,10 @@ import com.ichi2.anki.utils.ext.menu
 import com.ichi2.anki.utils.ext.removeSubMenu
 import com.ichi2.anki.utils.ext.sharedPrefs
 import com.ichi2.anki.utils.ext.window
+import com.ichi2.anki.utils.openUrl
 import com.ichi2.libanki.sched.Counts
 import com.ichi2.themes.Themes
+import com.ichi2.utils.show
 
 class ReviewerFragment :
     CardViewerFragment(R.layout.reviewer2),
@@ -111,6 +115,24 @@ class ReviewerFragment :
             extraJsAssets = listOf("scripts/ankidroid.js"),
             nightMode = Themes.currentTheme.isNightMode,
         )
+
+    override fun handleUrl(url: Uri): Boolean {
+        when (url.scheme) {
+            "missing-user-action" -> {
+                val actionNumber = url.toString().substringAfter(":")
+                val message = getString(R.string.missing_user_action_dialog_message, actionNumber)
+                AlertDialog.Builder(requireContext()).show {
+                    setMessage(message)
+                    setPositiveButton(R.string.dialog_ok) { _, _ -> }
+                    setNeutralButton(R.string.help) { _, _ ->
+                        openUrl(R.string.link_user_actions_help)
+                    }
+                }
+            }
+            else -> return super.handleUrl(url)
+        }
+        return true
+    }
 
     override fun onStop() {
         super.onStop()
