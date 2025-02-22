@@ -77,6 +77,12 @@ abstract class CardViewerFragment(
         }
     }
 
+    protected open fun buildInitialHtml(): String =
+        stdHtml(
+            context = requireContext(),
+            nightMode = Themes.currentTheme.isNightMode,
+        )
+
     private fun setupWebView(savedInstanceState: Bundle?) {
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true)
         with(webView) {
@@ -96,7 +102,7 @@ abstract class CardViewerFragment(
 
             loadDataWithBaseURL(
                 viewModel.baseUrl(),
-                stdHtml(requireContext(), Themes.currentTheme.isNightMode),
+                buildInitialHtml(),
                 "text/html",
                 null,
                 null,
@@ -264,6 +270,4 @@ abstract class CardViewerFragment(
             setAction(R.string.help) { openUrl(getString(R.string.link_faq_missing_media).toUri()) }
         }
     }
-
-    private fun openUrl(uri: Uri) = startActivity(Intent(Intent.ACTION_VIEW, uri))
 }

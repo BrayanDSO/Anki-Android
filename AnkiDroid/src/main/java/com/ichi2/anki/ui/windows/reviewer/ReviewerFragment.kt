@@ -72,6 +72,7 @@ import com.ichi2.anki.preferences.reviewer.ViewerAction.SUSPEND_NOTE
 import com.ichi2.anki.preferences.reviewer.ViewerAction.UNDO
 import com.ichi2.anki.previewer.CardViewerActivity
 import com.ichi2.anki.previewer.CardViewerFragment
+import com.ichi2.anki.previewer.stdHtml
 import com.ichi2.anki.reviewer.PeripheralKeymap
 import com.ichi2.anki.settings.Prefs
 import com.ichi2.anki.settings.enums.FrameStyle
@@ -86,6 +87,7 @@ import com.ichi2.anki.utils.ext.removeSubMenu
 import com.ichi2.anki.utils.ext.sharedPrefs
 import com.ichi2.anki.utils.ext.window
 import com.ichi2.libanki.sched.Counts
+import com.ichi2.themes.Themes
 
 class ReviewerFragment :
     CardViewerFragment(R.layout.reviewer2),
@@ -102,6 +104,13 @@ class ReviewerFragment :
     override val baseSnackbarBuilder: SnackbarBuilder = {
         anchorView = this@ReviewerFragment.view?.findViewById(R.id.snackbar_anchor)
     }
+
+    override fun buildInitialHtml(): String =
+        stdHtml(
+            context = requireContext(),
+            extraJsAssets = listOf("scripts/ankidroid.js"),
+            nightMode = Themes.currentTheme.isNightMode,
+        )
 
     override fun onStop() {
         super.onStop()
