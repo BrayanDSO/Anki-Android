@@ -368,6 +368,8 @@ class ReviewerViewModel(
     override suspend fun showQuestion() {
         super.showQuestion()
         runStateMutationHook()
+        updateMarkIcon()
+        updateFlagIcon()
         if (!autoAdvance.shouldWaitForAudio()) {
             autoAdvance.onShowQuestion()
         } // else run in onSoundGroupCompleted
@@ -456,8 +458,6 @@ class ReviewerViewModel(
         autoAdvance.onCardChange(card)
         showQuestion()
         loadAndPlaySounds(CardSide.QUESTION)
-        updateMarkIcon()
-        updateFlagIcon()
         canBuryNoteFlow.emit(isBuryNoteAvailable(card))
         canSuspendNoteFlow.emit(isSuspendNoteAvailable(card))
         countsFlow.emit(state.counts to state.countsIndex)
