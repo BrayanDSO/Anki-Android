@@ -15,6 +15,9 @@
  */
 package com.ichi2.anki
 
+import androidx.annotation.ColorRes
+import androidx.annotation.DrawableRes
+
 /**
  * [value] should be kept in sync with the [com.ichi2.anki.api.Ease] enum.
  *
@@ -23,11 +26,13 @@ package com.ichi2.anki
  */
 enum class Ease(
     val value: Int,
+    @DrawableRes val feedbackIcon: Int,
+    @ColorRes val feedbackColor: Int,
 ) {
-    AGAIN(1),
-    HARD(2),
-    GOOD(3),
-    EASY(4),
+    AGAIN(1, R.drawable.close_icon, R.color.again_button_text),
+    HARD(2, R.drawable.ic_check_small, R.color.hard_button_text),
+    GOOD(3, R.drawable.ic_done, R.color.good_button_text),
+    EASY(4, R.drawable.ic_done_all, R.color.easy_button_text),
     ;
 
     companion object {

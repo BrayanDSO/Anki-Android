@@ -19,6 +19,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.text.SpannableString
 import android.text.style.UnderlineSpan
 import android.view.KeyEvent
@@ -26,6 +28,8 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup.MarginLayoutParams
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.webkit.WebView
@@ -36,6 +40,7 @@ import androidx.annotation.StringRes
 import androidx.appcompat.view.menu.SubMenuBuilder
 import androidx.appcompat.widget.ActionMenuView
 import androidx.appcompat.widget.AppCompatImageButton
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -56,6 +61,7 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textview.MaterialTextView
 import com.ichi2.anki.CollectionManager
 import com.ichi2.anki.DispatchKeyEventListener
+import com.ichi2.anki.Ease
 import com.ichi2.anki.R
 import com.ichi2.anki.cardviewer.CardMediaPlayer
 import com.ichi2.anki.common.utils.android.isRobolectric
@@ -220,6 +226,18 @@ class ReviewerFragment :
             val dialogFragment = SetDueDateDialog.newInstance(listOf(cardId))
             showDialogFragment(dialogFragment)
         }
+
+        viewModel.answerFeedbackFlow.collectIn(lifecycleScope) { ease ->
+            if (ease == Ease.AGAIN) {
+                fadeInAndOut(view.findViewById(R.id.wrong_answer_feedback))
+                return@collectIn
+            }
+            view.findViewById<AppCompatImageView>(R.id.correct_answer_feedback).apply {
+                setImageResource(ease.feedbackIcon)
+                setColorFilter(requireContext().getColor(ease.feedbackColor))
+                fadeInAndOut(this)
+            }
+        }
     }
 
     private fun setupTypeAnswer(view: View) {
@@ -310,19 +328,27 @@ class ReviewerFragment :
 
         val againButton =
             view.findViewById<MaterialButton>(R.id.again_button).apply {
-                setOnClickListener { viewModel.answerAgain() }
+                setOnClickListener {
+                    viewModel.answerCard(Ease.AGAIN)
+                }
             }
         val hardButton =
             view.findViewById<MaterialButton>(R.id.hard_button).apply {
-                setOnClickListener { viewModel.answerHard() }
+                setOnClickListener {
+                    viewModel.answerCard(Ease.HARD)
+                }
             }
         val goodButton =
             view.findViewById<MaterialButton>(R.id.good_button).apply {
-                setOnClickListener { viewModel.answerGood() }
+                setOnClickListener {
+                    viewModel.answerCard(Ease.GOOD)
+                }
             }
         val easyButton =
             view.findViewById<MaterialButton>(R.id.easy_button).apply {
-                setOnClickListener { viewModel.answerEasy() }
+                setOnClickListener {
+                    viewModel.answerCard(Ease.EASY)
+                }
             }
 
         viewModel.answerButtonsNextTimeFlow
@@ -367,6 +393,43 @@ class ReviewerFragment :
                 }
             }
         }
+    }
+
+    /**
+     * Fades a view in, holds it for a specified duration, and then fades it out.
+     */
+    private fun fadeInAndOut(view: View) {
+        val fadeIn = AnimationUtils.loadAnimation(requireContext(), android.R.anim.fade_in)
+        val fadeOut = AnimationUtils.loadAnimation(requireContext(), android.R.anim.fade_out)
+        fadeIn.duration = 125
+        fadeOut.duration = 175
+        fadeIn.setAnimationListener(
+            object : Animation.AnimationListener {
+                override fun onAnimationStart(animation: Animation) {
+                    view.visibility = View.VISIBLE
+                }
+
+                override fun onAnimationEnd(animation: Animation) {
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        view.startAnimation(fadeOut)
+                    }, 200)
+                }
+
+                override fun onAnimationRepeat(animation: Animation) {}
+            },
+        )
+        fadeOut.setAnimationListener(
+            object : Animation.AnimationListener {
+                override fun onAnimationStart(animation: Animation) {}
+
+                override fun onAnimationEnd(animation: Animation) {
+                    view.visibility = View.INVISIBLE
+                }
+
+                override fun onAnimationRepeat(animation: Animation) {}
+            },
+        )
+        view.startAnimation(fadeIn)
     }
 
     private fun setupCounts(view: View) {
