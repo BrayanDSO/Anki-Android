@@ -86,6 +86,31 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 tools:backgroundTint="@color/white" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/wrong_answer_feedback"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:layout_margin="6dp"
+                android:visibility="gone"
+                app:srcCompat="@drawable/close_icon"
+                app:tint="@color/again_button_text"
+                tools:visibility="visible"
+                />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/correct_answer_feedback"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|end"
+                android:layout_margin="6dp"
+                android:visibility="gone"
+                tools:visibility="visible"
+                tools:srcCompat="@drawable/ic_done"
+                tools:tint="@color/good_button_text"
+                />
+
         </com.google.android.material.card.MaterialCardView>
 
         <!-- Use the same card style of the WebView -->

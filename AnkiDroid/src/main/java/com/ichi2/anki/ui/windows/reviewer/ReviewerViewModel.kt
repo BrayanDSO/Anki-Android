@@ -102,6 +102,7 @@ class ReviewerViewModel(
     val destinationFlow = MutableSharedFlow<Destination>()
     val editNoteTagsFlow = MutableSharedFlow<NoteId>()
     val setDueDateFlow = MutableSharedFlow<CardId>()
+    val answerFeedbackFlow = MutableSharedFlow<Ease>()
 
     override val server: AnkiServer = AnkiServer(this, serverPort).also { it.start() }
     private val stateMutationKey = TimeManager.time.intTimeMS().toString()
@@ -190,14 +191,6 @@ class ReviewerViewModel(
             } // else wait for onMediaGroupCompleted
         }
     }
-
-    fun answerAgain() = answerCard(Ease.AGAIN)
-
-    fun answerHard() = answerCard(Ease.HARD)
-
-    fun answerGood() = answerCard(Ease.GOOD)
-
-    fun answerEasy() = answerCard(Ease.EASY)
 
     fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action != KeyEvent.ACTION_DOWN) return false
@@ -442,11 +435,12 @@ class ReviewerViewModel(
         return ByteArray(0)
     }
 
-    private fun answerCard(ease: Ease) {
+    fun answerCard(ease: Ease) {
         Timber.v("ReviewerViewModel::answerCard")
         launchCatchingIO {
             queueState.await()?.let {
                 undoableOp(this) { sched.answerCard(it, ease) }
+                answerFeedbackFlow.emit(ease)
                 updateCurrentCard()
             }
         }
