@@ -126,6 +126,7 @@ object PreferenceUpgradeService {
                     yield(RemoveNoCodeFormatting())
                     yield(UpgradeBrowserColumns())
                     yield(RemoveLastExportedAtTime())
+                    yield(RemoveLongTouchGesture())
                 }
 
             /** Returns a list of preference upgrade classes which have not been applied */
@@ -674,6 +675,21 @@ object PreferenceUpgradeService {
                 preferences.edit {
                     remove("last_successful_export_mod")
                     remove("last_successful_export_second")
+                }
+            }
+        }
+
+        internal class RemoveLongTouchGesture : PreferenceUpgrade(21) {
+            override fun upgrade(preferences: SharedPreferences) {
+                for (command in ViewerCommand.entries) {
+                    val value = preferences.getString(command.preferenceKey, null) ?: continue
+                    val bindings = ReviewerBinding.fromPreferenceString(value)
+                    val unknown = bindings.filter { it.binding is Binding.UnknownBinding }
+                    if (unknown.isEmpty()) continue
+                    val newBindings = bindings - unknown
+                    preferences.edit {
+                        putString(command.preferenceKey, newBindings.toPreferenceString())
+                    }
                 }
             }
         }
