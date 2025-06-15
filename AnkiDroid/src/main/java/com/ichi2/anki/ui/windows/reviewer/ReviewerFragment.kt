@@ -324,18 +324,14 @@ class ReviewerFragment :
                     viewModel.answerCard(Ease.HARD)
                 }
             }
-        val goodButton =
-            view.findViewById<MaterialButton>(R.id.good_button).apply {
-                setOnClickListener {
-                    viewModel.answerCard(Ease.GOOD)
-                }
-            }
+        val goodButton = view.findViewById<MaterialButton>(R.id.good_button)
         val easyButton =
             view.findViewById<MaterialButton>(R.id.easy_button).apply {
                 setOnClickListener {
                     viewModel.answerCard(Ease.EASY)
                 }
             }
+        goodButton.setOnClickListener { viewModel.answerCard(Ease.GOOD) }
 
         viewModel.answerButtonsNextTimeFlow
             .flowWithLifecycle(lifecycle)
