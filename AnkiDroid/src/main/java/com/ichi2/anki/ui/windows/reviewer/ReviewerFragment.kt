@@ -312,26 +312,15 @@ class ReviewerFragment :
             text = ReviewerViewModel.buildAnswerButtonText(titleString, nextTime)
         }
 
-        val againButton =
-            view.findViewById<MaterialButton>(R.id.again_button).apply {
-                setOnClickListener {
-                    viewModel.answerCard(Ease.AGAIN)
-                }
-            }
-        val hardButton =
-            view.findViewById<MaterialButton>(R.id.hard_button).apply {
-                setOnClickListener {
-                    viewModel.answerCard(Ease.HARD)
-                }
-            }
+        val againButton = view.findViewById<MaterialButton>(R.id.again_button)
+        val hardButton = view.findViewById<MaterialButton>(R.id.hard_button)
         val goodButton = view.findViewById<MaterialButton>(R.id.good_button)
-        val easyButton =
-            view.findViewById<MaterialButton>(R.id.easy_button).apply {
-                setOnClickListener {
-                    viewModel.answerCard(Ease.EASY)
-                }
-            }
+        val easyButton = view.findViewById<MaterialButton>(R.id.easy_button)
+
+        againButton.setOnClickListener { viewModel.answerCard(Ease.AGAIN) }
+        hardButton.setOnClickListener { viewModel.answerCard(Ease.HARD) }
         goodButton.setOnClickListener { viewModel.answerCard(Ease.GOOD) }
+        easyButton.setOnClickListener { viewModel.answerCard(Ease.EASY) }
 
         viewModel.answerButtonsNextTimeFlow
             .flowWithLifecycle(lifecycle)
