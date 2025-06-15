@@ -401,8 +401,8 @@ class ReviewerFragment :
     private fun fadeInAndOut(view: View) {
         val fadeIn = AnimationUtils.loadAnimation(requireContext(), android.R.anim.fade_in)
         val fadeOut = AnimationUtils.loadAnimation(requireContext(), android.R.anim.fade_out)
-        fadeIn.duration = 100
-        fadeOut.duration = 150
+        fadeIn.duration = 125
+        fadeOut.duration = 175
         fadeIn.setAnimationListener(
             object : Animation.AnimationListener {
                 override fun onAnimationStart(animation: Animation) {
@@ -412,7 +412,7 @@ class ReviewerFragment :
                 override fun onAnimationEnd(animation: Animation) {
                     Handler(Looper.getMainLooper()).postDelayed({
                         view.startAnimation(fadeOut)
-                    }, 150)
+                    }, 200)
                 }
 
                 override fun onAnimationRepeat(animation: Animation) {}
