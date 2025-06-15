@@ -24,6 +24,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
+            android:layout_marginHorizontal="4dp"
             >
 
             <androidx.appcompat.widget.AppCompatImageButton
@@ -32,7 +33,6 @@
                 android:layout_width="?minTouchTargetSize"
                 android:layout_height="?actionBarSize"
                 android:src="?attr/homeAsUpIndicator"
-                android:layout_marginStart="4dp"
                 android:contentDescription="@string/abc_action_bar_up_description"
                 android:tooltipText="@string/abc_action_bar_up_description"
                 />
@@ -146,7 +146,8 @@
             android:id="@+id/answer_area"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginVertical="4dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="8dp"
             android:layout_marginHorizontal="@dimen/reviewer_side_margin"
             tools:visibility="visible">
 
