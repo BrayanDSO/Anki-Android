@@ -42,6 +42,7 @@
         android:entryValues="@array/reviewer_frame_style_values"
         android:key="@string/reviewer_frame_style_key"
         android:title="@string/reviewer_frame_style"
+        android:icon="@drawable/ic_crop_square"
         app:useSimpleSummaryProvider="true"/>
 
     <ListPreference
