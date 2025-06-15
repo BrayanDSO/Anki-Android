@@ -23,6 +23,7 @@
             android:id="@+id/tools_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/reviewer_side_margin"
             android:gravity="center_vertical"
             >
 
@@ -32,7 +33,6 @@
                 android:layout_width="?minTouchTargetSize"
                 android:layout_height="?actionBarSize"
                 android:src="?attr/homeAsUpIndicator"
-                android:layout_marginStart="4dp"
                 android:contentDescription="@string/abc_action_bar_up_description"
                 android:tooltipText="@string/abc_action_bar_up_description"
                 />
