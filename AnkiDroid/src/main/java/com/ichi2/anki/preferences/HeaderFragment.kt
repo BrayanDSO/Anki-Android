@@ -15,12 +15,16 @@
  */
 package com.ichi2.anki.preferences
 
+import android.os.Bundle
+import android.view.View
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.preference.Preference
 import com.bytehamster.lib.preferencesearch.SearchConfiguration
 import com.bytehamster.lib.preferencesearch.SearchPreference
+import com.google.android.material.appbar.MaterialToolbar
 import com.ichi2.anki.BuildConfig
 import com.ichi2.anki.CollectionManager.TR
 import com.ichi2.anki.R
@@ -30,6 +34,7 @@ import com.ichi2.anki.ui.internationalization.toSentenceCase
 import com.ichi2.anki.utils.isWindowCompact
 import com.ichi2.compat.CompatHelper
 import com.ichi2.preferences.HeaderPreference
+import com.ichi2.themes.Themes
 import com.ichi2.utils.AdaptionUtil
 import timber.log.Timber
 
@@ -72,19 +77,31 @@ class HeaderFragment : SettingsFragment() {
             requireActivity() as AppCompatActivity,
             requirePreference<SearchPreference>(R.string.search_preference_key).searchConfiguration,
         )
+    }
 
-        if (settingsIsSplit) {
-            highlightPreference(R.string.pref_general_screen_key)
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+        if (!settingsIsSplit) return
 
-            parentFragmentManager.addOnBackStackChangedListener {
-                if (!isAdded) return@addOnBackStackChangedListener
-                val fragment =
-                    parentFragmentManager.findFragmentById(R.id.settings_container)
-                        ?: return@addOnBackStackChangedListener
+        val drawableRes = Themes.getResFromAttr(requireContext(), android.R.attr.homeAsUpIndicator)
+        view.findViewById<MaterialToolbar>(R.id.toolbar).navigationIcon = ContextCompat.getDrawable(requireContext(), drawableRes)
 
-                val key = getHeaderKeyForFragment(fragment) ?: return@addOnBackStackChangedListener
-                highlightPreference(key)
-            }
+        parentFragmentManager.findFragmentById(R.id.settings_container)?.let {
+            val key = getHeaderKeyForFragment(it) ?: return@let
+            highlightPreference(key)
+        }
+
+        parentFragmentManager.addOnBackStackChangedListener {
+            if (!isAdded) return@addOnBackStackChangedListener
+            val fragment =
+                parentFragmentManager.findFragmentById(R.id.settings_container)
+                    ?: return@addOnBackStackChangedListener
+
+            val key = getHeaderKeyForFragment(fragment) ?: return@addOnBackStackChangedListener
+            highlightPreference(key)
         }
     }
 

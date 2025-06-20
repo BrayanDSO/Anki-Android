@@ -40,6 +40,7 @@ import com.ichi2.anki.R
 import com.ichi2.anki.SingleFragmentActivity
 import com.ichi2.anki.reviewreminders.ScheduleReminders
 import com.ichi2.anki.utils.ext.sharedPrefs
+import com.ichi2.utils.FragmentFactoryUtils
 import timber.log.Timber
 import kotlin.reflect.KClass
 import kotlin.reflect.jvm.jvmName
@@ -82,6 +83,11 @@ class PreferencesFragment :
             .findViewById<MaterialToolbar>(R.id.toolbar)
             ?.setNavigationOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
         setupBackCallbacks()
+
+        // Load initial subscreen if activity is being first created
+        if (savedInstanceState == null) {
+            loadInitialSubscreen()
+        }
     }
 
     override fun onDestroyView() {
@@ -147,6 +153,24 @@ class PreferencesFragment :
     private fun setFadeTransition(fragmentTransaction: FragmentTransaction) {
         if (!sharedPrefs().getBoolean("safeDisplay", false)) {
             fragmentTransaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+        }
+    }
+
+    /**
+     * Starts the first settings fragment, which by default is [HeaderFragment].
+     * The initial fragment may be overridden by putting the java class name
+     * of the fragment on an intent extra with the key [INITIAL_FRAGMENT_EXTRA]
+     */
+    private fun loadInitialSubscreen() {
+        val fragmentClassName = arguments?.getString(INITIAL_FRAGMENT_EXTRA)
+        val initialFragment =
+            if (fragmentClassName == null) {
+                if (!settingsIsSplit) HeaderFragment() else GeneralSettingsFragment()
+            } else {
+                FragmentFactoryUtils.instantiate<Fragment>(requireActivity(), fragmentClassName)
+            }
+        childFragmentManager.commit {
+            replace(R.id.settings_container, initialFragment, initialFragment::class.java.name)
         }
     }
 }

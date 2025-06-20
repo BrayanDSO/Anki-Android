@@ -53,9 +53,10 @@ class AboutFragment : Fragment(R.layout.about_layout) {
         view: View,
         savedInstanceState: Bundle?,
     ) {
-        view
-            .findViewById<MaterialToolbar>(R.id.toolbar)
-            .setNavigationOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
+        view.findViewById<MaterialToolbar>(R.id.toolbar).apply {
+            setNavigationOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
+            if (settingsIsSplit) navigationIcon = null
+        }
 
         // Version date
         val apkBuildDate =
