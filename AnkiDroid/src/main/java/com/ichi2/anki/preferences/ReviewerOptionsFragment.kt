@@ -15,10 +15,8 @@
  */
 package com.ichi2.anki.preferences
 
-import android.os.Bundle
 import androidx.preference.ListPreference
 import androidx.preference.Preference
-import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
 import com.ichi2.anki.R
 import com.ichi2.anki.SingleFragmentActivity
@@ -33,16 +31,12 @@ import com.ichi2.anki.settings.enums.HideSystemBars
  * since this is just a temporary screen while the new reviewer is being developed.
  */
 class ReviewerOptionsFragment :
-    PreferenceFragmentCompat(),
+    SettingsFragment(),
     PreferenceXmlSource {
     override val preferenceResource: Int = R.xml.preferences_reviewer
+    override val analyticsScreenNameConstant: String = "prefs.studyScreen"
 
-    override fun onCreatePreferences(
-        savedInstanceState: Bundle?,
-        rootKey: String?,
-    ) {
-        addPreferencesFromResource(preferenceResource)
-
+    override fun initSubscreen() {
         // TODO launch the fragment inside PreferencesFragment instead of using a new activity.
         // An activity is being currently used because the preferences screens are shown below the
         // collapsible toolbar, and the menu screen has a non collapsible one. Putting it in
