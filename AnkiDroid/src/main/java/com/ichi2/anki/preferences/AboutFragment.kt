@@ -25,7 +25,6 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.text.parseAsHtml
 import androidx.fragment.app.Fragment
 import com.google.android.material.appbar.MaterialToolbar
@@ -54,9 +53,9 @@ class AboutFragment : Fragment(R.layout.about_layout) {
         view: View,
         savedInstanceState: Bundle?,
     ) {
-        val toolbar = view.findViewById<MaterialToolbar>(R.id.toolbar)
-        (activity as? AppCompatActivity)?.setSupportActionBar(toolbar)
-        toolbar.setNavigationOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
+        view
+            .findViewById<MaterialToolbar>(R.id.toolbar)
+            .setNavigationOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
 
         // Version date
         val apkBuildDate =

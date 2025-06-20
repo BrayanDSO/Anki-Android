@@ -24,11 +24,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.activity.OnBackPressedCallback
-import androidx.activity.enableEdgeToEdge
 import androidx.annotation.XmlRes
 import androidx.core.os.bundleOf
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
@@ -163,16 +160,6 @@ class PreferencesFragment :
 class PreferencesActivity :
     SingleFragmentActivity(),
     SearchPreferenceResultListener {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root_layout)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom)
-            insets
-        }
-    }
-
     override fun onSearchResultClicked(result: SearchPreferenceResult) {
         val fragment = supportFragmentManager.findFragmentByTag(FRAGMENT_TAG)
         if (fragment is SearchPreferenceResultListener) {
