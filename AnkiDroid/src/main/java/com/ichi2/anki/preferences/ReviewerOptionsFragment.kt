@@ -17,7 +17,9 @@ package com.ichi2.anki.preferences
 
 import androidx.preference.ListPreference
 import androidx.preference.SwitchPreferenceCompat
+import com.ichi2.anki.CollectionManager
 import com.ichi2.anki.R
+import com.ichi2.anki.launchCatchingTask
 import com.ichi2.anki.settings.Prefs
 import com.ichi2.anki.settings.enums.HideSystemBars
 
@@ -41,6 +43,18 @@ class ReviewerOptionsFragment :
 
         requirePreference<ListPreference>(R.string.hide_system_bars_key).setOnPreferenceChangeListener { value ->
             ignoreDisplayCutout.isEnabled = value != HideSystemBars.NONE.entryValue
+        }
+
+        // Show play buttons on cards with audio
+        // Note: Stored inverted in the collection as HIDE_AUDIO_PLAY_BUTTONS
+        requirePreference<SwitchPreferenceCompat>(R.string.show_audio_play_buttons_key).apply {
+            title = CollectionManager.TR.preferencesShowPlayButtonsOnCardsWith()
+            launchCatchingTask { isChecked = !getHidePlayAudioButtons() }
+            setOnPreferenceChangeListener { _, newValue ->
+                val newValueBool = newValue as? Boolean ?: return@setOnPreferenceChangeListener false
+                launchCatchingTask { setHideAudioPlayButtons(!newValueBool) }
+                true
+            }
         }
     }
 }
