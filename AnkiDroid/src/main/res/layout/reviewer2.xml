@@ -43,7 +43,9 @@
                 app:constraint_referenced_ids="new_count,lrn_count,rev_count"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toEndOf="@id/back_button"
+                app:layout_constraintEnd_toStartOf="@id/reviewer_menu_view"
                 app:layout_constraintBottom_toTopOf="@id/timer"
+                android:layout_marginHorizontal="6dp"
                 />
 
             <com.google.android.material.textview.MaterialTextView
@@ -86,10 +88,9 @@
                 android:id="@+id/reviewer_menu_view"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_marginStart="12dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@id/rev_count"
+                app:layout_constraintStart_toEndOf="@id/counts_flow"
                 app:layout_constraintTop_toTopOf="parent" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
