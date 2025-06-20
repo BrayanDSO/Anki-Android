@@ -35,7 +35,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
-import kotlin.reflect.jvm.jvmName
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -88,22 +87,6 @@ class PreferencesTest : RobolectricTest() {
                     add(R.id.settings_container, it)
                 }
             }
-        }
-    }
-
-    @Test
-    fun `All preferences fragments are TitleProvider`() {
-        val fragments =
-            PreferenceTestUtils
-                .getAllPreferencesFragments(targetContext)
-                .filter { it !is ReviewerOptionsFragment } // WIP dev options
-
-        fragments.forEach { fragment ->
-            assertThat(
-                "${fragment::class.jvmName} should implement TitleProvider",
-                fragment is TitleProvider,
-                equalTo(true),
-            )
         }
     }
 

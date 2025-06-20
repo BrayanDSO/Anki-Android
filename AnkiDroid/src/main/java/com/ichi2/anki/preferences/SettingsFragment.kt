@@ -39,15 +39,11 @@ abstract class SettingsFragment :
     PreferenceFragmentCompat(),
     OnPreferenceTreeClickListener,
     SharedPreferences.OnSharedPreferenceChangeListener,
-    PreferenceXmlSource,
-    TitleProvider {
+    PreferenceXmlSource {
     /** @return The XML file which defines the preferences displayed by this PreferenceFragment
      */
     @get:XmlRes
     abstract override val preferenceResource: Int
-
-    override val title: CharSequence
-        get() = preferenceManager?.preferenceScreen?.title ?: ""
 
     abstract fun initSubscreen()
 
@@ -95,8 +91,9 @@ abstract class SettingsFragment :
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
+        val title = preferenceManager?.preferenceScreen?.title ?: ""
         view.findViewById<MaterialToolbar>(R.id.toolbar).apply {
-            setTitle(this@SettingsFragment.title)
+            setTitle(title)
             setNavigationOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
         }
     }

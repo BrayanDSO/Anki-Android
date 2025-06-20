@@ -194,10 +194,6 @@ class PreferencesActivity :
     }
 }
 
-interface TitleProvider {
-    val title: CharSequence
-}
-
 // Only enable AnkiDroid notifications unrelated to due reminders
 const val PENDING_NOTIFICATIONS_ONLY = 1000000
 

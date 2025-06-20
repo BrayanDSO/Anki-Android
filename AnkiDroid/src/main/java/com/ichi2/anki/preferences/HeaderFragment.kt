@@ -36,15 +36,11 @@ import com.ichi2.preferences.HeaderPreference
 import com.ichi2.utils.AdaptionUtil
 import timber.log.Timber
 
-class HeaderFragment :
-    SettingsFragment(),
-    TitleProvider {
+class HeaderFragment : SettingsFragment() {
     override val analyticsScreenNameConstant: String
         get() = "prefs.initialPage"
     override val preferenceResource: Int
         get() = R.xml.preference_headers
-    override val title: CharSequence
-        get() = getString(R.string.settings)
 
     private var highlightedPreferenceKey: String = ""
 
