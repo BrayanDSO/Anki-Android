@@ -31,7 +31,7 @@
         />
 
     <Preference
-        android:title="Menu actions"
+        android:title="@string/toolbar_actions"
         android:key="@string/reviewer_menu_settings_key"
         android:icon="@drawable/ic_widgets"
         android:fragment="com.ichi2.anki.preferences.reviewer.ReviewerMenuSettingsFragment"
@@ -52,6 +52,6 @@
         android:entryValues="@array/reviewer_toolbar_position_values"
         android:key="@string/reviewer_toolbar_position_key"
         android:icon="@drawable/ic_toolbar"
-        android:title="Toolbar position"
+        android:title="@string/toolbar_position"
         app:useSimpleSummaryProvider="true"/>
 </androidx.preference.PreferenceScreen>
