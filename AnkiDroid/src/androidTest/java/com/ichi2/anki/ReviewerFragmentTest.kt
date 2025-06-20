@@ -144,7 +144,7 @@ class ReviewerFragmentTest : InstrumentedTest() {
 
     private fun setNewReviewer() {
         testContext.sharedPrefs().edit {
-            putBoolean("newReviewer", true)
+            putBoolean("newReviewerExperiment", true)
         }
     }
 }

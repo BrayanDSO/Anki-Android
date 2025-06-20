@@ -155,7 +155,7 @@ class IntentHandler : AbstractIntentHandler() {
         Timber.i("Handling intent to review deck '%d'", deckId)
 
         val reviewIntent =
-            if (sharedPrefs().getBoolean("newReviewer", false)) {
+            if (sharedPrefs().getBoolean("newReviewerExperiment", false)) {
                 ReviewerFragment.getIntent(this)
             } else {
                 Intent(this, Reviewer::class.java).apply {
@@ -456,7 +456,7 @@ class IntentHandler : AbstractIntentHandler() {
         /**
          * Returns an intent to review a specific deck.
          * This does not states which reviewer to use, instead IntentHandler will choose whether to use the
-         * legacy or the new reviewer based on the "newReviewer" preference.
+         * legacy or the new reviewer based on the "newReviewerExperiment" preference.
          * It is expected to be used from widget, shortcut, reminders but not from ankidroid directly because of the CLEAR_TOP flag.
          */
         fun intentToReviewDeckFromShorcuts(

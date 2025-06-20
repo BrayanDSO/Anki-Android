@@ -1657,7 +1657,7 @@ open class Reviewer :
         const val ACTION_SNACKBAR_TIME = 500
 
         fun getIntent(context: Context): Intent =
-            if (context.sharedPrefs().getBoolean("newReviewer", false)) {
+            if (context.sharedPrefs().getBoolean("newReviewerExperiment", false)) {
                 ReviewerFragment.getIntent(context)
             } else {
                 Intent(context, Reviewer::class.java)

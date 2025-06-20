@@ -4,6 +4,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:title="@string/pref_cat_reviewer"
     >
+
+    <SwitchPreferenceCompat
+        android:key="@string/new_reviewer_experiment_pref_key"
+        android:title="@string/new_study_screen"
+        android:defaultValue="true"
+        />
+
     <ListPreference
         android:defaultValue="@string/reviewer_frame_style_card_value"
         android:entries="@array/reviewer_frame_style_entries"
