@@ -16,11 +16,8 @@
 package com.ichi2.anki.preferences
 
 import androidx.preference.ListPreference
-import androidx.preference.Preference
 import androidx.preference.SwitchPreferenceCompat
 import com.ichi2.anki.R
-import com.ichi2.anki.SingleFragmentActivity
-import com.ichi2.anki.preferences.reviewer.ReviewerMenuSettingsFragment
 import com.ichi2.anki.settings.Prefs
 import com.ichi2.anki.settings.enums.HideSystemBars
 
@@ -37,19 +34,6 @@ class ReviewerOptionsFragment :
     override val analyticsScreenNameConstant: String = "prefs.studyScreen"
 
     override fun initSubscreen() {
-        // TODO launch the fragment inside PreferencesFragment instead of using a new activity.
-        // An activity is being currently used because the preferences screens are shown below the
-        // collapsible toolbar, and the menu screen has a non collapsible one. Putting it in
-        // `settings_container` would lead to two toolbars, which isn't desirable. Putting its menu
-        // into the collapsible toolbar would ruin the preview, which also isn't desirable.
-        // An activity partially solves that, because the screen looks alright in phones, but in
-        // tablets/big screens, the preferences navigation lateral bar isn't shown.
-        requirePreference<Preference>(R.string.reviewer_menu_settings_key).setOnPreferenceClickListener {
-            val intent = SingleFragmentActivity.getIntent(requireContext(), ReviewerMenuSettingsFragment::class)
-            startActivity(intent)
-            true
-        }
-
         val ignoreDisplayCutout =
             requirePreference<SwitchPreferenceCompat>(R.string.ignore_display_cutout_key).apply {
                 isEnabled = Prefs.hideSystemBars != HideSystemBars.NONE

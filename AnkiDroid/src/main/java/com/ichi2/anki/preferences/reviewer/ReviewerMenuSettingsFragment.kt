@@ -29,6 +29,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.ichi2.anki.R
 import com.ichi2.anki.snackbar.showSnackbar
 import com.ichi2.anki.utils.ext.sharedPrefs
+import com.ichi2.anki.utils.isWindowCompact
 import kotlinx.coroutines.launch
 
 class ReviewerMenuSettingsFragment :
@@ -44,9 +45,13 @@ class ReviewerMenuSettingsFragment :
         super.onViewCreated(view, savedInstanceState)
         repository = ReviewerMenuRepository(sharedPrefs())
         setupRecyclerView(view)
-
-        view.findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener {
-            requireActivity().finish()
+        val toolbar = view.findViewById<MaterialToolbar>(R.id.toolbar)
+        if (!resources.isWindowCompact()) {
+            toolbar.navigationIcon = null
+        } else {
+            toolbar.setNavigationOnClickListener {
+                requireActivity().onBackPressedDispatcher.onBackPressed()
+            }
         }
         view.findViewById<ReviewerMenuView>(R.id.reviewer_menu_view).apply {
             setOnMenuItemClickListener(this@ReviewerMenuSettingsFragment)
