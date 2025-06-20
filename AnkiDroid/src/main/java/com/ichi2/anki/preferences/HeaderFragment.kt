@@ -15,9 +15,6 @@
  */
 package com.ichi2.anki.preferences
 
-import android.os.Bundle
-import android.view.View
-import android.view.ViewGroup
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
@@ -77,10 +74,7 @@ class HeaderFragment : SettingsFragment() {
         )
 
         if (settingsIsSplit) {
-            parentFragmentManager.findFragmentById(R.id.settings_container)?.let {
-                val key = getHeaderKeyForFragment(it) ?: return@let
-                highlightPreference(key)
-            }
+            highlightPreference(R.string.pref_general_screen_key)
 
             parentFragmentManager.addOnBackStackChangedListener {
                 if (!isAdded) return@addOnBackStackChangedListener
@@ -103,17 +97,6 @@ class HeaderFragment : SettingsFragment() {
         highlightedPreferenceKey = key
     }
 
-    override fun onViewCreated(
-        view: View,
-        savedInstanceState: Bundle?,
-    ) {
-        super.onViewCreated(view, savedInstanceState)
-        // use the same fragment container to search in case there is a navigation container
-        requirePreference<SearchPreference>(R.string.search_preference_key)
-            .searchConfiguration
-            .setFragmentContainerViewId((view.parent as? ViewGroup)?.id ?: R.id.settings_container)
-    }
-
     companion object {
         fun configureSearchBar(
             activity: AppCompatActivity,
@@ -125,6 +108,7 @@ class HeaderFragment : SettingsFragment() {
                 setBreadcrumbsEnabled(true)
                 setFuzzySearchEnabled(false)
                 setHistoryEnabled(true)
+                setFragmentContainerViewId(android.R.id.list_container)
 
                 index(R.xml.preferences_general)
                 index(R.xml.preferences_reviewing)
