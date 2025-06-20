@@ -35,14 +35,11 @@ import androidx.preference.PreferenceFragmentCompat
 import com.bytehamster.lib.preferencesearch.SearchConfiguration
 import com.bytehamster.lib.preferencesearch.SearchPreferenceResult
 import com.bytehamster.lib.preferencesearch.SearchPreferenceResultListener
-import com.google.android.material.appbar.AppBarLayout
-import com.google.android.material.appbar.CollapsingToolbarLayout
 import com.google.android.material.appbar.MaterialToolbar
 import com.ichi2.anki.R
 import com.ichi2.anki.SingleFragmentActivity
 import com.ichi2.anki.reviewreminders.ScheduleReminders
 import com.ichi2.anki.utils.ext.sharedPrefs
-import com.ichi2.utils.FragmentFactoryUtils
 import timber.log.Timber
 import kotlin.reflect.KClass
 import kotlin.reflect.jvm.jvmName
@@ -83,33 +80,8 @@ class PreferencesFragment :
     ) {
         view
             .findViewById<MaterialToolbar>(R.id.toolbar)
-            .setNavigationOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
-
+            ?.setNavigationOnClickListener { requireActivity().onBackPressedDispatcher.onBackPressed() }
         setupBackCallbacks()
-
-        // Load initial subscreen if activity is being first created
-        if (savedInstanceState == null) {
-            loadInitialSubscreen()
-        } else {
-            childFragmentManager.findFragmentById(R.id.settings_container)?.let {
-                setFragmentTitleOnToolbar(it)
-            }
-        }
-
-        childFragmentManager.addOnBackStackChangedListener {
-            val fragment =
-                childFragmentManager.findFragmentById(R.id.settings_container)
-                    ?: return@addOnBackStackChangedListener
-
-            setFragmentTitleOnToolbar(fragment)
-
-            // Expand bar in new fragments if scrolled to top
-            (fragment as? PreferenceFragmentCompat)?.listView?.post {
-                val viewHolder = fragment.listView?.findViewHolderForAdapterPosition(0)
-                val isAtTop = viewHolder != null && viewHolder.itemView.top >= 0
-                view.findViewById<AppBarLayout>(R.id.appbar).setExpanded(isAtTop, false)
-            }
-        }
     }
 
     override fun onDestroyView() {
@@ -135,7 +107,8 @@ class PreferencesFragment :
             )
         fragment.arguments = pref.extras
         childFragmentManager.commit {
-            replace(R.id.settings_container, fragment, fragment::class.jvmName)
+            hide(currentFragment)
+            add(R.id.settings_container, fragment, fragment::class.jvmName)
             setFadeTransition(this)
             addToBackStack(null)
         }
@@ -171,38 +144,9 @@ class PreferencesFragment :
         childFragmentManager.addOnBackStackChangedListener(childBackStackListener)
     }
 
-    private fun setFragmentTitleOnToolbar(fragment: Fragment) {
-        val title = if (fragment is TitleProvider) fragment.title else getString(R.string.settings)
-
-        view?.findViewById<CollapsingToolbarLayout>(R.id.collapsingToolbarLayout)?.title = title
-        view?.findViewById<MaterialToolbar>(R.id.toolbar)?.title = title
-    }
-
     private fun setFadeTransition(fragmentTransaction: FragmentTransaction) {
         if (!sharedPrefs().getBoolean("safeDisplay", false)) {
             fragmentTransaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
-        }
-    }
-
-    /**
-     * Starts the first settings fragment, which by default is [HeaderFragment].
-     * The initial fragment may be overridden by putting the java class name
-     * of the fragment on an intent extra with the key [INITIAL_FRAGMENT_EXTRA]
-     */
-    private fun loadInitialSubscreen() {
-        val fragmentClassName = arguments?.getString(INITIAL_FRAGMENT_EXTRA)
-        val initialFragment =
-            if (fragmentClassName == null) {
-                if (!settingsIsSplit) HeaderFragment() else GeneralSettingsFragment()
-            } else {
-                FragmentFactoryUtils.instantiate<Fragment>(requireActivity(), fragmentClassName)
-            }
-        childFragmentManager.commit {
-            // In big screens, show the headers fragment at the lateral navigation container
-            if (settingsIsSplit) {
-                replace(R.id.lateral_nav_container, HeaderFragment())
-            }
-            replace(R.id.settings_container, initialFragment, initialFragment::class.java.name)
         }
     }
 }

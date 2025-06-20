@@ -22,7 +22,6 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.preference.Preference
-import androidx.preference.PreferenceFragmentCompat
 import com.bytehamster.lib.preferencesearch.SearchConfiguration
 import com.bytehamster.lib.preferencesearch.SearchPreference
 import com.ichi2.anki.BuildConfig
@@ -38,19 +37,18 @@ import com.ichi2.utils.AdaptionUtil
 import timber.log.Timber
 
 class HeaderFragment :
-    PreferenceFragmentCompat(),
+    SettingsFragment(),
     TitleProvider {
+    override val analyticsScreenNameConstant: String
+        get() = "prefs.initialPage"
+    override val preferenceResource: Int
+        get() = R.xml.preference_headers
     override val title: CharSequence
         get() = getString(R.string.settings)
 
     private var highlightedPreferenceKey: String = ""
 
-    override fun onCreatePreferences(
-        savedInstanceState: Bundle?,
-        rootKey: String?,
-    ) {
-        setPreferencesFromResource(R.xml.preference_headers, rootKey)
-
+    override fun initSubscreen() {
         requirePreference<HeaderPreference>(R.string.pref_backup_limits_screen_key)
             .title = TR.preferencesBackups()
 
