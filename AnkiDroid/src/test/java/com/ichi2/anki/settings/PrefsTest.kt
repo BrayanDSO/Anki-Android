@@ -17,11 +17,8 @@ package com.ichi2.anki.settings
 
 import android.content.res.Resources
 import com.github.ivanshafran.sharedpreferencesmock.SPMockBuilder
-import com.ichi2.anki.AnkiDroidApp
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.unmockkObject
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.equalTo
 import org.junit.Test
@@ -32,7 +29,6 @@ import kotlin.reflect.full.memberProperties
 class PrefsTest {
     @Test
     fun `getters and setters use the same key`() {
-        AnkiDroidApp.sharedPreferencesTestingOverride = SPMockBuilder().createSharedPreferences()
         var lastKey = 0
         val mockResources = mockk<Resources>()
         every { mockResources.getString(any()) } answers {
@@ -40,24 +36,22 @@ class PrefsTest {
             lastKey = resId
             resId.toString()
         }
-        mockkObject(Prefs)
-        every { Prefs.resources } returns mockResources
+        val prefsHelper = PrefsHelper(SPMockBuilder().createSharedPreferences(), mockResources)
 
-        for (property in Prefs::class.memberProperties) {
+        for (property in PrefsHelper::class.memberProperties) {
             if (property.visibility != KVisibility.PUBLIC || property !is KMutableProperty<*>) continue
 
-            property.getter.call(Prefs)
+            property.getter.call(prefsHelper)
             val getterKey = lastKey
 
             when (property.returnType.classifier) {
-                Boolean::class -> property.setter.call(Prefs, false)
-                String::class -> property.setter.call(Prefs, "foo")
+                Boolean::class -> property.setter.call(prefsHelper, false)
+                String::class -> property.setter.call(prefsHelper, "foo")
                 else -> continue
             }
             val setterKey = lastKey
 
             assertThat("The getter and setter of '${property.name}' use the same key", getterKey, equalTo(setterKey))
         }
-        unmockkObject(Prefs)
     }
 }

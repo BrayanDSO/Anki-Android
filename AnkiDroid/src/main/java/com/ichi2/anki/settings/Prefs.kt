@@ -15,13 +15,16 @@
  */
 package com.ichi2.anki.settings
 
+import android.content.Context
 import android.content.SharedPreferences
+import android.content.res.Resources
 import androidx.annotation.StringRes
 import androidx.annotation.VisibleForTesting
 import androidx.core.content.edit
 import com.ichi2.anki.AnkiDroidApp
 import com.ichi2.anki.BuildConfig
 import com.ichi2.anki.R
+import com.ichi2.anki.preferences.sharedPrefs
 import com.ichi2.anki.settings.enums.FrameStyle
 import com.ichi2.anki.settings.enums.HideSystemBars
 import com.ichi2.anki.settings.enums.PrefEnum
@@ -31,11 +34,16 @@ import kotlin.reflect.KProperty
 
 // TODO move this to `com.ichi2.anki.preferences`
 //  after the UI classes of that package are moved to `com.ichi2.anki.ui.preferences`
-object Prefs {
-    private val sharedPrefs get() = AnkiDroidApp.sharedPrefs()
+object Prefs : PrefsHelper(AnkiDroidApp.sharedPrefs(), AnkiDroidApp.appResources)
 
-    @VisibleForTesting
-    val resources get() = AnkiDroidApp.appResources
+open class PrefsHelper(
+    private val sharedPrefs: SharedPreferences,
+    val resources: Resources,
+) {
+    constructor(context: Context) : this(
+        context.sharedPrefs(),
+        context.resources,
+    )
 
     @VisibleForTesting
     fun key(
@@ -211,11 +219,8 @@ object Prefs {
 
     // **************************************** UI Config *************************************** //
 
-    private const val UI_CONFIG_PREFERENCES_NAME = "ui-config"
-
     /**
      * Get the SharedPreferences used for UI configuration such as Resizable layouts
      */
-    fun getUiConfig(context: android.content.Context): SharedPreferences =
-        context.getSharedPreferences(UI_CONFIG_PREFERENCES_NAME, android.content.Context.MODE_PRIVATE)
+    fun getUiConfig(context: Context): SharedPreferences = context.getSharedPreferences("ui-config", Context.MODE_PRIVATE)
 }
