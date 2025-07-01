@@ -128,6 +128,7 @@ object PreferenceUpgradeService {
                     yield(UpgradeBrowserColumns())
                     yield(RemoveLastExportedAtTime())
                     yield(RemoveLongTouchGesture())
+                    yield(UpgradeAnswerButtonSize())
                 }
 
             /** Returns a list of preference upgrade classes which have not been applied */
@@ -692,6 +693,23 @@ object PreferenceUpgradeService {
                     preferences.edit {
                         putString(command.preferenceKey, newBindings.toPreferenceString())
                     }
+                }
+            }
+        }
+
+        internal class UpgradeAnswerButtonSize : PreferenceUpgrade(22) {
+            override fun upgrade(preferences: SharedPreferences) {
+                val value = preferences.getInt("answerButtonSize", 0)
+                val newValue =
+                    if (value < 100) {
+                        100
+                    } else if (value > 200) {
+                        200
+                    } else {
+                        return
+                    }
+                preferences.edit {
+                    putInt("answerButtonsSize", newValue)
                 }
             }
         }
