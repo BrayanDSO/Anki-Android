@@ -127,7 +127,7 @@ class ReviewerFragment :
     TagsDialogListener,
     ShakeDetector.Listener {
     override val viewModel: ReviewerViewModel by viewModels {
-        val repository = StudyScreenRepository(sharedPrefs())
+        val repository = StudyScreenRepository(requireContext())
         ReviewerViewModel.factory(CardMediaPlayer(), getServerPort(), repository)
     }
 

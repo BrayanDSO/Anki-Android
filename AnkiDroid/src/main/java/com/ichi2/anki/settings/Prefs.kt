@@ -37,7 +37,8 @@ import kotlin.reflect.KProperty
 object Prefs : PrefsHelper(AnkiDroidApp.sharedPrefs(), AnkiDroidApp.appResources)
 
 open class PrefsHelper(
-    private val sharedPrefs: SharedPreferences,
+    val sharedPrefs: SharedPreferences,
+    @VisibleForTesting
     val resources: Resources,
 ) {
     constructor(context: Context) : this(

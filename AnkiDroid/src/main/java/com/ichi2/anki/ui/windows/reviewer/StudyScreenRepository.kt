@@ -15,26 +15,27 @@
  */
 package com.ichi2.anki.ui.windows.reviewer
 
-import android.content.SharedPreferences
+import android.content.Context
 import com.ichi2.anki.preferences.reviewer.MenuDisplayType
 import com.ichi2.anki.preferences.reviewer.ReviewerMenuRepository
 import com.ichi2.anki.preferences.reviewer.ViewerAction
-import com.ichi2.anki.settings.Prefs
+import com.ichi2.anki.settings.PrefsHelper
 import com.ichi2.anki.settings.enums.ToolbarPosition
 
 class StudyScreenRepository(
-    preferences: SharedPreferences,
+    context: Context,
 ) {
+    private val prefs = PrefsHelper(context)
     val isMarkShownInToolbar: Boolean
     val isFlagShownInToolbar: Boolean
 
     init {
         val actions =
-            ReviewerMenuRepository(preferences)
+            ReviewerMenuRepository(prefs.sharedPrefs)
                 .getActionsByMenuDisplayTypes(
                     MenuDisplayType.ALWAYS,
                 ).getValue(MenuDisplayType.ALWAYS)
-        val isToolbarShown = Prefs.toolbarPosition != ToolbarPosition.NONE
+        val isToolbarShown = prefs.toolbarPosition != ToolbarPosition.NONE
         isMarkShownInToolbar = isToolbarShown && ViewerAction.MARK in actions
         isFlagShownInToolbar = isToolbarShown && ViewerAction.FLAG_MENU in actions
     }
