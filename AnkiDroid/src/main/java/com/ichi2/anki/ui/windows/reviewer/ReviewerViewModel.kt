@@ -516,7 +516,7 @@ class ReviewerViewModel :
         clearTypeAnswerFlow.emit(Unit) // must be before showQuestion()
         showQuestion()
         loadAndPlayMedia(CardSide.QUESTION)
-        canBuryNoteFlow.emit(isBuryNoteAvailable(card))
+        canBuryNoteFlow.emit(isBuryNoteAvailable(card)) // TODO juntar os dois num flow só
         canSuspendNoteFlow.emit(isSuspendNoteAvailable(card))
         countsFlow.emit(state.counts to state.countsIndex)
     }
