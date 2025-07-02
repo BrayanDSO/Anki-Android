@@ -21,7 +21,6 @@
         BURY: "bury",
         SUSPEND: "suspend",
         RESET_PROGRESS: "resetProgress",
-        TOGGLE_MARK: "toggleMark",
         TOGGLE_FLAG: "toggleFlag",
     };
     var Card = class {
@@ -141,10 +140,6 @@
              */
             this.resetProgress = () => this.handleRequest(cardEndpoints.RESET_PROGRESS);
             /**
-             * Toggles the "marked" status of the card.
-             */
-            this.toggleMark = () => this.handleRequest(cardEndpoints.TOGGLE_MARK);
-            /**
              * Toggles a flag on the current card.
              * @param flag The flag to set on the card.
              */
@@ -169,6 +164,7 @@
         SUSPEND: "suspend",
         GET_TAGS: "getTags",
         SET_TAGS: "setTags",
+        TOGGLE_MARK: "toggleMark",
     };
     var Note = class {
         constructor(handler, id) {
@@ -189,7 +185,11 @@
              */
             this.suspend = () => this.handleRequest(noteEndpoints.SUSPEND);
             this.getTags = () => this.handleRequest(noteEndpoints.GET_TAGS);
-            this.setTags = tags => this.handleRequest(noteEndpoints.SET_TAGS, { tags });
+            this.setTags = tags => this.handleRequest(noteEndpoints.SET_TAGS, tags);
+            /**
+             * Toggles the "marked" status of the note.
+             */
+            this.toggleMark = () => this.handleRequest(noteEndpoints.TOGGLE_MARK);
         }
         async handleRequest(endpoint, data) {
             const id = this.id;
@@ -281,6 +281,11 @@
             this.currentNote = new Note(this, 0);
             this.currentDeck = new Deck(this, 0);
             this.android = new Android(this);
+            this.getCard = id => new Card(this, id);
+            this.getNote = id => new Note(this, id);
+            this.getDeck = id => new Deck(this, id);
+            this.openCardInfo = cardId => this.request("cardInfo", cardId);
+            this.editNote = noteId => this.request("editNote", noteId);
         }
         async request(endpoint, data) {
             const url = `/jsapi/${endpoint}`;
@@ -291,8 +296,8 @@
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        author: this.contract.author,
-                        supportUrl: this.contract.supportUrl,
+                        version: this.contract.version,
+                        developer: this.contract.developer,
                         data,
                     }),
                 });
@@ -300,6 +305,7 @@
                     throw new Error("Failed to make the request");
                 }
                 const responseData = await response.text();
+                console.log(responseData);
                 return JSON.parse(responseData);
             } catch (error) {
                 console.error("Request error:", error);

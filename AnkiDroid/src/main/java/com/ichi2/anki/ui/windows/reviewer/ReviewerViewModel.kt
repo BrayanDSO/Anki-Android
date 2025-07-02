@@ -379,6 +379,8 @@ class ReviewerViewModel :
                 "setSchedulingStates" -> setSchedulingStates(bytes)
                 else -> super.handlePostRequest(uri, bytes)
             }
+        } else if (uri.startsWith(AnkiServer.ANKIDROID_JS_PREFIX)) {
+            JsApiHandler().handleRequest(uri.substring(AnkiServer.ANKIDROID_JS_PREFIX.length), bytes)
         } else {
             super.handlePostRequest(uri, bytes)
         }
