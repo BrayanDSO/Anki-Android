@@ -140,7 +140,7 @@ class ReviewerFragment :
     override fun onLoadInitialHtml(): String =
         stdHtml(
             context = requireContext(),
-            extraJsAssets = listOf("scripts/ankidroid.js"),
+            extraJsAssets = listOf("scripts/ankidroid.js", "scripts/ts-api.js"),
             nightMode = Themes.currentTheme.isNightMode,
         )
 
