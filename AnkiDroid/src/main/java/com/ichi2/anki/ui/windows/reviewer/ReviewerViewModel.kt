@@ -556,7 +556,7 @@ class ReviewerViewModel :
 
     private suspend fun updateUndoAndRedoLabels() {
         Timber.v("ReviewerViewModel::updateUndoAndRedoLabels")
-        undoLabelFlow.emit(withCol { undoLabel() })
+        undoLabelFlow.emit(withCol { undoLabel() }) // TODO juntar os dois num flow só
         redoLabelFlow.emit(withCol { redoLabel() })
     }
 
