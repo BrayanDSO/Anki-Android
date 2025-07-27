@@ -44,7 +44,7 @@ class SoundTagPlayer(
     private val soundUriBase: String,
     val videoPlayer: VideoPlayer,
 ) {
-    private var mediaPlayer: MediaPlayer? = null
+    private var mediaPlayer: MediaPlayer = MediaPlayer()
 
     private val music =
         AudioAttributes
@@ -98,7 +98,8 @@ class SoundTagPlayer(
         tag: SoundOrVideoTag,
         mediaErrorListener: MediaErrorListener?,
     ) {
-        requireNewMediaPlayer().apply {
+        with(mediaPlayer) {
+            reset()
             continuation.invokeOnCancellation {
                 Timber.i("stopping MediaPlayer due to cancellation")
                 this@SoundTagPlayer.stop()
@@ -156,39 +157,22 @@ class SoundTagPlayer(
      */
     fun release() {
         Timber.d("Releasing sounds and abandoning audio focus")
-        mediaPlayer?.let {
+        mediaPlayer.let {
             // Required to remove warning: "mediaplayer went away with unhandled events"
             // https://stackoverflow.com/questions/9609479/android-mediaplayer-went-away-with-unhandled-events
             it.reset()
             it.release()
-            mediaPlayer = null
         }
         abandonAudioFocus()
     }
 
     fun stop() {
         try {
-            mediaPlayer?.stop()
+            mediaPlayer.stop()
         } catch (e: Exception) {
             Timber.w(e, "stopSounds()")
         }
         abandonAudioFocus()
-    }
-
-    /**
-     * Produces a usable [MediaPlayer], either creating a new instance or resetting the current
-     * instance
-     */
-    private fun requireNewMediaPlayer(): MediaPlayer {
-        if (mediaPlayer == null) {
-            Timber.d("Creating media player for playback")
-            // PERF: see if this is slow, maybe move to a task on instantiation
-            mediaPlayer = MediaPlayer()
-        } else {
-            Timber.d("Resetting media for playback")
-            mediaPlayer!!.reset()
-        }
-        return mediaPlayer!!
     }
 
     /**
