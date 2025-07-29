@@ -16,7 +16,6 @@
 package com.ichi2.anki.cardviewer
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.os.Build
 import com.ichi2.anki.R
 import com.ichi2.anki.cardviewer.TapGestureMode.FOUR_POINT
@@ -97,14 +96,4 @@ enum class TapGestureMode {
      * See: #7537
      */
     NINE_POINT,
-
-    ;
-
-    companion object {
-        fun fromPreference(preferences: SharedPreferences): TapGestureMode =
-            when (preferences.getBoolean("gestureCornerTouch", false)) {
-                true -> NINE_POINT
-                false -> FOUR_POINT
-            }
-    }
 }

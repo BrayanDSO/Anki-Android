@@ -20,7 +20,7 @@ import android.view.ViewConfiguration
 import com.ichi2.anki.AnkiDroidApp
 import com.ichi2.anki.cardviewer.Gesture
 import com.ichi2.anki.cardviewer.TapGestureMode
-import com.ichi2.anki.cardviewer.TapGestureMode.Companion.fromPreference
+import com.ichi2.anki.settings.Prefs
 import timber.log.Timber
 import kotlin.math.abs
 import kotlin.math.floor
@@ -33,7 +33,7 @@ class GestureMapper {
 
     fun init(preferences: SharedPreferences) {
         val sensitivity = preferences.getInt("swipeSensitivity", 100)
-        tapGestureMode = fromPreference(preferences)
+        tapGestureMode = Prefs.tapGestureMode
 
         // ViewConfiguration can be used statically but it must be initialized during Android application lifecycle
         // Else, when Robolectric executes in the CI it accesses AnkiDroidApp.getInstance before it exists #9173
