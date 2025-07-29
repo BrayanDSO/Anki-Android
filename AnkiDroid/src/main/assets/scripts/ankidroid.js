@@ -39,6 +39,7 @@ document.addEventListener("focusout", event => {
 });
 
 globalThis.ankidroid.doubleTapTimeout = 200;
+globalThis.ankidroid.isDoubleTapEnabled = false;
 
 (() => {
     const SCHEME = "gesture";
@@ -48,7 +49,8 @@ globalThis.ankidroid.doubleTapTimeout = 200;
         startY = 0,
         touchCount = 0,
         touchStartTime = 0,
-        tapTimer = null;
+        lastTouchTime = 0,
+        doubleTapTimer = null;
 
     document.addEventListener(
         "touchstart",
@@ -86,34 +88,49 @@ globalThis.ankidroid.doubleTapTimeout = 200;
             }
 
             // Double tap detection
-            if (tapTimer != null) {
-                clearTimeout(tapTimer);
-                tapTimer = null;
-                window.location.href = `${SCHEME}://doubleTap`;
+            if (ankidroid.isDoubleTapEnabled) {
+                if (doubleTapTimer != null) {
+                    clearTimeout(doubleTapTimer);
+                    doubleTapTimer = null;
+                    window.location.href = `${SCHEME}://doubleTap`;
+                } else {
+                    doubleTapTimer = setTimeout(() => {
+                        handleTapOrSwipe(event);
+                        doubleTapTimer = null;
+                    }, ankidroid.doubleTapTimeout);
+                }
                 return;
             }
-
             // Swipes and single tap detection
-            const endX = event.changedTouches[0].pageX;
-            const endY = event.changedTouches[0].pageY;
-            const scrollDirection = getScrollDirection(event.target);
-            const params = new URLSearchParams({
-                x: Math.round(endX),
-                y: Math.round(endY),
-                deltaX: Math.round(endX - startX),
-                deltaY: Math.round(endY - startY),
-            });
-            if (scrollDirection !== null) {
-                params.append("scrollDirection", scrollDirection);
+            const touchTime = Date.now();
+            if (touchTime - lastTouchTime < ankidroid.doubleTapTimeout) {
+                lastTouchTime = touchTime;
+                return;
             }
-            const requestUrl = `${SCHEME}://tapOrSwipe/?${params.toString()}`;
-            tapTimer = setTimeout(() => {
-                window.location.href = requestUrl;
-                tapTimer = null;
-            }, ankidroid.doubleTapTimeout);
+            lastTouchTime = touchTime;
+            handleTapOrSwipe(event);
         },
         { passive: true },
     );
+
+    /**
+     * @param {TouchEvent} event
+     */
+    function handleTapOrSwipe(event) {
+        const endX = event.changedTouches[0].pageX;
+        const endY = event.changedTouches[0].pageY;
+        const scrollDirection = getScrollDirection(event.target);
+        const params = new URLSearchParams({
+            x: Math.round(endX),
+            y: Math.round(endY),
+            deltaX: Math.round(endX - startX),
+            deltaY: Math.round(endY - startY),
+        });
+        if (scrollDirection !== null) {
+            params.append("scrollDirection", scrollDirection);
+        }
+        window.location.href = `${SCHEME}://tapOrSwipe/?${params.toString()}`;
+    }
 
     /**
      * Checks if the target element or its parents are interactive.

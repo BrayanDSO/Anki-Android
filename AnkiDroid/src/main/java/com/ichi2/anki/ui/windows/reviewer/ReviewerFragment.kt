@@ -760,6 +760,7 @@ class ReviewerFragment :
         ) {
             super.onPageFinished(view, url)
             view?.evaluateJavascript("ankidroid.doubleTapTimeout = ${Prefs.doubleTapInterval};", null)
+            view?.evaluateJavascript("ankidroid.isDoubleTapEnabled = ${bindingMap.isBound(Gesture.DOUBLE_TAP)};", null)
             Prefs.cardZoom.let {
                 if (it == 100) return@let
                 val scale = it / 100.0
