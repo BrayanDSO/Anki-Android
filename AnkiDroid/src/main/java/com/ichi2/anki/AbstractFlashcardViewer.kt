@@ -205,7 +205,7 @@ abstract class AbstractFlashcardViewer :
     private var gesturesEnabled = false
     private var largeAnswerButtons = false
     protected var answerButtonsPosition: String? = "bottom"
-    private var doubleTapTimeInterval = DEFAULT_DOUBLE_TAP_TIME_INTERVAL
+    private var doubleTapTimeInterval = 200
 
     // Android WebView
     var automaticAnswer = AutomaticAnswer.defaultInstance(this)
@@ -1218,8 +1218,7 @@ abstract class AbstractFlashcardViewer :
         doubleScrolling = preferences.getBoolean("double_scrolling", false)
         prefShowTopbar = preferences.getBoolean("showTopbar", true)
         largeAnswerButtons = preferences.getBoolean("showLargeAnswerButtons", false)
-        doubleTapTimeInterval =
-            preferences.getInt(DOUBLE_TAP_TIME_INTERVAL, DEFAULT_DOUBLE_TAP_TIME_INTERVAL)
+        doubleTapTimeInterval = Prefs.doubleTapInterval
         gesturesEnabled = preferences.getBoolean(GestureProcessor.PREF_KEY, false)
         if (gesturesEnabled) {
             gestureProcessor.init(preferences)
@@ -2728,8 +2727,6 @@ abstract class AbstractFlashcardViewer :
          */
         const val INITIAL_HIDE_DELAY = 200
         internal var displayAnswer = false
-        const val DOUBLE_TAP_TIME_INTERVAL = "doubleTapTimeInterval"
-        const val DEFAULT_DOUBLE_TAP_TIME_INTERVAL = 200
 
         /** Handle providing help for "Image Not Found"  */
         internal val mediaErrorHandler = MediaErrorHandler()

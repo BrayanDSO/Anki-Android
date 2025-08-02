@@ -79,7 +79,7 @@ class AbstractFlashcardViewerTest : RobolectricTest() {
                 lastTime +=
                     baseContext
                         .sharedPrefs()
-                        .getInt(DOUBLE_TAP_TIME_INTERVAL, DEFAULT_DOUBLE_TAP_TIME_INTERVAL)
+                        .getInt("doubleTapTimeout", 200)
                 return lastTime.toLong()
             }
         val hintLocale: String?
