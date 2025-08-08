@@ -11,12 +11,12 @@
     android:focusableInTouchMode="true"
     tools:context=".ui.windows.reviewer.ReviewerFragment">
 
-
     <LinearLayout
         android:id="@+id/main_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:clipChildren="false">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/tools_layout"
@@ -161,6 +161,17 @@
                 tools:srcCompat="@drawable/ic_ease_good"
                 />
         </com.google.android.material.card.MaterialCardView>
+
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/check_pronunciation_container"
+            android:name="com.ichi2.anki.ui.windows.reviewer.audiorecord.CheckPronunciationFragment"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:clipChildren="false"
+            android:layout_marginHorizontal="@dimen/reviewer_side_margin"
+            android:layout_gravity="center_horizontal"
+            android:elevation="1dp"
+            android:visibility="gone"/>
 
         <!-- Use the same card style of the WebView -->
         <com.google.android.material.card.MaterialCardView

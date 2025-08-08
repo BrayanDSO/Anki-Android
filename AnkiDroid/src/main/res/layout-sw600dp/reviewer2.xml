@@ -14,7 +14,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:clipChildren="false">
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/webview_container"
@@ -71,6 +72,17 @@
                 />
         </com.google.android.material.card.MaterialCardView>
 
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/check_pronunciation_container"
+            android:name="com.ichi2.anki.ui.windows.reviewer.audiorecord.CheckPronunciationFragment"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:clipChildren="false"
+            android:layout_marginHorizontal="@dimen/reviewer_side_margin"
+            android:layout_gravity="center_horizontal"
+            android:elevation="1dp"
+            android:visibility="visible"/>
+
         <!-- Use the same card style of the WebView -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/type_answer_container"
@@ -99,7 +111,6 @@
                     />
             </com.google.android.material.textfield.TextInputLayout>
         </com.google.android.material.card.MaterialCardView>
-
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/tools_layout"
