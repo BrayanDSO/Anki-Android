@@ -45,7 +45,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:clipChildren="false">
+    android:clipChildren="false"
+    tools:context=".ui.windows.reviewer.audiorecord.AudioRecordView">
 
     <FrameLayout
         android:id="@+id/recording"
@@ -61,6 +62,7 @@
             android:layout_gravity="bottom|end"
             android:layout_marginEnd="88dp"
             android:gravity="center"
+            android:clipChildren="false"
             android:visibility="gone">
 
             <ImageView
@@ -156,13 +158,15 @@
         app:cardElevation="2dp"
         app:cardPreventCornerOverlap="false"
         app:cardUseCompatPadding="true"
-        app:contentPadding="0dp">
+        app:contentPadding="0dp"
+        android:clipChildren="false">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center|top"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:clipChildren="false">
 
             <ImageView
                 android:id="@+id/imageViewLock"
@@ -204,9 +208,10 @@
 
         <ImageView
             android:id="@+id/imageAudio"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:src="@drawable/ic_action_mic" />
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_margin="10dp"
+            app:srcCompat="@drawable/ic_action_mic"/>
 
     </androidx.cardview.widget.CardView>
 
@@ -233,8 +238,9 @@
 
         <ImageView
             android:id="@+id/imageStop"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_margin="10dp"
             android:src="@drawable/ic_stop" />
 
     </androidx.cardview.widget.CardView>

@@ -11,12 +11,12 @@
     android:focusableInTouchMode="true"
     tools:context=".ui.windows.reviewer.ReviewerFragment">
 
-
     <LinearLayout
         android:id="@+id/main_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:clipChildren="false">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/tools_layout"
@@ -190,6 +190,13 @@
                     />
             </com.google.android.material.textfield.TextInputLayout>
         </com.google.android.material.card.MaterialCardView>
+
+
+        <com.ichi2.anki.ui.windows.reviewer.audiorecord.AudioRecordView
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:clipChildren="false"
+            />
 
         <FrameLayout
             android:id="@+id/answer_area"
