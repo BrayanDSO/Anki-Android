@@ -57,18 +57,19 @@ class AudioPlayView : ConstraintLayout {
             if (isPlaying) {
                 replay()
             } else {
-                playListener?.onAudioPlay()
+                playListener?.onPlayButtonPressed()
             }
         }
         findViewById<View>(R.id.cancel_button).setOnClickListener {
             cancel()
+            playListener?.onCancelButtonPressed()
         }
     }
 
     interface PlayListener {
-        fun onAudioPlay()
+        fun onPlayButtonPressed()
 
-        fun onAudioPlayCancel()
+        fun onCancelButtonPressed()
     }
 
     private var timer: CountDownTimer? = null
@@ -126,7 +127,6 @@ class AudioPlayView : ConstraintLayout {
         isPlaying = false
         timer?.cancel()
         audioPlayer?.cancel()
-        playListener?.onAudioPlayCancel()
     }
 
     fun changePlayIcon() {
