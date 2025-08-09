@@ -55,6 +55,7 @@ import com.ichi2.anki.servicelayer.NoteService
 import com.ichi2.anki.servicelayer.isBuryNoteAvailable
 import com.ichi2.anki.servicelayer.isSuspendNoteAvailable
 import com.ichi2.anki.settings.Prefs
+import com.ichi2.anki.ui.windows.reviewer.audiorecord.AudioPlayer
 import com.ichi2.anki.ui.windows.reviewer.autoadvance.AutoAdvance
 import com.ichi2.anki.utils.CollectionPreferences
 import com.ichi2.anki.utils.Destination
@@ -107,6 +108,7 @@ class ReviewerViewModel :
 
     private val autoAdvance = AutoAdvance(this)
     private val isHtmlTypeAnswerEnabled = Prefs.isHtmlTypeAnswerEnabled
+    val voicePlayer = AudioPlayer()
 
     /**
      * A flag that determines if the SchedulingStates in CurrentQueueState are
