@@ -11,7 +11,7 @@
  * PARTICULAR PURPOSE. See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * this program.  If not, see <http://www.gnu.org/licenses/>.
+ * this program. If not, see <http://www.gnu.org/licenses/>.
  *
  * This file incorporates code under the following license:
  *
@@ -149,8 +149,6 @@ class AudioRecordView : FrameLayout {
 
     interface RecordingListener {
         fun onRecordingStarted()
-
-        fun onRecordingLocked()
 
         fun onRecordingCompleted()
 
@@ -290,13 +288,11 @@ class AudioRecordView : FrameLayout {
             RecordingBehaviour.LOCKED -> {
                 imageViewStop.visibility = VISIBLE
                 recordButton.visibility = GONE
-                recordingListener?.onRecordingLocked()
             }
             RecordingBehaviour.CANCELED -> {
                 chronometer.clearAnimation()
-                chronometer.visibility = INVISIBLE
                 chronometer.stop()
-
+                chronometer.visibility = INVISIBLE
                 imageViewMic.visibility = INVISIBLE
                 imageViewStop.visibility = GONE
                 recordButton.visibility = VISIBLE
@@ -305,13 +301,11 @@ class AudioRecordView : FrameLayout {
             }
             RecordingBehaviour.RELEASED, RecordingBehaviour.LOCK_DONE -> {
                 chronometer.clearAnimation()
+                chronometer.stop()
                 chronometer.visibility = INVISIBLE
                 imageViewMic.visibility = INVISIBLE
                 imageViewStop.visibility = GONE
                 recordButton.visibility = VISIBLE
-
-                chronometer.stop()
-
                 recordingListener?.onRecordingCompleted()
             }
         }
