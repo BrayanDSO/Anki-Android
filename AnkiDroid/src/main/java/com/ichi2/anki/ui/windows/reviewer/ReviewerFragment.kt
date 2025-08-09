@@ -606,7 +606,7 @@ class ReviewerFragment :
             }
         }
         viewModel.replayVoiceFlow.flowWithLifecycle(lifecycle).collectIn(lifecycleScope) {
-            checkPronunciationView.onAudioReplay() // TODO obviamente isso vai crashar se utilizado durante uma gravação
+            checkPronunciationView.replay()
         }
     }
 

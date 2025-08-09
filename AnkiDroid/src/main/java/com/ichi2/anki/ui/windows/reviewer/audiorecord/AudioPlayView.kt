@@ -29,8 +29,8 @@ import com.ichi2.anki.R
 class AudioPlayView : ConstraintLayout {
     private val progressBar: LinearProgressIndicator
     private val playIconView: ImageView
-    private var isPlaying: Boolean = false
-        set(value) {
+    var isPlaying: Boolean = false
+        private set(value) {
             field = value
             changePlayIcon()
         }
