@@ -64,7 +64,7 @@ class AudioRecorder(
     }
 
     fun cancel() {
-        recorder.release()
+        recorder.reset()
     }
 
     private fun createTempRecordingFile() =
