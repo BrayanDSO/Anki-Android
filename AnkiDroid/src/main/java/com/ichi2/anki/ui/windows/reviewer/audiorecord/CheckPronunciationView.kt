@@ -32,7 +32,6 @@ class CheckPronunciationView :
     AudioRecordView.RecordingListener {
     private val playView: AudioPlayView
     private val recordView: AudioRecordView
-    private val audioRecorder: AudioRecorder
     private val audioPlayer: AudioPlayer
 
     constructor(context: Context) : this(context, null, 0, 0)
@@ -53,7 +52,6 @@ class CheckPronunciationView :
             findViewById<AudioRecordView>(R.id.audio_record_view).apply {
                 setRecordingListener(this@CheckPronunciationView)
             }
-        audioRecorder = AudioRecorder(context)
         audioPlayer = AudioPlayer()
     }
 
@@ -68,28 +66,25 @@ class CheckPronunciationView :
 
     override fun onAudioPlayCancel() {
         audioPlayer.cancel()
-        audioRecorder.cancel()
+        recordView.cancelRecording()
     }
     //endregion
 
     /** region [AudioRecordView.RecordingListener] */
     override fun onRecordingStarted() {
         playView.cancel()
-        audioRecorder.startRecording()
     }
 
     override fun onRecordingCompleted() {
-        audioRecorder.stop()
         playView.isVisible = true
     }
 
     override fun onRecordingCanceled() {
-        audioRecorder.cancel()
     }
     //endregion
 
     fun replay() {
-        if (audioRecorder.isRecording) return
+        if (recordView.isRecording) return
         if (playView.isPlaying) {
             playView.replay()
         } else {
@@ -103,7 +98,7 @@ class CheckPronunciationView :
     }
 
     private fun play() {
-        audioRecorder.currentFile?.let {
+        recordView.currentFile?.let {
             audioPlayer.play(it)
             playView.playNew(audioPlayer.duration)
         }

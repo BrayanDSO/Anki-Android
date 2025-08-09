@@ -98,6 +98,9 @@ class AudioRecordView : FrameLayout {
     private val lockOffset: Float
     private val dp = TypedValueCompat.dpToPx(1F, resources.displayMetrics)
     private var isLocked = false
+    private val audioRecorder: AudioRecorder
+    val isRecording get() = audioRecorder.isRecording
+    val currentFile get() = audioRecorder.currentFile
 
     private var userBehavior = UserBehavior.NONE
 
@@ -106,6 +109,7 @@ class AudioRecordView : FrameLayout {
     fun setRecordingListener(recordingListener: RecordingListener) {
         this.recordingListener = recordingListener
     }
+
     //endregion
 
     constructor(context: Context) : this(context, null, 0, 0)
@@ -118,7 +122,6 @@ class AudioRecordView : FrameLayout {
         defStyleRes: Int,
     ) : super(context, attrs, defStyleAttr, defStyleRes) {
         LayoutInflater.from(context).inflate(R.layout.audio_record_view, this, true)
-
         recordButton = findViewById(R.id.recordButton)
         imageViewStop = findViewById(R.id.imageViewStop)
         imageViewLock = findViewById(R.id.imageViewLock)
@@ -130,6 +133,7 @@ class AudioRecordView : FrameLayout {
         imageViewMic = findViewById(R.id.imageViewMic)
         dustin = findViewById(R.id.dustin)
         dustinCover = findViewById(R.id.dustin_cover)
+        audioRecorder = AudioRecorder(context)
 
         cancelOffset = (resources.displayMetrics.widthPixels / 4F)
         lockOffset = (resources.displayMetrics.heightPixels / 4F)
@@ -305,6 +309,7 @@ class AudioRecordView : FrameLayout {
                 imageViewStop.visibility = GONE
                 recordButton.visibility = VISIBLE
                 delete()
+                audioRecorder.cancel()
                 recordingListener?.onRecordingCanceled()
             }
             RecordingBehaviour.RELEASED, RecordingBehaviour.LOCK_DONE -> {
@@ -314,12 +319,14 @@ class AudioRecordView : FrameLayout {
                 imageViewMic.visibility = INVISIBLE
                 imageViewStop.visibility = GONE
                 recordButton.visibility = VISIBLE
+                audioRecorder.stop()
                 recordingListener?.onRecordingCompleted()
             }
         }
     }
 
     private fun startRecord() {
+        audioRecorder.startRecording()
         recordingListener?.onRecordingStarted()
 
         stopTrackingAction = false
