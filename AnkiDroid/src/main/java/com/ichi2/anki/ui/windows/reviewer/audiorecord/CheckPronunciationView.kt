@@ -87,4 +87,9 @@ class CheckPronunciationView :
         audioRecorder.cancel()
     }
     //endregion
+
+    fun cancelPlayAndRecording() {
+        recordView.cancelRecording()
+        playView.cancel()
+    }
 }

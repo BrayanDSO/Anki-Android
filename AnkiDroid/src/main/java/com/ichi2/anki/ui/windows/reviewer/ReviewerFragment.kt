@@ -83,6 +83,7 @@ import com.ichi2.anki.settings.enums.ToolbarPosition
 import com.ichi2.anki.snackbar.BaseSnackbarBuilderProvider
 import com.ichi2.anki.snackbar.SnackbarBuilder
 import com.ichi2.anki.snackbar.showSnackbar
+import com.ichi2.anki.ui.windows.reviewer.audiorecord.CheckPronunciationView
 import com.ichi2.anki.utils.CollectionPreferences
 import com.ichi2.anki.utils.ext.collectIn
 import com.ichi2.anki.utils.ext.collectLatestIn
@@ -184,6 +185,7 @@ class ReviewerFragment :
         setupToolbarPosition(view)
         setupAnswerTimer(view)
         setupMargins(view)
+        setupCheckPronunciation(view)
 
         viewModel.actionFeedbackFlow
             .flowWithLifecycle(lifecycle)
@@ -591,6 +593,20 @@ class ReviewerFragment :
                     timer.isVisible = false
                 }
             }
+        }
+    }
+
+    private fun setupCheckPronunciation(view: View) {
+        val checkPronunciationView = view.findViewById<CheckPronunciationView>(R.id.check_pronunciation_view)
+        viewModel.toggleVoiceRecorderFlow.flowWithLifecycle(lifecycle).collectIn(lifecycleScope) {
+            val toggledStatus = !checkPronunciationView.isVisible
+            checkPronunciationView.isVisible = toggledStatus
+            if (!toggledStatus) {
+                checkPronunciationView.cancelPlayAndRecording()
+            }
+        }
+        viewModel.replayVoiceFlow.flowWithLifecycle(lifecycle).collectIn(lifecycleScope) {
+            checkPronunciationView.onAudioReplay() // TODO obviamente isso vai crashar se utilizado durante uma gravação
         }
     }
 

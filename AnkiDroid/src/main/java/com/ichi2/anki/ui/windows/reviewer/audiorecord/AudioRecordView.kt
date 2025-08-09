@@ -437,6 +437,16 @@ class AudioRecordView : FrameLayout {
         return false
     }
 
+    fun cancelRecording() {
+        if (chronometer.visibility != VISIBLE || isDeleting) {
+            return
+        }
+        if (isLocked) {
+            isLocked = false
+        }
+        stopRecording(RecordingBehaviour.CANCELED)
+    }
+
     companion object {
         private const val DURATION_DELETE_MIC_FLY_UP = 400L
         private const val DURATION_DELETE_TRASH_SLIDE_IN = 250L
