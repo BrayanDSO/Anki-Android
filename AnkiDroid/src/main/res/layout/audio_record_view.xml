@@ -45,8 +45,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:clipChildren="false"
-    tools:context=".ui.windows.reviewer.audiorecord.AudioRecordView">
+    android:clipChildren="false">
 
     <FrameLayout
         android:id="@+id/recording"
@@ -110,15 +109,16 @@
 
             <ImageView
                 android:id="@+id/dustin_cover"
-                android:layout_width="32dp"
-                android:layout_height="4dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="1dp"
                 android:src="@drawable/ic_trash_cover"
                 android:visibility="gone" />
 
             <ImageView
                 android:id="@+id/dustin"
-                android:layout_width="16dp"
-                android:layout_height="18dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginBottom="16dp"
                 android:src="@drawable/ic_trash_can"
@@ -188,8 +188,8 @@
 
     <androidx.cardview.widget.CardView
         android:id="@+id/recordButton"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_gravity="bottom|end"
         android:layout_marginTop="6dp"
         android:layout_marginEnd="10dp"
@@ -210,15 +210,15 @@
             android:id="@+id/imageAudio"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:layout_margin="10dp"
+            android:layout_margin="12dp"
             app:srcCompat="@drawable/ic_action_mic"/>
 
     </androidx.cardview.widget.CardView>
 
     <androidx.cardview.widget.CardView
         android:id="@+id/imageViewStop"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_gravity="bottom|end"
         android:layout_marginTop="6dp"
         android:layout_marginEnd="10dp"
@@ -240,7 +240,7 @@
             android:id="@+id/imageStop"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:layout_margin="10dp"
+            android:layout_margin="12dp"
             android:src="@drawable/ic_stop" />
 
     </androidx.cardview.widget.CardView>

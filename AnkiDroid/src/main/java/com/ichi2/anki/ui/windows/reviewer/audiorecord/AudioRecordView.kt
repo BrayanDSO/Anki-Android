@@ -287,15 +287,17 @@ class AudioRecordView
             when (recordingBehaviour) {
                 RecordingBehaviour.LOCKED -> {
                     imageViewStop.visibility = VISIBLE
+                    recordButton.visibility = GONE
                     recordingListener?.onRecordingLocked()
                 }
                 RecordingBehaviour.CANCELED -> {
                     chronometer.clearAnimation()
                     chronometer.visibility = INVISIBLE
+                    chronometer.stop()
+
                     imageViewMic.visibility = INVISIBLE
                     imageViewStop.visibility = GONE
-
-                    chronometer.stop()
+                    recordButton.visibility = VISIBLE
                     delete()
                     recordingListener?.onRecordingCanceled()
                 }
@@ -304,6 +306,7 @@ class AudioRecordView
                     chronometer.visibility = INVISIBLE
                     imageViewMic.visibility = INVISIBLE
                     imageViewStop.visibility = GONE
+                    recordButton.visibility = VISIBLE
 
                     chronometer.stop()
 
@@ -355,7 +358,7 @@ class AudioRecordView
             imageViewMic
                 .animate()
                 .translationY(-dp * 150)
-                .rotation(180f)
+                .rotation(360f)
                 .scaleX(0.6f)
                 .scaleY(0.6f)
                 .setDuration(DURATION_DELETE_MIC_FLY_UP)
