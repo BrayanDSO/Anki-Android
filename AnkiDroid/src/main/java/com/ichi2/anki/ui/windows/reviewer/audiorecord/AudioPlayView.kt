@@ -16,14 +16,12 @@
 package com.ichi2.anki.ui.windows.reviewer.audiorecord
 
 import android.content.Context
-import android.graphics.drawable.Drawable
 import android.os.CountDownTimer
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.view.animation.DecelerateInterpolator
 import android.widget.ImageView
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.ichi2.anki.R
@@ -31,13 +29,10 @@ import com.ichi2.anki.R
 class AudioPlayView : ConstraintLayout {
     private val progressBar: LinearProgressIndicator
     private val playIconView: ImageView
-    private val playDrawable: Drawable
-    private val replayDrawable: Drawable
     private var isPlaying: Boolean = false
         set(value) {
-            val drawable = if (value) replayDrawable else playDrawable
-            playIconView.setImageDrawable(drawable)
             field = value
+            changePlayIcon()
         }
 
     constructor(context: Context) : this(context, null, 0, 0)
@@ -52,8 +47,6 @@ class AudioPlayView : ConstraintLayout {
         LayoutInflater.from(context).inflate(R.layout.audio_play_view, this, true)
         progressBar = findViewById(R.id.progress_indicator)
         playIconView = findViewById(R.id.play_icon)
-        playDrawable = AppCompatResources.getDrawable(context, R.drawable.ic_play)!!
-        replayDrawable = AppCompatResources.getDrawable(context, R.drawable.ic_replay)!!
         findViewById<View>(R.id.play_button).setOnClickListener {
             if (isPlaying) {
                 replay()
@@ -125,5 +118,21 @@ class AudioPlayView : ConstraintLayout {
         isPlaying = false
         timer?.cancel()
         playListener?.onAudioPlayCancel()
+    }
+
+    fun changePlayIcon() {
+        val newIcon = if (isPlaying) R.drawable.ic_replay else R.drawable.ic_play
+        playIconView
+            .animate()
+            .alpha(0f)
+            .setDuration(100)
+            .withEndAction {
+                playIconView.setImageResource(newIcon)
+                playIconView
+                    .animate()
+                    .alpha(1f)
+                    .setDuration(300)
+                    .start()
+            }.start()
     }
 }
