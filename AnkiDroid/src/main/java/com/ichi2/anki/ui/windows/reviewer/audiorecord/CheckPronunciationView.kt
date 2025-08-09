@@ -68,6 +68,7 @@ class CheckPronunciationView :
 
     override fun onAudioPlayCancel() {
         audioPlayer.cancel()
+        audioRecorder.cancel()
     }
     //endregion
 
@@ -102,7 +103,9 @@ class CheckPronunciationView :
     }
 
     private fun play() {
-        audioPlayer.play(audioRecorder.currentFile)
-        playView.playNew(audioPlayer.duration)
+        audioRecorder.currentFile?.let {
+            audioPlayer.play(it)
+            playView.playNew(audioPlayer.duration)
+        }
     }
 }

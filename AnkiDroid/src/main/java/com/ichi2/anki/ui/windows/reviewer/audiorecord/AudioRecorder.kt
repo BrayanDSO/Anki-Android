@@ -37,7 +37,7 @@ class AudioRecorder(
     private val cacheDir = context.cacheDir
     var isRecording: Boolean = false
         private set
-    var currentFile: String = ""
+    var currentFile: String? = null
         private set
 
     fun startRecording() {
@@ -70,6 +70,7 @@ class AudioRecorder(
 
     fun cancel() {
         recorder.reset()
+        currentFile = null
         isRecording = false
     }
 
