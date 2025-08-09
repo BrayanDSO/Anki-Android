@@ -17,14 +17,17 @@ package com.ichi2.anki.ui.windows.reviewer.audiorecord
 
 import android.content.Context
 import android.os.CountDownTimer
+import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.view.animation.DecelerateInterpolator
 import android.widget.ImageView
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.isVisible
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.ichi2.anki.R
+import kotlinx.parcelize.Parcelize
 
 class AudioPlayView : ConstraintLayout {
     private val progressBar: LinearProgressIndicator
@@ -35,6 +38,7 @@ class AudioPlayView : ConstraintLayout {
         this.audioPlayer = audioPlayer
     }
 
+    private val playIcon get() = if (isPlaying) R.drawable.ic_replay else R.drawable.ic_play
     var isPlaying: Boolean = false
         private set(value) {
             field = value
@@ -130,13 +134,12 @@ class AudioPlayView : ConstraintLayout {
     }
 
     fun changePlayIcon() {
-        val newIcon = if (isPlaying) R.drawable.ic_replay else R.drawable.ic_play
         playIconView
             .animate()
             .alpha(0f)
             .setDuration(100)
             .withEndAction {
-                playIconView.setImageResource(newIcon)
+                playIconView.setImageResource(playIcon)
                 playIconView
                     .animate()
                     .alpha(1f)
@@ -144,4 +147,33 @@ class AudioPlayView : ConstraintLayout {
                     .start()
             }.start()
     }
+
+    override fun onSaveInstanceState(): Parcelable =
+        SavedState(
+            state = super.onSaveInstanceState(),
+            isPlaying = isPlaying,
+            isVisible = isVisible,
+            progress = progressBar.progress,
+        )
+
+    override fun onRestoreInstanceState(state: Parcelable?) {
+        if (state !is SavedState) {
+            super.onRestoreInstanceState(state)
+            return
+        }
+        isVisible = state.isVisible
+        isPlaying = state.isPlaying
+        progressBar.progress = state.progress
+        playIconView.setImageResource(playIcon)
+
+        super.onRestoreInstanceState(state.superState)
+    }
+
+    @Parcelize
+    private data class SavedState(
+        val state: Parcelable?,
+        val isPlaying: Boolean,
+        val isVisible: Boolean,
+        val progress: Int,
+    ) : BaseSavedState(state)
 }
