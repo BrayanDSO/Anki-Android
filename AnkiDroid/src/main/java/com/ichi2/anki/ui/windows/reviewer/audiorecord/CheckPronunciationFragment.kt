@@ -15,45 +15,40 @@
  */
 package com.ichi2.anki.ui.windows.reviewer.audiorecord
 
-import android.content.Context
-import android.util.AttributeSet
-import android.view.LayoutInflater
-import androidx.constraintlayout.widget.ConstraintLayout
+import android.os.Bundle
+import android.view.View
 import androidx.core.view.isVisible
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModel
 import com.ichi2.anki.R
 
 /**
  * Integrates [AudioRecordView] with [AudioPlayView]
  * to play the recorded audios.
  */
-class CheckPronunciationView :
-    ConstraintLayout,
+class CheckPronunciationFragment :
+    Fragment(R.layout.check_pronunciation_fragment),
     AudioPlayView.PlayListener,
     AudioRecordView.RecordingListener {
-    private val playView: AudioPlayView
-    private val recordView: AudioRecordView
+    private lateinit var playView: AudioPlayView
+    private lateinit var recordView: AudioRecordView
 
-    fun setAudioPlayer(audioPlayer: AudioPlayer) {
-        playView.setAudioPlayer(audioPlayer)
-    }
+    private val viewModel: CheckPronunciationViewModel by viewModels()
 
-    constructor(context: Context) : this(context, null, 0, 0)
-    constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0, 0)
-    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : this(context, attrs, defStyleAttr, 0)
-    constructor(
-        context: Context,
-        attrs: AttributeSet?,
-        defStyleAttr: Int,
-        defStyleRes: Int,
-    ) : super(context, attrs, defStyleAttr, defStyleRes) {
-        LayoutInflater.from(context).inflate(R.layout.check_pronunciation_view, this, true)
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
         playView =
-            findViewById<AudioPlayView>(R.id.audio_play_view).apply {
-                setPlayListener(this@CheckPronunciationView)
+            view.findViewById<AudioPlayView>(R.id.audio_play_view).apply {
+                setAudioPlayer(viewModel.voicePlayer)
+                setPlayListener(this@CheckPronunciationFragment)
             }
         recordView =
-            findViewById<AudioRecordView>(R.id.audio_record_view).apply {
-                setRecordingListener(this@CheckPronunciationView)
+            view.findViewById<AudioRecordView>(R.id.audio_record_view).apply {
+                setRecordingListener(this@CheckPronunciationFragment)
             }
     }
 
@@ -93,4 +88,8 @@ class CheckPronunciationView :
         val file = recordView.currentFile ?: return
         playView.play(file)
     }
+}
+
+class CheckPronunciationViewModel : ViewModel() {
+    val voicePlayer = AudioPlayer()
 }

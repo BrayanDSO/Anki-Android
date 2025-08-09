@@ -163,7 +163,7 @@ class AudioPlayView : ConstraintLayout {
         }
         isVisible = state.isVisible
         isPlaying = state.isPlaying
-        progressBar.progress = state.progress
+        progressBar.progress = state.progress // TODO redefinir o max, talvez fazer versão melhorada da progress bar
         playIconView.setImageResource(playIcon)
 
         super.onRestoreInstanceState(state.superState)
