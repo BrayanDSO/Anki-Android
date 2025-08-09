@@ -135,7 +135,7 @@
             android:elevation="2dp"
             android:gravity="center"
             android:padding="8dp"
-            android:textSize="20sp"
+            android:textSize="16sp"
             android:textStyle="normal"
             android:translationZ="10dp"
             android:visibility="gone"
