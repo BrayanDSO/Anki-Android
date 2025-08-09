@@ -93,7 +93,6 @@ class CheckPronunciationView :
     }
 
     fun cancelPlayAndRecording() {
-        recordView.cancelRecording()
         playView.cancel()
     }
 
