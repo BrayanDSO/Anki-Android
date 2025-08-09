@@ -195,6 +195,7 @@
         <com.ichi2.anki.ui.windows.reviewer.audiorecord.AudioRecordView
             android:layout_width="match_parent"
             android:layout_height="56dp"
+            android:translationZ="1dp"
             android:clipChildren="false"
             />
 
