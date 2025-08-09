@@ -21,7 +21,11 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import com.ichi2.anki.R
+import com.ichi2.anki.ui.windows.reviewer.ReviewerViewModel
+import com.ichi2.anki.utils.ext.collectIn
 
 /**
  * Integrates [AudioRecordView] with [AudioPlayView]
@@ -35,6 +39,7 @@ class CheckPronunciationFragment :
     private lateinit var recordView: AudioRecordView
 
     private val viewModel: CheckPronunciationViewModel by viewModels()
+    private val studyScreenViewModel: ReviewerViewModel by viewModels({ requireParentFragment() })
 
     override fun onViewCreated(
         view: View,
@@ -50,6 +55,15 @@ class CheckPronunciationFragment :
             view.findViewById<AudioRecordView>(R.id.audio_record_view).apply {
                 setRecordingListener(this@CheckPronunciationFragment)
             }
+
+        studyScreenViewModel.voiceRecorderEnabledFlow.flowWithLifecycle(lifecycle).collectIn(lifecycleScope) { isEnabled ->
+            if (!isEnabled) {
+                cancelPlayAndRecording()
+            }
+        }
+        studyScreenViewModel.replayVoiceFlow.flowWithLifecycle(lifecycle).collectIn(lifecycleScope) {
+            replay()
+        }
     }
 
     /** region [AudioPlayView.PlayListener] */
@@ -70,7 +84,7 @@ class CheckPronunciationFragment :
     }
     //endregion
 
-    fun replay() {
+    private fun replay() {
         if (recordView.isRecording) return
         if (playView.isPlaying) {
             playView.replay()
@@ -79,7 +93,7 @@ class CheckPronunciationFragment :
         }
     }
 
-    fun cancelPlayAndRecording() {
+    private fun cancelPlayAndRecording() {
         playView.cancel()
         recordView.cancelRecording()
     }

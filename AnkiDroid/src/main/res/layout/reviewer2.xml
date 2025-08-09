@@ -171,7 +171,7 @@
             android:layout_marginHorizontal="@dimen/reviewer_side_margin"
             android:layout_gravity="center_horizontal"
             android:elevation="1dp"
-            android:visibility="visible"/>
+            android:visibility="gone"/>
 
         <!-- Use the same card style of the WebView -->
         <com.google.android.material.card.MaterialCardView

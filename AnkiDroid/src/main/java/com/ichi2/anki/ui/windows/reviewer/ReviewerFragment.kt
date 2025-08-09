@@ -84,7 +84,6 @@ import com.ichi2.anki.settings.enums.ToolbarPosition
 import com.ichi2.anki.snackbar.BaseSnackbarBuilderProvider
 import com.ichi2.anki.snackbar.SnackbarBuilder
 import com.ichi2.anki.snackbar.showSnackbar
-import com.ichi2.anki.ui.windows.reviewer.audiorecord.CheckPronunciationFragment
 import com.ichi2.anki.utils.CollectionPreferences
 import com.ichi2.anki.utils.ext.collectIn
 import com.ichi2.anki.utils.ext.collectLatestIn
@@ -599,15 +598,8 @@ class ReviewerFragment :
 
     private fun setupCheckPronunciation(view: View) {
         val container = view.findViewById<FragmentContainerView>(R.id.check_pronunciation_container)
-        val fragment = childFragmentManager.findFragmentById(R.id.check_pronunciation_container) as CheckPronunciationFragment
         viewModel.voiceRecorderEnabledFlow.flowWithLifecycle(lifecycle).collectIn(lifecycleScope) { isEnabled ->
-            container.isVisible = true
-            if (!isEnabled) {
-                fragment.cancelPlayAndRecording()
-            }
-        }
-        viewModel.replayVoiceFlow.flowWithLifecycle(lifecycle).collectIn(lifecycleScope) {
-            fragment.replay()
+            container.isVisible = isEnabled
         }
     }
 
