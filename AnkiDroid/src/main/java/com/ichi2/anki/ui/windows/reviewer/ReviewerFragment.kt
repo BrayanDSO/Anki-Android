@@ -599,10 +599,9 @@ class ReviewerFragment :
     private fun setupCheckPronunciation(view: View) {
         val checkPronunciationView = view.findViewById<CheckPronunciationView>(R.id.check_pronunciation_view)
         checkPronunciationView.setAudioPlayer(viewModel.voicePlayer)
-        viewModel.toggleVoiceRecorderFlow.flowWithLifecycle(lifecycle).collectIn(lifecycleScope) {
-            val toggledStatus = !checkPronunciationView.isVisible
-            checkPronunciationView.isVisible = toggledStatus
-            if (!toggledStatus) {
+        viewModel.voiceRecorderEnabledFlow.flowWithLifecycle(lifecycle).collectIn(lifecycleScope) { isEnabled ->
+            checkPronunciationView.isVisible = isEnabled
+            if (!isEnabled) {
                 checkPronunciationView.cancelPlayAndRecording()
             }
         }
