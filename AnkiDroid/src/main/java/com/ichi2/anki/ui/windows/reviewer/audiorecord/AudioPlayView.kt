@@ -29,6 +29,12 @@ import com.ichi2.anki.R
 class AudioPlayView : ConstraintLayout {
     private val progressBar: LinearProgressIndicator
     private val playIconView: ImageView
+    private var audioPlayer: AudioPlayer? = null
+
+    fun setAudioPlayer(audioPlayer: AudioPlayer) {
+        this.audioPlayer = audioPlayer
+    }
+
     var isPlaying: Boolean = false
         private set(value) {
             field = value
@@ -62,8 +68,6 @@ class AudioPlayView : ConstraintLayout {
     interface PlayListener {
         fun onAudioPlay()
 
-        fun onAudioReplay()
-
         fun onAudioPlayCancel()
     }
 
@@ -74,7 +78,11 @@ class AudioPlayView : ConstraintLayout {
         this.playListener = playListener
     }
 
-    fun playNew(duration: Int) {
+    fun play(filePath: String) {
+        val player = audioPlayer ?: return
+        player.play(filePath)
+
+        val duration = player.duration
         progressBar.progress = 0
         progressBar.max = duration
         timer =
@@ -109,7 +117,7 @@ class AudioPlayView : ConstraintLayout {
                 DecelerateInterpolator(),
             ).start()
 
-        playListener?.onAudioReplay()
+        audioPlayer?.replay()
     }
 
     fun cancel() {
@@ -117,6 +125,7 @@ class AudioPlayView : ConstraintLayout {
         progressBar.progress = 0
         isPlaying = false
         timer?.cancel()
+        audioPlayer?.cancel()
         playListener?.onAudioPlayCancel()
     }
 
