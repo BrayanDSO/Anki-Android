@@ -162,8 +162,6 @@ class AudioRecordView : FrameLayout {
         fun onRecordingStarted()
 
         fun onRecordingCompleted()
-
-        fun onRecordingCanceled()
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -310,7 +308,6 @@ class AudioRecordView : FrameLayout {
                 recordButton.visibility = VISIBLE
                 delete()
                 audioRecorder.cancel()
-                recordingListener?.onRecordingCanceled()
             }
             RecordingBehaviour.RELEASED, RecordingBehaviour.LOCK_DONE -> {
                 chronometer.clearAnimation()

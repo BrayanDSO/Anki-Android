@@ -56,13 +56,9 @@ class CheckPronunciationView :
     }
 
     /** region [AudioPlayView.PlayListener] */
-    override fun onAudioPlay() {
-        play()
-    }
+    override fun onAudioPlay() = play()
 
-    override fun onAudioReplay() {
-        audioPlayer.replay()
-    }
+    override fun onAudioReplay() = audioPlayer.replay()
 
     override fun onAudioPlayCancel() {
         audioPlayer.cancel()
@@ -79,8 +75,6 @@ class CheckPronunciationView :
         playView.isVisible = true
     }
 
-    override fun onRecordingCanceled() {
-    }
     //endregion
 
     fun replay() {
@@ -93,7 +87,7 @@ class CheckPronunciationView :
     }
 
     fun cancelPlayAndRecording() {
-        playView.cancel()
+        playView.cancel() // FIXME isso indiretamente cancela o recording
     }
 
     private fun play() {
