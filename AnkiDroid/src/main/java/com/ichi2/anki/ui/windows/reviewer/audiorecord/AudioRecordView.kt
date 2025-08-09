@@ -351,13 +351,7 @@ class AudioRecordView : FrameLayout {
         isDeleting = true
         recordButton.isEnabled = false
 
-        postDelayed({
-            isDeleting = false
-            recordButton.isEnabled = true
-        }, DURATION_DELETE_TOTAL)
-
         val trashCanDisplacement = -dp * 40
-
         // 1. Animate Mic flying up to the trash can
         imageViewMic
             .animate()
@@ -421,6 +415,8 @@ class AudioRecordView : FrameLayout {
                         }
                         slideOutAnimator(dustin)
                         slideOutAnimator(dustinCover)
+                        isDeleting = false
+                        recordButton.isEnabled = true
                     }.start()
             }.start()
     }
@@ -442,13 +438,12 @@ class AudioRecordView : FrameLayout {
     }
 
     companion object {
-        private const val DURATION_DELETE_MIC_FLY_UP = 500L
-        private const val DURATION_DELETE_TRASH_SLIDE_IN = 350L
-        private const val DURATION_DELETE_MIC_DROP = 350L
+        private const val DURATION_DELETE_MIC_FLY_UP = 400L
+        private const val DURATION_DELETE_TRASH_SLIDE_IN = 250L
+        private const val DURATION_DELETE_MIC_DROP = 250L
         private const val DURATION_DELETE_COVER_CLOSE = 150L
         private const val DELAY_DELETE_COVER_CLOSE = 50L
         private const val DURATION_DELETE_TRASH_SLIDE_OUT = 200L
-        private const val DELAY_DELETE_TRASH_SLIDE_OUT = 250L
-        private const val DURATION_DELETE_TOTAL = 1250L
+        private const val DELAY_DELETE_TRASH_SLIDE_OUT = 200L
     }
 }
