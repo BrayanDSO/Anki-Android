@@ -21,6 +21,7 @@ import android.os.CountDownTimer
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
+import android.view.animation.DecelerateInterpolator
 import android.widget.ImageView
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -84,7 +85,7 @@ class AudioPlayView : ConstraintLayout {
         progressBar.progress = 0
         progressBar.max = duration
         timer =
-            object : CountDownTimer(duration.toLong(), PROGRESS_UPDATE_RATE_MS) {
+            object : CountDownTimer(duration.toLong(), 50L) {
                 override fun onTick(millisUntilFinished: Long) {
                     val progress = duration - millisUntilFinished
                     progressBar.setProgress(progress.toInt(), true)
@@ -100,10 +101,21 @@ class AudioPlayView : ConstraintLayout {
 
     fun replay() {
         progressBar.progress = 0
+
         timer?.run {
             cancel()
             start()
         }
+
+        playIconView.rotation = 0F
+        playIconView
+            .animate()
+            .rotation(-360F)
+            .setDuration(400)
+            .setInterpolator(
+                DecelerateInterpolator(),
+            ).start()
+
         playListener?.onAudioReplay()
     }
 
@@ -113,9 +125,5 @@ class AudioPlayView : ConstraintLayout {
         isPlaying = false
         timer?.cancel()
         playListener?.onAudioPlayCancel()
-    }
-
-    companion object {
-        private const val PROGRESS_UPDATE_RATE_MS = 50L
     }
 }
