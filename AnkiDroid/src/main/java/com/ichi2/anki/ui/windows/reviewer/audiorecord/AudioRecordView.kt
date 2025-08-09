@@ -41,7 +41,9 @@
  */
 package com.ichi2.anki.ui.windows.reviewer.audiorecord
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.os.SystemClock
 import android.util.AttributeSet
@@ -55,6 +57,9 @@ import android.view.animation.OvershootInterpolator
 import android.widget.Chronometer
 import android.widget.FrameLayout
 import android.widget.TextView
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.content.PermissionChecker
 import androidx.core.util.TypedValueCompat
 import com.ichi2.anki.R
 import kotlin.math.abs
@@ -96,8 +101,11 @@ class AudioRecordView : FrameLayout {
 
     private var userBehavior = UserBehavior.NONE
 
-    @JvmField
-    var recordingListener: RecordingListener? = null
+    private var recordingListener: RecordingListener? = null
+
+    fun setRecordingListener(recordingListener: RecordingListener) {
+        this.recordingListener = recordingListener
+    }
     //endregion
 
     constructor(context: Context) : this(context, null, 0, 0)
@@ -109,7 +117,6 @@ class AudioRecordView : FrameLayout {
         defStyleAttr: Int,
         defStyleRes: Int,
     ) : super(context, attrs, defStyleAttr, defStyleRes) {
-
         LayoutInflater.from(context).inflate(R.layout.audio_record_view, this, true)
 
         recordButton = findViewById(R.id.recordButton)
@@ -158,6 +165,7 @@ class AudioRecordView : FrameLayout {
     @SuppressLint("ClickableViewAccessibility")
     private fun setupTouchListener() {
         recordButton.setOnTouchListener { _, motionEvent ->
+            if (!requireMicrophonePermission(context)) return@setOnTouchListener true // TODO decidir o fluxo de pedir a permissão
             if (isDeleting) return@setOnTouchListener true
 
             when (motionEvent.action) {
@@ -415,6 +423,22 @@ class AudioRecordView : FrameLayout {
                         slideOutAnimator(dustinCover)
                     }.start()
             }.start()
+    }
+
+    private fun requireMicrophonePermission(context: Context): Boolean {
+        val isGranted =
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.RECORD_AUDIO,
+            ) == PermissionChecker.PERMISSION_GRANTED
+        if (isGranted) return true
+        if (context !is Activity) return false
+        ActivityCompat.requestPermissions(
+            context,
+            arrayOf(Manifest.permission.RECORD_AUDIO),
+            0,
+        )
+        return false
     }
 
     companion object {

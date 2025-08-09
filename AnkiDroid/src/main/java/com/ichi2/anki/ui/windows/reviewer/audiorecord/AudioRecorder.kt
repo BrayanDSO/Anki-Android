@@ -18,24 +18,26 @@ package com.ichi2.anki.ui.windows.reviewer.audiorecord
 
 import android.content.Context
 import android.media.MediaRecorder
-import com.ichi2.compat.CompatHelper
+import android.os.Build
 import timber.log.Timber
-import java.io.Closeable
 import java.io.File
 import java.io.IOException
 
-// TODO pedir permissão em algum lugar
-// TODO salvar path do arquivo em savedinstancestate ou similar
 class AudioRecorder(
     context: Context,
-) : Closeable,
-    AudioRecordView.RecordingListener {
+) {
+    @Suppress("DEPRECATION")
     private val recorder =
-        CompatHelper.compat.getMediaRecorder(context)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            MediaRecorder(context)
+        } else {
+            MediaRecorder()
+        }
 
     private val cacheDir = context.cacheDir
+    var currentFile: String = ""
 
-    fun startRecording(audioPath: File) {
+    fun startRecording() {
         recorder.run {
             setAudioSource(MediaRecorder.AudioSource.MIC)
             setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
@@ -50,32 +52,24 @@ class AudioRecorder(
                 Timber.w(exception)
                 setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
             }
-            setOutputFile(audioPath.absolutePath)
+            currentFile = createTempRecordingFile()?.absolutePath ?: return
+            setOutputFile(currentFile)
             prepare()
             start()
         }
     }
 
-    override fun close() {
+    fun stop() {
+        recorder.stop()
+    }
+
+    fun cancel() {
         recorder.release()
-    }
-
-    override fun onRecordingStarted() {
-        val file = createTempRecordingFile() ?: return
-        startRecording(file)
-    }
-
-    override fun onRecordingCompleted() {
-        recorder.stop()
-    }
-
-    override fun onRecordingCanceled() {
-        recorder.stop()
     }
 
     private fun createTempRecordingFile() =
         try {
-            File.createTempFile("ankidroid_audiorec", ".3gp", cacheDir)
+            File.createTempFile("audiorec", ".3gp", cacheDir)
         } catch (exception: IOException) {
             Timber.w(exception, "Could not create temporary recording file.")
             null

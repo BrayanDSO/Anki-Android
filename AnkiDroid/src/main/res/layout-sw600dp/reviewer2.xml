@@ -102,12 +102,12 @@
         </com.google.android.material.card.MaterialCardView>
 
 
-        <com.ichi2.anki.ui.windows.reviewer.audiorecord.AudioRecordView
+        <com.ichi2.anki.ui.windows.reviewer.audiorecord.CheckPronunciationView
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:clipChildren="false"
             android:layout_marginHorizontal="@dimen/reviewer_side_margin"
-            android:layout_gravity="bottom"
+            android:layout_gravity="center_horizontal"
             android:elevation="1dp"
             />
 
