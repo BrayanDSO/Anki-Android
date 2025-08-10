@@ -13,32 +13,8 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  *
- * This file incorporates code under the following license:
- *
- *     Copyright 2018 Varun John
- *
- *     Licensed under the Apache License, Version 2.0 (the "License");
- *     you may not use this file except in compliance with the License.
- *     You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
- *     Unless required by applicable law or agreed to in writing, software
- *     distributed under the License is distributed on an "AS IS" BASIS,
- *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *     See the License for the specific language governing permissions and
- *     limitations under the License.
- *
- * https://github.com/varunjohn/Audio-Recording-Animation/blob/d5fef5bbf051e81f4ff35bb58496b7848bde6dd4/WhatsappMessengerView/src/main/java/com/varunjohn1990/audio_record_view/AudioRecordView.java
- *
- * CHANGES:
- * * Convert to Kotlin
- * * Removed layoutEffect1 and layoutEffect2
- * * Removed imageViewSend
- * * Removed "Attachments" and "Message" views
- * * Simplified the layouts hierarchy
- * * Changed the icons, strings and style
- * * Added single tap management
+ * This file incorporates code from https://github.com/varunjohn/Audio-Recording-Animation
+ * under the Apache License, Version 2.0.
  */
 package com.ichi2.anki.ui.windows.reviewer.audiorecord
 
@@ -89,6 +65,9 @@ class AudioRecordView : FrameLayout {
     // region State & Logic
     private var isDeleting = false
     private var stopTrackingAction = false
+    private var isLocked = false
+    private var isRecording = false
+    private var userBehavior = UserBehavior.NONE
 
     private var firstX = 0f
     private var firstY = 0f
@@ -98,18 +77,9 @@ class AudioRecordView : FrameLayout {
     private val cancelOffset: Float
     private val lockOffset: Float
     private val dp = TypedValueCompat.dpToPx(1F, resources.displayMetrics)
-    private var isLocked = false
-    private var isRecording = false
-
-    private var userBehavior = UserBehavior.NONE
 
     private var recordingListener: RecordingListener? = null
     private lateinit var gestureDetector: GestureDetector
-
-    fun setRecordingListener(recordingListener: RecordingListener) {
-        this.recordingListener = recordingListener
-    }
-
     // endregion
 
     constructor(context: Context) : this(context, null, 0, 0)
@@ -138,6 +108,10 @@ class AudioRecordView : FrameLayout {
         lockOffset = (resources.displayMetrics.heightPixels / 4F)
 
         setupTouchListener()
+    }
+
+    fun setRecordingListener(recordingListener: RecordingListener) {
+        this.recordingListener = recordingListener
     }
 
     enum class UserBehavior {
@@ -183,16 +157,10 @@ class AudioRecordView : FrameLayout {
                     override fun onSingleTapUp(e: MotionEvent): Boolean {
                         if (!hasMicrophonePermission()) {
                             recordingListener?.onRecordingPermissionRequired()
-                            // Reset animation if permission is not granted
-                            recordButton
-                                .animate()
-                                .scaleX(1f)
-                                .scaleY(1f)
-                                .setDuration(100)
-                                .start()
+                            reset(animate = true)
                             return true
                         }
-                        startRecord(showHints = false, animateScale = false)
+                        startRecord(isLongPress = false)
                         lock()
                         return true
                     }
@@ -203,7 +171,7 @@ class AudioRecordView : FrameLayout {
                             return
                         }
                         // The button is already scaled from onDown, now start the main recording animation
-                        startRecord(showHints = true, animateScale = true)
+                        startRecord(isLongPress = true)
                         firstX = e.rawX
                         firstY = e.rawY
                     }
@@ -219,12 +187,7 @@ class AudioRecordView : FrameLayout {
 
             if (motionEvent.action == MotionEvent.ACTION_UP || motionEvent.action == MotionEvent.ACTION_CANCEL) {
                 if (!isRecording && !isLocked) {
-                    recordButton
-                        .animate()
-                        .scaleX(1f)
-                        .scaleY(1f)
-                        .setDuration(100)
-                        .start()
+                    reset(animate = true)
                 }
             }
 
@@ -233,30 +196,30 @@ class AudioRecordView : FrameLayout {
             // Handle move and up actions for a long press
             if (isRecording && !isLocked) {
                 when (motionEvent.action) {
-                    MotionEvent.ACTION_UP -> {
-                        stopRecording(RecordingBehaviour.RELEASED)
-                    }
-                    MotionEvent.ACTION_MOVE -> {
-                        if (stopTrackingAction) return@OnTouchListener true
-
-                        val behavior = getBehaviorFromDirection(motionEvent.rawX, motionEvent.rawY)
-                        if (behavior != userBehavior) {
-                            userBehavior = behavior
-                        }
-
-                        when (userBehavior) {
-                            UserBehavior.CANCELING -> translateX(motionEvent.rawX - firstX)
-                            UserBehavior.LOCKING -> translateY(motionEvent.rawY - firstY)
-                            else -> {}
-                        }
-
-                        lastX = motionEvent.rawX
-                        lastY = motionEvent.rawY
-                    }
+                    MotionEvent.ACTION_UP -> stopRecording(RecordingBehaviour.RELEASED)
+                    MotionEvent.ACTION_MOVE -> handleMove(motionEvent)
                 }
             }
             true
         }
+
+    private fun handleMove(motionEvent: MotionEvent) {
+        if (stopTrackingAction) return
+
+        val behavior = getBehaviorFromDirection(motionEvent.rawX, motionEvent.rawY)
+        if (behavior != userBehavior) {
+            userBehavior = behavior
+        }
+
+        when (userBehavior) {
+            UserBehavior.CANCELING -> translateX(motionEvent.rawX - firstX)
+            UserBehavior.LOCKING -> translateY(motionEvent.rawY - firstY)
+            else -> {}
+        }
+
+        lastX = motionEvent.rawX
+        lastY = motionEvent.rawY
+    }
 
     private fun hasMicrophonePermission(): Boolean =
         ContextCompat.checkSelfPermission(
@@ -285,10 +248,7 @@ class AudioRecordView : FrameLayout {
             return
         }
 
-        if (layoutLock.visibility != VISIBLE) {
-            layoutLock.visibility = VISIBLE
-        }
-
+        layoutLock.visibility = VISIBLE
         recordButton.translationY = y
         layoutLock.translationY = y / 2
         recordButton.translationX = 0f
@@ -308,13 +268,39 @@ class AudioRecordView : FrameLayout {
         recordButton.translationY = 0f
 
         if (abs(x) < imageViewMic.width / 2) {
-            if (layoutLock.visibility != VISIBLE) {
-                layoutLock.visibility = VISIBLE
-            }
+            layoutLock.visibility = VISIBLE
         } else {
-            if (layoutLock.visibility != GONE) {
-                layoutLock.visibility = GONE
-            }
+            layoutLock.visibility = GONE
+        }
+    }
+
+    private fun startRecord(isLongPress: Boolean) {
+        if (isRecording) return
+        isRecording = true
+        recordingListener?.onRecordingStarted()
+        stopTrackingAction = false
+
+        if (isLongPress) {
+            recordButton
+                .animate()
+                .scaleX(1.8f)
+                .scaleY(1.8f)
+                .setDuration(200)
+                .setInterpolator(OvershootInterpolator())
+                .start()
+        }
+
+        chronometer.visibility = VISIBLE
+        imageViewMic.visibility = VISIBLE
+        chronometer.base = SystemClock.elapsedRealtime()
+        chronometer.startAnimation(animBlink)
+        chronometer.start()
+
+        if (isLongPress) {
+            layoutLock.visibility = VISIBLE
+            layoutSlideCancel.visibility = VISIBLE
+            lockArrow.startAnimation(animJumpFast)
+            imageViewLock.startAnimation(animJump)
         }
     }
 
@@ -323,12 +309,10 @@ class AudioRecordView : FrameLayout {
         isLocked = true
         recordIcon.setImageResource(R.drawable.ic_stop)
 
-        // Reset the button's scale to its original size when locking
         recordButton.animate().cancel()
         recordButton.scaleX = 1f
         recordButton.scaleY = 1f
 
-        // When locked, the button should only respond to a simple click to stop
         recordButton.setOnTouchListener(null)
         recordButton.setOnClickListener {
             stopRecording(RecordingBehaviour.LOCK_DONE)
@@ -345,21 +329,38 @@ class AudioRecordView : FrameLayout {
     private fun stopRecording(recordingBehaviour: RecordingBehaviour) {
         if (!isRecording) return
 
+        val animateRelease = recordingBehaviour == RecordingBehaviour.RELEASED
+        reset(animate = animateRelease)
+        chronometer.stop()
+
+        when (recordingBehaviour) {
+            RecordingBehaviour.CANCELED -> {
+                delete()
+                recordingListener?.onRecordingCanceled()
+            }
+            RecordingBehaviour.RELEASED, RecordingBehaviour.LOCK_DONE -> {
+                recordingListener?.onRecordingCompleted()
+            }
+            else -> { // No-op
+            }
+        }
+    }
+
+    private fun reset(animate: Boolean) {
         isRecording = false
         isLocked = false
-        stopTrackingAction = true
+        stopTrackingAction = false
         firstX = 0f
         firstY = 0f
         lastX = 0f
         lastY = 0f
         userBehavior = UserBehavior.NONE
 
-        // Restore the gesture listener and mic icon
         recordIcon.setImageResource(R.drawable.ic_action_mic)
         recordButton.setOnClickListener(null)
         recordButton.setOnTouchListener(gestureListener)
 
-        if (recordingBehaviour == RecordingBehaviour.RELEASED) {
+        if (animate) {
             recordButton
                 .animate()
                 .scaleX(1f)
@@ -370,74 +371,21 @@ class AudioRecordView : FrameLayout {
                 .setInterpolator(LinearInterpolator())
                 .start()
         } else {
+            recordButton.animate().cancel()
             recordButton.scaleX = 1f
             recordButton.scaleY = 1f
             recordButton.translationX = 0f
             recordButton.translationY = 0f
         }
 
-        layoutSlideCancel.translationX = 0f
         layoutSlideCancel.visibility = GONE
-
         layoutLock.visibility = GONE
-        layoutLock.translationY = 0f
+        chronometer.visibility = INVISIBLE
+        imageViewMic.visibility = INVISIBLE
+
+        chronometer.clearAnimation()
         lockArrow.clearAnimation()
         imageViewLock.clearAnimation()
-
-        when (recordingBehaviour) {
-            RecordingBehaviour.CANCELED -> {
-                chronometer.clearAnimation()
-                chronometer.stop()
-                chronometer.visibility = INVISIBLE
-                imageViewMic.visibility = INVISIBLE
-                delete()
-                recordingListener?.onRecordingCanceled()
-            }
-            RecordingBehaviour.RELEASED, RecordingBehaviour.LOCK_DONE -> {
-                chronometer.clearAnimation()
-                chronometer.stop()
-                chronometer.visibility = INVISIBLE
-                imageViewMic.visibility = INVISIBLE
-                recordingListener?.onRecordingCompleted()
-            }
-            RecordingBehaviour.LOCKED -> {
-                // handled by lock()
-            }
-        }
-    }
-
-    private fun startRecord(
-        showHints: Boolean,
-        animateScale: Boolean,
-    ) {
-        if (isRecording) return
-        isRecording = true
-        recordingListener?.onRecordingStarted()
-        stopTrackingAction = false
-
-        if (animateScale) {
-            recordButton
-                .animate()
-                .scaleX(1.8f)
-                .scaleY(1.8f)
-                .setDuration(200)
-                .setInterpolator(OvershootInterpolator())
-                .start()
-        }
-
-        chronometer.visibility = VISIBLE
-        imageViewMic.visibility = VISIBLE
-
-        if (showHints) {
-            layoutLock.visibility = VISIBLE
-            layoutSlideCancel.visibility = VISIBLE
-            lockArrow.startAnimation(animJumpFast)
-            imageViewLock.startAnimation(animJump)
-        }
-
-        chronometer.startAnimation(animBlink)
-        chronometer.base = SystemClock.elapsedRealtime()
-        chronometer.start()
     }
 
     private fun delete() {
@@ -519,9 +467,6 @@ class AudioRecordView : FrameLayout {
     fun cancelRecording() {
         if (!isRecording || isDeleting) {
             return
-        }
-        if (isLocked) {
-            isLocked = false
         }
         stopRecording(RecordingBehaviour.CANCELED)
     }
