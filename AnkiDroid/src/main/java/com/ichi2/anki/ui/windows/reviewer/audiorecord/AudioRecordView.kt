@@ -145,12 +145,30 @@ class AudioRecordView : FrameLayout {
             GestureDetector(
                 context,
                 object : GestureDetector.SimpleOnGestureListener() {
+                    override fun onDown(e: MotionEvent): Boolean {
+                        // Provide immediate feedback on press
+                        recordButton
+                            .animate()
+                            .scaleX(1.2f)
+                            .scaleY(1.2f)
+                            .setDuration(150)
+                            .start()
+                        return true // Must return true to receive other events
+                    }
+
                     override fun onSingleTapUp(e: MotionEvent): Boolean {
                         if (!hasMicrophonePermission()) {
                             recordingListener?.onRecordingPermissionRequired()
+                            // Reset animation if permission is not granted
+                            recordButton
+                                .animate()
+                                .scaleX(1f)
+                                .scaleY(1f)
+                                .setDuration(100)
+                                .start()
                             return true
                         }
-                        startRecord(showHints = false)
+                        startRecord(showHints = false, animateScale = false)
                         lock()
                         return true
                     }
@@ -160,28 +178,39 @@ class AudioRecordView : FrameLayout {
                             recordingListener?.onRecordingPermissionRequired()
                             return
                         }
-                        startRecord(showHints = true)
+                        // The button is already scaled from onDown, now start the main recording animation
+                        startRecord(showHints = true, animateScale = true)
                         firstX = e.rawX
                         firstY = e.rawY
                     }
                 },
             )
+        // Set the initial listener for gestures
         recordButton.setOnTouchListener(gestureListener)
     }
 
     private val gestureListener =
         OnTouchListener { _, motionEvent ->
-            // Let the gesture detector inspect the event
             gestureDetector.onTouchEvent(motionEvent)
+
+            if (motionEvent.action == MotionEvent.ACTION_UP || motionEvent.action == MotionEvent.ACTION_CANCEL) {
+                if (!isRecording && !isLocked) {
+                    recordButton
+                        .animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(100)
+                        .start()
+                }
+            }
 
             if (isDeleting) return@OnTouchListener true
 
-            if (isRecording) {
+            // Handle move and up actions for a long press
+            if (isRecording && !isLocked) {
                 when (motionEvent.action) {
                     MotionEvent.ACTION_UP -> {
-                        if (!isLocked) {
-                            stopRecording(RecordingBehaviour.RELEASED)
-                        }
+                        stopRecording(RecordingBehaviour.RELEASED)
                     }
                     MotionEvent.ACTION_MOVE -> {
                         if (stopTrackingAction) return@OnTouchListener true
@@ -353,18 +382,25 @@ class AudioRecordView : FrameLayout {
         }
     }
 
-    private fun startRecord(showHints: Boolean) {
+    private fun startRecord(
+        showHints: Boolean,
+        animateScale: Boolean,
+    ) {
         if (isRecording) return
         isRecording = true
         recordingListener?.onRecordingStarted()
         stopTrackingAction = false
-        recordButton
-            .animate()
-            .scaleXBy(1f)
-            .scaleYBy(1f)
-            .setDuration(200)
-            .setInterpolator(OvershootInterpolator())
-            .start()
+
+        if (animateScale) {
+            recordButton
+                .animate()
+                .scaleX(2f)
+                .scaleY(2f)
+                .setDuration(200)
+                .setInterpolator(OvershootInterpolator())
+                .start()
+        }
+
         chronometer.visibility = VISIBLE
         imageViewMic.visibility = VISIBLE
 
