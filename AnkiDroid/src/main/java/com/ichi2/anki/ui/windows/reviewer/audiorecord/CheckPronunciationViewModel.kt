@@ -66,6 +66,7 @@ class CheckPronunciationViewModel(
         audioRecorder.stop()
         viewModelScope.launch {
             isPlaybackVisibleFlow.emit(true)
+            playIconFlow.emit(R.drawable.ic_play)
             playbackProgressFlow.emit(0)
         }
     }
@@ -96,6 +97,7 @@ class CheckPronunciationViewModel(
         viewModelScope.launch {
             isPlaybackVisibleFlow.emit(false)
             playbackProgressFlow.emit(0)
+            playIconFlow.emit(R.drawable.ic_play)
         }
     }
 

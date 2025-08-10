@@ -16,19 +16,22 @@
 package com.ichi2.anki.ui.windows.reviewer.audiorecord
 
 import android.Manifest
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.snackbar.Snackbar
 import com.ichi2.anki.R
-import com.ichi2.anki.snackbar.showSnackbar
 import com.ichi2.anki.ui.windows.reviewer.ReviewerViewModel
 import com.ichi2.anki.utils.ext.collectIn
+import com.ichi2.utils.show
 
 /**
  * Integrates [AudioRecordView] with [AudioPlayView] to play the recorded audios.
@@ -43,8 +46,17 @@ class CheckPronunciationFragment : Fragment(R.layout.check_pronunciation_fragmen
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (!isGranted) {
-                // TODO substituir com um diálogo e um botão de help
-                showSnackbar(R.string.multimedia_editor_audio_permission_refused, Snackbar.LENGTH_INDEFINITE)
+                AlertDialog.Builder(requireContext()).show {
+                    setTitle(R.string.permission_denied)
+                    setMessage(R.string.recording_permission_denied_message)
+                    setPositiveButton(R.string.dialog_ok) { _, _ ->
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                        val uri = Uri.fromParts("package", requireContext().packageName, null)
+                        intent.data = uri
+                        startActivity(intent)
+                    }
+                    setNegativeButton(R.string.dialog_cancel, null)
+                }
             }
         }
 
@@ -95,7 +107,7 @@ class CheckPronunciationFragment : Fragment(R.layout.check_pronunciation_fragmen
         )
     }
 
-    fun observeViewModel() {
+    private fun observeViewModel() {
         viewModel.isPlaybackVisibleFlow.flowWithLifecycle(lifecycle).collectIn(lifecycleScope) { isVisible ->
             playView.isVisible = isVisible
         }
