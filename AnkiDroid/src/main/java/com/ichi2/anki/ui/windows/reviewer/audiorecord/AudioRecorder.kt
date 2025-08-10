@@ -31,6 +31,7 @@ class AudioRecorder(
     private val recorder = CompatHelper.compat.getMediaRecorder(context)
 
     private val cacheDir = context.cacheDir
+    private var isRecording = false
     var currentFile: String? = null
         private set
 
@@ -53,16 +54,23 @@ class AudioRecorder(
             setOutputFile(currentFile)
             prepare()
             start()
+            isRecording = true
         }
     }
 
     fun stop() {
+        if (!isRecording) return
         recorder.stop()
+        isRecording = false
     }
 
     override fun close() {
+        if (isRecording) {
+            stop()
+        }
         recorder.reset()
         currentFile = null
+        isRecording = false
     }
 
     private fun createTempRecordingFile() =

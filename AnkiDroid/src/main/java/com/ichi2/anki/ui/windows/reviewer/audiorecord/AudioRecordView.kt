@@ -143,8 +143,8 @@ class AudioRecordView : FrameLayout {
                     override fun onDown(e: MotionEvent): Boolean {
                         recordButton
                             .animate()
-                            .scaleX(1.2f)
-                            .scaleY(1.2f)
+                            .scaleX(1.25f)
+                            .scaleY(1.25f)
                             .setDuration(150)
                             .start()
                         return true
