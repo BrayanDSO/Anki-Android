@@ -47,21 +47,21 @@ class CheckPronunciationViewModel(
     private var progressBarUpdateJob: Job? = null
     private val isPlaying get() = audioPlayer.isPlaying
 
-    fun playCurrentFile() {
+    private fun playCurrentFile() {
         val file = currentFile ?: return
-        audioPlayer.play(file)
-
-        launchProgressBarUpdateJob()
-        viewModelScope.launch {
-            playbackProgressBarMaxFlow.emit(audioPlayer.duration)
-            isPlaybackVisibleFlow.emit(true)
+        // Use the callback to sync UI updates with the player's state
+        audioPlayer.play(file) {
+            viewModelScope.launch {
+                playbackProgressBarMaxFlow.emit(audioPlayer.duration)
+                launchProgressBarUpdateJob()
+            }
         }
     }
 
-    fun replayCurrentFile() {
-        progressBarUpdateJob?.cancel()
-        launchProgressBarUpdateJob()
+    private fun replayCurrentFile() {
         audioPlayer.replay()
+        // Relaunch the job to update progress from the beginning
+        launchProgressBarUpdateJob()
     }
 
     fun cancelPlayback() {
@@ -73,16 +73,17 @@ class CheckPronunciationViewModel(
     }
 
     private fun launchProgressBarUpdateJob() {
+        progressBarUpdateJob?.cancel() // Cancel any existing job
         progressBarUpdateJob =
             viewModelScope.launch {
-                playbackProgressFlow.emit(0)
-                try {
-                    for (elapsedTime in 0..playbackProgressBarMaxFlow.value step 50) {
-                        playbackProgressFlow.emit(elapsedTime)
-                        delay(50L)
-                    }
-                } finally {
-                    playbackProgressFlow.emit(playbackProgressBarMaxFlow.value)
+                // Poll the actual player position while it's playing
+                while (isPlaying) {
+                    playbackProgressFlow.emit(audioPlayer.currentPosition)
+                    delay(50L) // Update ~20 times per second
+                }
+                // When playback is finished, ensure the progress bar is full
+                if (!isPlaying && audioPlayer.duration > 0) {
+                    playbackProgressFlow.emit(audioPlayer.duration)
                 }
             }
     }
@@ -104,6 +105,7 @@ class CheckPronunciationViewModel(
                 replayFlow.emit(Unit)
             }
         } else {
+            // This now correctly handles both the first play and replay after completion
             playCurrentFile()
         }
     }
@@ -142,6 +144,9 @@ class CheckPronunciationViewModel(
         audioRecorder.stop()
         viewModelScope.launch {
             isPlaybackVisibleFlow.emit(true)
+            // Reset UI for the new recording
+            playIconFlow.emit(R.drawable.ic_play)
+            playbackProgressFlow.emit(0)
         }
     }
     //endregion

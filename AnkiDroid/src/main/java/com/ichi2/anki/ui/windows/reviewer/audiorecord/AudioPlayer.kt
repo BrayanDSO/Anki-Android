@@ -17,30 +17,50 @@ package com.ichi2.anki.ui.windows.reviewer.audiorecord
 
 import android.media.MediaPlayer
 import java.io.Closeable
+import java.io.IOException
 
 class AudioPlayer : Closeable {
     private val mediaPlayer = MediaPlayer()
     var isPlaying = false
         private set
-    val duration: Int get() = mediaPlayer.duration
+    private var isPrepared = false
 
-    fun play(filePath: String) {
-        mediaPlayer.setDataSource(filePath)
-        mediaPlayer.prepare()
-        mediaPlayer.start()
-        isPlaying = true
-        mediaPlayer.setOnCompletionListener {
+    val duration: Int get() = mediaPlayer.duration
+    val currentPosition: Int get() = mediaPlayer.currentPosition
+
+    fun play(
+        filePath: String,
+        onPrepared: () -> Unit,
+    ) {
+        try {
+            mediaPlayer.reset()
+            isPrepared = false
             isPlaying = false
+
+            mediaPlayer.setDataSource(filePath)
+            mediaPlayer.setOnPreparedListener { mp ->
+                isPrepared = true
+                mp.start()
+                isPlaying = true
+                onPrepared()
+            }
+            mediaPlayer.prepareAsync()
+        } catch (_: IOException) {
+            close()
         }
     }
 
     fun replay() {
-        mediaPlayer.seekTo(0)
-        mediaPlayer.start()
-        isPlaying = true
+        if (isPrepared) {
+            mediaPlayer.seekTo(0)
+            mediaPlayer.start()
+            isPlaying = true
+        }
     }
 
     override fun close() {
         mediaPlayer.reset()
+        isPrepared = false
+        isPlaying = false
     }
 }
