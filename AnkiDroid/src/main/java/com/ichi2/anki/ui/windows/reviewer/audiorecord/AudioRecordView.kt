@@ -63,11 +63,9 @@ class AudioRecordView : FrameLayout {
     // endregion
 
     // region State & Logic
-    private var isDeleting = false
-    private var stopTrackingAction = false
-    private var isLocked = false
-    private var isRecording = false
+    private var state = ViewState.IDLE
     private var userBehavior = UserBehavior.NONE
+    private var stopTrackingAction = false
 
     private var firstX = 0f
     private var firstY = 0f
@@ -114,13 +112,20 @@ class AudioRecordView : FrameLayout {
         this.recordingListener = recordingListener
     }
 
+    private enum class ViewState {
+        IDLE,
+        RECORDING,
+        LOCKED,
+        DELETING,
+    }
+
     enum class UserBehavior {
         CANCELING,
         LOCKING,
         NONE,
     }
 
-    enum class RecordingBehaviour {
+    enum class RecordingOutcome {
         CANCELED,
         LOCK_DONE,
         RELEASED,
@@ -143,14 +148,13 @@ class AudioRecordView : FrameLayout {
                 context,
                 object : GestureDetector.SimpleOnGestureListener() {
                     override fun onDown(e: MotionEvent): Boolean {
-                        // Provide immediate feedback on press
                         recordButton
                             .animate()
                             .scaleX(1.2f)
                             .scaleY(1.2f)
                             .setDuration(150)
                             .start()
-                        return true // Must return true to receive other events
+                        return true
                     }
 
                     override fun onSingleTapUp(e: MotionEvent): Boolean {
@@ -169,14 +173,12 @@ class AudioRecordView : FrameLayout {
                             recordingListener?.onRecordingPermissionRequired()
                             return
                         }
-                        // The button is already scaled from onDown, now start the main recording animation
                         startRecord(showHints = true)
                         firstX = e.rawX
                         firstY = e.rawY
                     }
                 },
             )
-        // Set the initial listener for gestures
         recordButton.setOnTouchListener(gestureListener)
     }
 
@@ -185,17 +187,16 @@ class AudioRecordView : FrameLayout {
             gestureDetector.onTouchEvent(motionEvent)
 
             if (motionEvent.action == MotionEvent.ACTION_UP || motionEvent.action == MotionEvent.ACTION_CANCEL) {
-                if (!isRecording && !isLocked) {
+                if (state == ViewState.IDLE) {
                     reset(animate = true)
                 }
             }
 
-            if (isDeleting) return@OnTouchListener true
+            if (state == ViewState.DELETING) return@OnTouchListener true
 
-            // Handle move and up actions for a long press
-            if (isRecording && !isLocked) {
+            if (state == ViewState.RECORDING) {
                 when (motionEvent.action) {
-                    MotionEvent.ACTION_UP -> stopRecording(RecordingBehaviour.RELEASED)
+                    MotionEvent.ACTION_UP -> stopRecording(RecordingOutcome.RELEASED)
                     MotionEvent.ACTION_MOVE -> handleMove(motionEvent)
                 }
             }
@@ -274,9 +275,9 @@ class AudioRecordView : FrameLayout {
     }
 
     private fun startRecord(showHints: Boolean) {
-        if (isRecording) return
+        if (state != ViewState.IDLE) return
 
-        isRecording = true
+        state = ViewState.RECORDING
         stopTrackingAction = false
         recordingListener?.onRecordingStarted()
 
@@ -307,8 +308,10 @@ class AudioRecordView : FrameLayout {
     }
 
     private fun lock() {
+        if (state != ViewState.RECORDING) return
+        state = ViewState.LOCKED
         stopTrackingAction = true
-        isLocked = true
+
         recordIcon.setImageResource(R.drawable.ic_stop)
 
         recordButton.animate().cancel()
@@ -317,7 +320,7 @@ class AudioRecordView : FrameLayout {
 
         recordButton.setOnTouchListener(null)
         recordButton.setOnClickListener {
-            stopRecording(RecordingBehaviour.LOCK_DONE)
+            stopRecording(RecordingOutcome.LOCK_DONE)
         }
         layoutSlideCancel.visibility = GONE
         layoutLock.visibility = GONE
@@ -325,30 +328,29 @@ class AudioRecordView : FrameLayout {
 
     private fun cancel() {
         stopTrackingAction = true
-        stopRecording(RecordingBehaviour.CANCELED)
+        stopRecording(RecordingOutcome.CANCELED)
     }
 
-    private fun stopRecording(recordingBehaviour: RecordingBehaviour) {
-        if (!isRecording) return
+    private fun stopRecording(outcome: RecordingOutcome) {
+        if (state != ViewState.RECORDING && state != ViewState.LOCKED) return
 
-        val animateRelease = recordingBehaviour == RecordingBehaviour.RELEASED
+        val animateRelease = outcome == RecordingOutcome.RELEASED
         reset(animate = animateRelease)
         chronometer.stop()
 
-        when (recordingBehaviour) {
-            RecordingBehaviour.CANCELED -> {
+        when (outcome) {
+            RecordingOutcome.CANCELED -> {
                 delete()
                 recordingListener?.onRecordingCanceled()
             }
-            RecordingBehaviour.RELEASED, RecordingBehaviour.LOCK_DONE -> {
+            RecordingOutcome.RELEASED, RecordingOutcome.LOCK_DONE -> {
                 recordingListener?.onRecordingCompleted()
             }
         }
     }
 
     private fun reset(animate: Boolean) {
-        isRecording = false
-        isLocked = false
+        state = ViewState.IDLE
         stopTrackingAction = false
         firstX = 0f
         firstY = 0f
@@ -390,13 +392,12 @@ class AudioRecordView : FrameLayout {
     }
 
     private fun delete() {
+        state = ViewState.DELETING
         imageViewMic.visibility = VISIBLE
         imageViewMic.rotation = 0f
-        isDeleting = true
         recordButton.isEnabled = false
 
         val trashCanDisplacement = -dp * 40
-        // 1. Animate Mic flying up to the trash can
         imageViewMic
             .animate()
             .translationY(-dp * 150)
@@ -406,7 +407,6 @@ class AudioRecordView : FrameLayout {
             .setDuration(DURATION_DELETE_MIC_FLY_UP)
             .setInterpolator(DecelerateInterpolator())
             .withStartAction {
-                // 2. Animate trash can sliding in at the same time
                 dustin.translationX = trashCanDisplacement
                 dustinCover.translationX = trashCanDisplacement
 
@@ -428,7 +428,6 @@ class AudioRecordView : FrameLayout {
                         dustinCover.visibility = VISIBLE
                     }.start()
             }.withEndAction {
-                // 3. Animate mic dropping into the can
                 imageViewMic
                     .animate()
                     .translationY(0f)
@@ -440,7 +439,6 @@ class AudioRecordView : FrameLayout {
                         imageViewMic.visibility = INVISIBLE
                         imageViewMic.rotation = 0f
 
-                        // 4. Animate trash can sliding out
                         dustinCover
                             .animate()
                             .rotation(0f)
@@ -455,21 +453,25 @@ class AudioRecordView : FrameLayout {
                                 .setDuration(DURATION_DELETE_TRASH_SLIDE_OUT)
                                 .setStartDelay(DELAY_DELETE_TRASH_SLIDE_OUT)
                                 .setInterpolator(DecelerateInterpolator())
-                                .start()
+                                .withEndAction {
+                                    // Reset state only after delete animation is fully complete
+                                    if (view == dustin) { // Only do this once
+                                        state = ViewState.IDLE
+                                        recordButton.isEnabled = true
+                                    }
+                                }.start()
                         }
                         slideOutAnimator(dustin)
                         slideOutAnimator(dustinCover)
-                        isDeleting = false
-                        recordButton.isEnabled = true
                     }.start()
             }.start()
     }
 
     fun cancelRecording() {
-        if (!isRecording || isDeleting) {
+        if (state == ViewState.IDLE || state == ViewState.DELETING) {
             return
         }
-        stopRecording(RecordingBehaviour.CANCELED)
+        stopRecording(RecordingOutcome.CANCELED)
     }
 
     companion object {
