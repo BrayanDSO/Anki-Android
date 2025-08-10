@@ -64,13 +64,18 @@ class AudioRecorder(
         isRecording = false
     }
 
-    override fun close() {
+    fun reset() {
         if (isRecording) {
             stop()
         }
         recorder.reset()
         currentFile = null
         isRecording = false
+    }
+
+    override fun close() {
+        reset()
+        recorder.release()
     }
 
     private fun createTempRecordingFile() =

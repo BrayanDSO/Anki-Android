@@ -59,7 +59,7 @@ class CheckPronunciationViewModel(
     }
 
     fun onRecordingCancelled() {
-        audioRecorder.close()
+        audioRecorder.reset()
     }
 
     fun onRecordingCompleted() {
