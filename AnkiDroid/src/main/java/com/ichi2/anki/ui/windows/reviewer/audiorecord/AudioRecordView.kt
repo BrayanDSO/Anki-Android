@@ -13,8 +13,32 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  *
- * This file incorporates code from https://github.com/varunjohn/Audio-Recording-Animation
- * under the Apache License, Version 2.0.
+ * This file incorporates code under the following license:
+ *
+ *     Copyright 2018 Varun John
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
+ * https://github.com/varunjohn/Audio-Recording-Animation/blob/d5fef5bbf051e81f4ff35bb58496b7848bde6dd4/WhatsappMessengerView/src/main/java/com/varunjohn1990/audio_record_view/AudioRecordView.java
+ *
+ * CHANGES:
+ * * Convert to Kotlin
+ * * Removed layoutEffect1 and layoutEffect2
+ * * Removed imageViewSend
+ * * Removed "Attachments" and "Message" views
+ * * Simplified the layouts hierarchy
+ * * Changed the icons, strings and style
+ * * Added single tap management
  */
 package com.ichi2.anki.ui.windows.reviewer.audiorecord
 
@@ -377,7 +401,7 @@ class AudioRecordView : FrameLayout {
                 recordingListener?.onRecordingCompleted()
             }
             RecordingBehaviour.LOCKED -> {
-                // This case is now handled by the lock() method directly
+                // handled by lock()
             }
         }
     }
@@ -394,8 +418,8 @@ class AudioRecordView : FrameLayout {
         if (animateScale) {
             recordButton
                 .animate()
-                .scaleX(2f)
-                .scaleY(2f)
+                .scaleX(1.8f)
+                .scaleY(1.8f)
                 .setDuration(200)
                 .setInterpolator(OvershootInterpolator())
                 .start()
