@@ -78,7 +78,7 @@ class CheckPronunciationFragment : Fragment(R.layout.check_pronunciation_fragmen
         if (requireActivity().isChangingConfigurations) {
             return
         }
-        viewModel.cancelAll()
+        viewModel.resetAll()
         recordView.forceReset()
     }
 
@@ -143,7 +143,7 @@ class CheckPronunciationFragment : Fragment(R.layout.check_pronunciation_fragmen
             .flowWithLifecycle(lifecycle)
             .collectIn(lifecycleScope) { isEnabled ->
                 if (!isEnabled) {
-                    viewModel.cancelAll()
+                    viewModel.resetAll()
                     recordView.forceReset()
                 }
             }

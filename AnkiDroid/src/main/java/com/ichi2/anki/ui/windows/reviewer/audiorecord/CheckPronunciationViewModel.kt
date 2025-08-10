@@ -95,7 +95,7 @@ class CheckPronunciationViewModel(
         }
     }
 
-    fun cancelAll() {
+    fun resetAll() {
         onRecordingCancelled()
         onCancelPlayback()
     }

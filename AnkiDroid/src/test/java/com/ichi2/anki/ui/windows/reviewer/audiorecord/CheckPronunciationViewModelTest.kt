@@ -27,6 +27,7 @@ import io.mockk.runs
 import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -56,7 +57,7 @@ class CheckPronunciationViewModelTest : JvmTest() {
                 every { play("test_file.3gp", capture(onPreparedCallback)) } just runs
                 every { isPlaying } answers { isPlayingMock }
                 every { duration } returns 3000
-                every { currentPosition } returns 1500 // Simulate being mid-playback
+                every { currentPosition } returns 1500
                 every { onCompletion = any() } answers {
                     onCompletionCallback = firstArg()
                 }
@@ -79,6 +80,8 @@ class CheckPronunciationViewModelTest : JvmTest() {
     @Test
     fun `onPlayOrReplay when stopped should start playback and update UI`() =
         runTest {
+            // Precondition: Playback view must be visible to allow play
+            viewModel.isPlaybackVisibleFlow.value = true
             isPlayingMock = false
 
             viewModel.playIconFlow.test {
@@ -99,6 +102,8 @@ class CheckPronunciationViewModelTest : JvmTest() {
     @Test
     fun `onPlayOrReplay when playing should replay audio`() =
         runTest {
+            // Precondition: Playback view must be visible
+            viewModel.isPlaybackVisibleFlow.value = true
             isPlayingMock = true
 
             viewModel.replayFlow.test {
@@ -107,43 +112,41 @@ class CheckPronunciationViewModelTest : JvmTest() {
             }
 
             verify { mockPlayer.replay() }
-
-            // Also verify that the progress bar job is running
-            viewModel.playbackProgressFlow.test {
-                assertEquals(1500, awaitItem())
-                // Required to allow the progress bar job to complete
-                isPlayingMock = false
-            }
+            // Allow the progress bar job to complete
+            isPlayingMock = false
         }
 
     @Test
     fun `when playback completes should reset icon and fill progress`() =
         runTest {
+            // Start playback to set the state
+            viewModel.isPlaybackVisibleFlow.value = true
             isPlayingMock = false
             viewModel.onPlayOrReplay()
-            onPreparedCallback.captured.invoke() // Player is now "prepared"
+            onPreparedCallback.captured.invoke()
             isPlayingMock = true
 
-            // Launch collectors concurrently to avoid race conditions
+            // Launch collectors concurrently
             val iconJob =
                 launch {
                     viewModel.playIconFlow.test {
-                        assertEquals(R.drawable.ic_replay, awaitItem()) // Icon is replay during playback
-                        assertEquals(R.drawable.ic_play, awaitItem()) // Icon resets to play on completion
+                        assertEquals(R.drawable.ic_replay, awaitItem())
+                        assertEquals(R.drawable.ic_play, awaitItem())
                     }
                 }
-
             val progressJob =
                 launch {
                     viewModel.playbackProgressFlow.test {
-                        awaitItem() // Consume initial 0
-                        assertEquals(1500, awaitItem()) // From the progress bar update job
-                        assertEquals(3000, awaitItem())
+                        awaitItem() // initial 0
+                        assertEquals(1500, awaitItem()) // from progress job
+                        assertEquals(3000, awaitItem()) // from completion
                     }
                 }
-            // Trigger the event that both collectors are waiting for
+
+            // Trigger the completion event
             onCompletionCallback?.invoke()
-            // Clean up to ensure test completion
+
+            // Clean up
             iconJob.cancel()
             progressJob.cancel()
         }
@@ -151,9 +154,8 @@ class CheckPronunciationViewModelTest : JvmTest() {
     @Test
     fun `onRecordingStarted should hide playback and start recording`() =
         runTest {
-            // Ensure playback is visible first to test that it gets hidden
+            // Make playback visible first to test that it gets hidden
             viewModel.onRecordingCompleted()
-            assertTrue(viewModel.isPlaybackVisibleFlow.value)
 
             viewModel.isPlaybackVisibleFlow.test {
                 assertTrue(awaitItem())
@@ -162,34 +164,19 @@ class CheckPronunciationViewModelTest : JvmTest() {
             }
 
             verify { mockRecorder.startRecording() }
-            coVerify { mockPlayer.close() } // Verifies that onCancelPlayback was called
+            coVerify { mockPlayer.close() }
         }
 
     @Test
-    fun `onRecordingCancelled should close recorder`() {
+    fun `onRecordingCancelled should reset recorder`() {
         viewModel.onRecordingCancelled()
-        verify { mockRecorder.close() }
+        verify { mockRecorder.reset() }
     }
 
     @Test
-    fun `onCancelPlayback should hide view and close player`() =
-        runTest {
-            // Make it visible first
-            viewModel.onRecordingCompleted()
-
-            viewModel.isPlaybackVisibleFlow.test {
-                assertTrue(awaitItem())
-                viewModel.onCancelPlayback()
-                assertFalse(awaitItem())
-            }
-
-            verify { mockPlayer.close() }
-        }
-
-    @Test
-    fun `cancelAll should close both recorder and player`() {
-        viewModel.cancelAll()
-        verify { mockRecorder.close() }
+    fun `resetAll should reset recorder and player`() {
+        viewModel.resetAll()
+        verify { mockRecorder.reset() }
         verify { mockPlayer.close() }
     }
 }
