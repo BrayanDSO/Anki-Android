@@ -20,19 +20,11 @@ import android.view.View
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewModelScope
-import com.ichi2.anki.AnkiDroidApp
 import com.ichi2.anki.R
 import com.ichi2.anki.ui.windows.reviewer.ReviewerViewModel
 import com.ichi2.anki.utils.ext.collectIn
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
 
 /**
  * Integrates [AudioRecordView] with [AudioPlayView]
@@ -93,122 +85,4 @@ class CheckPronunciationFragment : Fragment(R.layout.check_pronunciation_fragmen
             playView.rotateReplayIcon()
         }
     }
-}
-
-class CheckPronunciationViewModel :
-    ViewModel(),
-    AudioPlayView.ButtonPressListener,
-    AudioRecordView.RecordingListener {
-    //region Playback
-    val audioPlayer = AudioPlayer()
-
-    val playbackProgressFlow = MutableStateFlow(0)
-    val playbackProgressBarMaxFlow = MutableStateFlow(1)
-    val playIconFlow = MutableStateFlow(R.drawable.ic_play)
-
-    val replayFlow = MutableSharedFlow<Unit>()
-    val isPlaybackVisibleFlow = MutableStateFlow(false)
-
-    private var progressBarUpdateJob: Job? = null
-    private var isPlaying = false
-
-    fun playCurrentFile() {
-        val file = currentFile ?: return
-        audioPlayer.play(file)
-        val duration = audioPlayer.duration
-        viewModelScope.launch {
-            playbackProgressBarMaxFlow.emit(duration)
-        }
-        launchProgressBarUpdateJob()
-    }
-
-    fun replayCurrentFile() {
-        progressBarUpdateJob?.cancel()
-        launchProgressBarUpdateJob()
-        audioPlayer.replay()
-    }
-
-    fun cancelPlayback() {
-        progressBarUpdateJob?.cancel()
-        audioPlayer.cancel()
-        viewModelScope.launch {
-            playbackProgressFlow.emit(0)
-        }
-    }
-
-    private fun launchProgressBarUpdateJob() {
-        progressBarUpdateJob =
-            viewModelScope.launch {
-                try {
-                    for (elapsedTime in 0..playbackProgressBarMaxFlow.value step 50) {
-                        playbackProgressFlow.emit(elapsedTime)
-                        delay(50L)
-                    }
-                } finally {
-                    isPlaying = false
-                    playbackProgressFlow.emit(playbackProgressBarMaxFlow.value)
-                }
-            }
-    }
-
-    fun onReplayVoiceAction() {
-        if (isRecording) return
-        onPlayButtonPressed()
-    }
-    //endregion
-
-    //region AudioPlayView.ButtonPressListener
-    override fun onPlayButtonPressed() {
-        viewModelScope.launch {
-            playIconFlow.emit(R.drawable.ic_replay)
-        }
-        if (isPlaying) {
-            replayCurrentFile()
-            viewModelScope.launch {
-                replayFlow.emit(Unit)
-            }
-        } else {
-            playCurrentFile()
-        }
-    }
-
-    override fun onCancelButtonPressed() {
-        viewModelScope.launch {
-            isPlaybackVisibleFlow.emit(false)
-            cancelPlayback()
-        }
-    }
-    //endregion
-
-    //region Recording
-    private val audioRecorder = AudioRecorder(AnkiDroidApp.instance)
-    private val currentFile get() = audioRecorder.currentFile
-    private val isRecording get() = audioRecorder.isRecording
-
-    fun cancelRecording() {
-        audioRecorder.cancel()
-    }
-
-    //endregion
-
-    //region AudioRecordView.RecordingListener
-    override fun onRecordingStarted() {
-        audioRecorder.startRecording()
-        viewModelScope.launch {
-            isPlaybackVisibleFlow.emit(false)
-            cancelPlayback()
-        }
-    }
-
-    override fun onRecordingCanceled() {
-        audioRecorder.cancel()
-    }
-
-    override fun onRecordingCompleted() {
-        audioRecorder.stop()
-        viewModelScope.launch {
-            isPlaybackVisibleFlow.emit(true)
-        }
-    }
-    //endregion
 }
