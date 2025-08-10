@@ -35,26 +35,22 @@ class CheckPronunciationViewModel(
         addCloseable(audioPlayer)
         addCloseable(audioRecorder)
 
-        // Set the completion callback to handle UI updates when audio finishes
         audioPlayer.onCompletion = {
             viewModelScope.launch {
-                // Ensure the progress bar is set to 100%
                 playbackProgressFlow.emit(playbackProgressBarMaxFlow.value)
-                // Reset the icon back to 'play'
                 playIconFlow.emit(R.drawable.ic_play)
             }
         }
     }
 
-    //region Playback
     val playbackProgressFlow = MutableStateFlow(0)
     val playbackProgressBarMaxFlow = MutableStateFlow(1)
     val playIconFlow = MutableStateFlow(R.drawable.ic_play)
-
     val replayFlow = MutableSharedFlow<Unit>()
     val isPlaybackVisibleFlow = MutableStateFlow(false)
 
     private var progressBarUpdateJob: Job? = null
+    private val currentFile get() = audioRecorder.currentFile
     private val isPlaying get() = audioPlayer.isPlaying
 
     private fun playCurrentFile() {
@@ -95,9 +91,7 @@ class CheckPronunciationViewModel(
         if (!isPlaybackVisibleFlow.value) return
         onPlayButtonPressed()
     }
-    //endregion
 
-    //region AudioPlayView.ButtonPressListener
     override fun onPlayButtonPressed() {
         if (!isPlaying) {
             viewModelScope.launch { playIconFlow.emit(R.drawable.ic_replay) }
@@ -119,17 +113,11 @@ class CheckPronunciationViewModel(
             cancelPlayback()
         }
     }
-    //endregion
-
-    //region Recording
-    private val currentFile get() = audioRecorder.currentFile
 
     fun cancelRecording() {
         audioRecorder.close()
     }
-    //endregion
 
-    //region AudioRecordView.RecordingListener
     override fun onRecordingStarted() {
         audioRecorder.startRecording()
         viewModelScope.launch {
@@ -150,5 +138,4 @@ class CheckPronunciationViewModel(
             playbackProgressFlow.emit(0)
         }
     }
-    //endregion
 }
