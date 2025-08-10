@@ -159,7 +159,7 @@ class AudioRecordView : FrameLayout {
                             reset(animate = true)
                             return true
                         }
-                        startRecord(isLongPress = false)
+                        startRecord(showHints = false)
                         lock()
                         return true
                     }
@@ -170,7 +170,7 @@ class AudioRecordView : FrameLayout {
                             return
                         }
                         // The button is already scaled from onDown, now start the main recording animation
-                        startRecord(isLongPress = true)
+                        startRecord(showHints = true)
                         firstX = e.rawX
                         firstY = e.rawY
                     }
@@ -273,13 +273,24 @@ class AudioRecordView : FrameLayout {
         }
     }
 
-    private fun startRecord(isLongPress: Boolean) {
+    private fun startRecord(showHints: Boolean) {
         if (isRecording) return
-        isRecording = true
-        recordingListener?.onRecordingStarted()
-        stopTrackingAction = false
 
-        if (isLongPress) {
+        isRecording = true
+        stopTrackingAction = false
+        recordingListener?.onRecordingStarted()
+
+        showRecordingAnimation(showHints)
+    }
+
+    private fun showRecordingAnimation(showHints: Boolean) {
+        chronometer.visibility = VISIBLE
+        imageViewMic.visibility = VISIBLE
+        chronometer.base = SystemClock.elapsedRealtime()
+        chronometer.startAnimation(animBlink)
+        chronometer.start()
+
+        if (showHints) {
             recordButton
                 .animate()
                 .scaleX(1.8f)
@@ -287,15 +298,7 @@ class AudioRecordView : FrameLayout {
                 .setDuration(200)
                 .setInterpolator(OvershootInterpolator())
                 .start()
-        }
 
-        chronometer.visibility = VISIBLE
-        imageViewMic.visibility = VISIBLE
-        chronometer.base = SystemClock.elapsedRealtime()
-        chronometer.startAnimation(animBlink)
-        chronometer.start()
-
-        if (isLongPress) {
             layoutLock.visibility = VISIBLE
             layoutSlideCancel.visibility = VISIBLE
             lockArrow.startAnimation(animJumpFast)
