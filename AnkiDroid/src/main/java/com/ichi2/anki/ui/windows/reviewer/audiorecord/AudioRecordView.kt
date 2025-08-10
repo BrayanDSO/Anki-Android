@@ -132,6 +132,8 @@ class AudioRecordView : FrameLayout {
         fun onRecordingCanceled()
 
         fun onRecordingCompleted()
+
+        fun onLock()
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -298,6 +300,7 @@ class AudioRecordView : FrameLayout {
 
     private fun lock() {
         if (state != ViewState.RECORDING) return
+        recordingListener?.onLock()
         state = ViewState.LOCKED
         stopTrackingAction = true
 

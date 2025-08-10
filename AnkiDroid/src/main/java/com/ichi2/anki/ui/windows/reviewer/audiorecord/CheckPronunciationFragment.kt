@@ -112,6 +112,10 @@ class CheckPronunciationFragment : Fragment(R.layout.check_pronunciation_fragmen
                 override fun onRecordingCompleted() {
                     viewModel.onRecordingCompleted()
                 }
+
+                override fun onLock() {
+                    // TODO("Not yet implemented")
+                }
             },
         )
     }
