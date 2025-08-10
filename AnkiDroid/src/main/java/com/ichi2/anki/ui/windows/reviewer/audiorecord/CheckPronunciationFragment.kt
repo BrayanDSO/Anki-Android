@@ -123,7 +123,7 @@ class CheckPronunciationFragment : Fragment(R.layout.check_pronunciation_fragmen
             .collectIn(lifecycleScope) { isEnabled ->
                 if (!isEnabled) {
                     viewModel.cancelAll()
-                    recordView.cancelRecording() // Also reset view state
+                    recordView.forceReset()
                 }
             }
         studyScreenViewModel.replayVoiceFlow

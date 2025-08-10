@@ -455,11 +455,18 @@ class AudioRecordView : FrameLayout {
             }.start()
     }
 
-    fun cancelRecording() {
-        if (state == ViewState.IDLE || state == ViewState.DELETING) {
-            return
-        }
-        stopRecording(RecordingBehavior.CANCEL)
+    /**
+     * Immediately stops all actions and animations, and returns the view to its initial state.
+     */
+    fun forceReset() {
+        chronometer.stop()
+
+        recordButton.animate().cancel()
+        imageViewMic.animate().cancel()
+        dustin.animate().cancel()
+        dustinCover.animate().cancel()
+
+        reset(animate = false)
     }
 
     companion object {
