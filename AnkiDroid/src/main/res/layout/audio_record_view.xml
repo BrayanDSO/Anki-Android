@@ -31,14 +31,6 @@
       limitations under the License.
 
   https://github.com/varunjohn/Audio-Recording-Animation/blob/d5fef5bbf051e81f4ff35bb58496b7848bde6dd4/WhatsappMessengerView/src/main/res/layout/record_view.xml
-
-  CHANGES:
-  * Removed layoutEffect1 and layoutEffect2
-  * Removed imageViewSend
-  * Removed "Attachments" and "Message" views
-  * Added clipChildren to some elements
-  * Simplified the layouts hierarchy
-  * Changed the icons, strings and style
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -181,32 +173,14 @@
         style="@style/Widget.AnkiDroid.CardView.Recording"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:layout_gravity="bottom|end"
-        >
+        android:layout_gravity="bottom|end">
 
         <ImageView
-            android:id="@+id/imageAudio"
+            android:id="@+id/recordIcon"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_margin="12dp"
             app:srcCompat="@drawable/ic_action_mic"/>
-
-    </androidx.cardview.widget.CardView>
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/imageViewStop"
-        style="@style/Widget.AnkiDroid.CardView.Recording"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_gravity="bottom|end"
-        android:visibility="gone">
-
-        <ImageView
-            android:id="@+id/imageStop"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_margin="12dp"
-            android:src="@drawable/ic_stop" />
 
     </androidx.cardview.widget.CardView>
 

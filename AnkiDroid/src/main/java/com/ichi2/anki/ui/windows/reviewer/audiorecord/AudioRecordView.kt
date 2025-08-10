@@ -33,6 +33,7 @@ import android.view.animation.LinearInterpolator
 import android.view.animation.OvershootInterpolator
 import android.widget.Chronometer
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
@@ -43,12 +44,12 @@ import kotlin.math.abs
 class AudioRecordView : FrameLayout {
     // region Views
     private val recordButton: View
+    private val recordIcon: ImageView
     private val lockArrow: View
     private val imageViewLock: View
     private val imageViewMic: View
     private val dustin: View
     private val dustinCover: View
-    private val imageViewStop: View
     private val layoutSlideCancel: View
     private val layoutLock: View
     private val chronometer: Chronometer
@@ -98,7 +99,7 @@ class AudioRecordView : FrameLayout {
     ) : super(context, attrs, defStyleAttr, defStyleRes) {
         LayoutInflater.from(context).inflate(R.layout.audio_record_view, this, true)
         recordButton = findViewById(R.id.recordButton)
-        imageViewStop = findViewById(R.id.imageViewStop)
+        recordIcon = findViewById(R.id.recordIcon)
         imageViewLock = findViewById(R.id.imageViewLock)
         lockArrow = findViewById(R.id.imageViewLockArrow)
         textViewSlide = findViewById(R.id.textViewSlide)
@@ -113,9 +114,6 @@ class AudioRecordView : FrameLayout {
         lockOffset = (resources.displayMetrics.heightPixels / 4F)
 
         setupTouchListener()
-        imageViewStop.setOnClickListener {
-            stopRecording(RecordingBehaviour.LOCK_DONE)
-        }
     }
 
     enum class UserBehavior {
@@ -147,7 +145,6 @@ class AudioRecordView : FrameLayout {
             GestureDetector(
                 context,
                 object : GestureDetector.SimpleOnGestureListener() {
-                    // Called for a quick tap.
                     override fun onSingleTapUp(e: MotionEvent): Boolean {
                         if (!hasMicrophonePermission()) {
                             recordingListener?.onRecordingPermissionRequired()
@@ -158,7 +155,6 @@ class AudioRecordView : FrameLayout {
                         return true
                     }
 
-                    // Called for a press-and-hold.
                     override fun onLongPress(e: MotionEvent) {
                         if (!hasMicrophonePermission()) {
                             recordingListener?.onRecordingPermissionRequired()
@@ -170,25 +166,25 @@ class AudioRecordView : FrameLayout {
                     }
                 },
             )
+        recordButton.setOnTouchListener(gestureListener)
+    }
 
-        recordButton.setOnTouchListener { _, motionEvent ->
+    private val gestureListener =
+        OnTouchListener { _, motionEvent ->
             // Let the gesture detector inspect the event
             gestureDetector.onTouchEvent(motionEvent)
 
-            if (isDeleting) return@setOnTouchListener true
+            if (isDeleting) return@OnTouchListener true
 
-            // Handle move and up actions only if a recording has been started by the gesture detector
             if (isRecording) {
                 when (motionEvent.action) {
                     MotionEvent.ACTION_UP -> {
-                        // This is the 'UP' for a long press, not a tap.
-                        // A tap's UP is consumed by onSingleTapUp.
                         if (!isLocked) {
                             stopRecording(RecordingBehaviour.RELEASED)
                         }
                     }
                     MotionEvent.ACTION_MOVE -> {
-                        if (stopTrackingAction) return@setOnTouchListener true
+                        if (stopTrackingAction) return@OnTouchListener true
 
                         val behavior = getBehaviorFromDirection(motionEvent.rawX, motionEvent.rawY)
                         if (behavior != userBehavior) {
@@ -206,9 +202,8 @@ class AudioRecordView : FrameLayout {
                     }
                 }
             }
-            true // Always consume the event
+            true
         }
-    }
 
     private fun hasMicrophonePermission(): Boolean =
         ContextCompat.checkSelfPermission(
@@ -273,8 +268,18 @@ class AudioRecordView : FrameLayout {
     private fun lock() {
         stopTrackingAction = true
         isLocked = true
-        imageViewStop.visibility = VISIBLE
-        recordButton.visibility = GONE
+        recordIcon.setImageResource(R.drawable.ic_stop)
+
+        // Reset the button's scale to its original size when locking
+        recordButton.animate().cancel()
+        recordButton.scaleX = 1f
+        recordButton.scaleY = 1f
+
+        // When locked, the button should only respond to a simple click to stop
+        recordButton.setOnTouchListener(null)
+        recordButton.setOnClickListener {
+            stopRecording(RecordingBehaviour.LOCK_DONE)
+        }
         layoutSlideCancel.visibility = GONE
         layoutLock.visibility = GONE
     }
@@ -296,15 +301,28 @@ class AudioRecordView : FrameLayout {
         lastY = 0f
         userBehavior = UserBehavior.NONE
 
-        recordButton
-            .animate()
-            .scaleX(1f)
-            .scaleY(1f)
-            .translationX(0f)
-            .translationY(0f)
-            .setDuration(100)
-            .setInterpolator(LinearInterpolator())
-            .start()
+        // Restore the gesture listener and mic icon
+        recordIcon.setImageResource(R.drawable.ic_action_mic)
+        recordButton.setOnClickListener(null)
+        recordButton.setOnTouchListener(gestureListener)
+
+        if (recordingBehaviour == RecordingBehaviour.RELEASED) {
+            recordButton
+                .animate()
+                .scaleX(1f)
+                .scaleY(1f)
+                .translationX(0f)
+                .translationY(0f)
+                .setDuration(100)
+                .setInterpolator(LinearInterpolator())
+                .start()
+        } else {
+            recordButton.scaleX = 1f
+            recordButton.scaleY = 1f
+            recordButton.translationX = 0f
+            recordButton.translationY = 0f
+        }
+
         layoutSlideCancel.translationX = 0f
         layoutSlideCancel.visibility = GONE
 
@@ -319,8 +337,6 @@ class AudioRecordView : FrameLayout {
                 chronometer.stop()
                 chronometer.visibility = INVISIBLE
                 imageViewMic.visibility = INVISIBLE
-                imageViewStop.visibility = GONE
-                recordButton.visibility = VISIBLE
                 delete()
                 recordingListener?.onRecordingCanceled()
             }
@@ -329,8 +345,6 @@ class AudioRecordView : FrameLayout {
                 chronometer.stop()
                 chronometer.visibility = INVISIBLE
                 imageViewMic.visibility = INVISIBLE
-                imageViewStop.visibility = GONE
-                recordButton.visibility = VISIBLE
                 recordingListener?.onRecordingCompleted()
             }
             RecordingBehaviour.LOCKED -> {
