@@ -43,7 +43,6 @@ package com.ichi2.anki.ui.windows.reviewer.audiorecord
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Context
 import android.os.SystemClock
 import android.util.AttributeSet
@@ -57,7 +56,6 @@ import android.view.animation.OvershootInterpolator
 import android.widget.Chronometer
 import android.widget.FrameLayout
 import android.widget.TextView
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.core.util.TypedValueCompat
@@ -155,12 +153,7 @@ class AudioRecordView : FrameLayout {
     }
 
     interface RecordingListener {
-        /**
-         * Called when the user tries to record but the permission is not granted.
-         * @return true if the listener will handle the permission request and recording can proceed,
-         * false otherwise.
-         */
-        fun onRecordingPermissionRequired(): Boolean
+        fun onRecordingPermissionRequired()
 
         fun onRecordingStarted()
 
@@ -174,10 +167,8 @@ class AudioRecordView : FrameLayout {
         recordButton.setOnTouchListener { _, motionEvent ->
             if (isDeleting) return@setOnTouchListener true
             if (!hasMicrophonePermission()) {
-                val permissionRequestHandled = recordingListener?.onRecordingPermissionRequired() ?: false
-                if (!permissionRequestHandled) {
-                    return@setOnTouchListener true
-                }
+                recordingListener?.onRecordingPermissionRequired()
+                return@setOnTouchListener true
             }
 
             when (motionEvent.action) {
@@ -436,22 +427,6 @@ class AudioRecordView : FrameLayout {
                         recordButton.isEnabled = true
                     }.start()
             }.start()
-    }
-
-    private fun requireMicrophonePermission(context: Context): Boolean { // TODO analisar botar isso no checkpronunciationfragment
-        val isGranted =
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.RECORD_AUDIO,
-            ) == PermissionChecker.PERMISSION_GRANTED
-        if (isGranted) return true
-        if (context !is Activity) return false
-        ActivityCompat.requestPermissions(
-            context,
-            arrayOf(Manifest.permission.RECORD_AUDIO),
-            0,
-        )
-        return false
     }
 
     fun cancelRecording() {

@@ -31,8 +31,7 @@ import com.ichi2.anki.ui.windows.reviewer.ReviewerViewModel
 import com.ichi2.anki.utils.ext.collectIn
 
 /**
- * Integrates [AudioRecordView] with [AudioPlayView]
- * to play the recorded audios.
+ * Integrates [AudioRecordView] with [AudioPlayView] to play the recorded audios.
  */
 class CheckPronunciationFragment : Fragment(R.layout.check_pronunciation_fragment) {
     private val viewModel: CheckPronunciationViewModel by viewModels()
@@ -44,6 +43,7 @@ class CheckPronunciationFragment : Fragment(R.layout.check_pronunciation_fragmen
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (!isGranted) {
+                // TODO substituir com um diálogo e um botão de help
                 showSnackbar(R.string.multimedia_editor_audio_permission_refused, Snackbar.LENGTH_INDEFINITE)
             }
         }
@@ -76,11 +76,8 @@ class CheckPronunciationFragment : Fragment(R.layout.check_pronunciation_fragmen
 
         recordView.setRecordingListener(
             object : AudioRecordView.RecordingListener {
-                override fun onRecordingPermissionRequired(): Boolean {
+                override fun onRecordingPermissionRequired() {
                     requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                    // Return false because the action is asynchronous.
-                    // The user must tap again after granting permission.
-                    return false
                 }
 
                 override fun onRecordingStarted() {
