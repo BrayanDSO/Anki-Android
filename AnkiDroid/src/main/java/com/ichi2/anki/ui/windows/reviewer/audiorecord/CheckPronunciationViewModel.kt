@@ -72,9 +72,7 @@ class CheckPronunciationViewModel(
     }
 
     fun onPlayOrReplay() {
-        if (!isPlaying) {
-            viewModelScope.launch { playIconFlow.emit(R.drawable.ic_replay) }
-        }
+        if (!isPlaybackVisibleFlow.value) return
 
         if (isPlaying) {
             replayCurrentFile()
@@ -82,13 +80,9 @@ class CheckPronunciationViewModel(
                 replayFlow.emit(Unit)
             }
         } else {
+            viewModelScope.launch { playIconFlow.emit(R.drawable.ic_replay) }
             playCurrentFile()
         }
-    }
-
-    fun onReplayFromAction() {
-        if (!isPlaybackVisibleFlow.value) return
-        onPlayOrReplay()
     }
 
     fun onCancelPlayback() {

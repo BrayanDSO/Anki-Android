@@ -141,7 +141,7 @@ class CheckPronunciationFragment : Fragment(R.layout.check_pronunciation_fragmen
         studyScreenViewModel.replayVoiceFlow
             .flowWithLifecycle(lifecycle)
             .collectIn(lifecycleScope) {
-                viewModel.onReplayFromAction()
+                viewModel.onPlayOrReplay()
             }
     }
 }
