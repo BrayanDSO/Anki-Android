@@ -13,31 +13,8 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  *
- * This file incorporates code under the following license:
- *
- *     Copyright 2018 Varun John
- *
- *     Licensed under the Apache License, Version 2.0 (the "License");
- *     you may not use this file except in compliance with the License.
- *     You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
- *     Unless required by applicable law or agreed to in writing, software
- *     distributed under the License is distributed on an "AS IS" BASIS,
- *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *     See the License for the specific language governing permissions and
- *     limitations under the License.
- *
- * https://github.com/varunjohn/Audio-Recording-Animation/blob/d5fef5bbf051e81f4ff35bb58496b7848bde6dd4/WhatsappMessengerView/src/main/java/com/varunjohn1990/audio_record_view/AudioRecordView.java
- *
- * CHANGES:
- * * Convert to Kotlin
- * * Removed layoutEffect1 and layoutEffect2
- * * Removed imageViewSend
- * * Removed "Attachments" and "Message" views
- * * Simplified the layouts hierarchy
- * * Changed the icons, strings and style
+ * This file incorporates code from https://github.com/varunjohn/Audio-Recording-Animation
+ * under the Apache License, Version 2.0.
  */
 package com.ichi2.anki.ui.windows.reviewer.audiorecord
 
@@ -46,6 +23,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.os.SystemClock
 import android.util.AttributeSet
+import android.view.GestureDetector
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -63,7 +41,7 @@ import com.ichi2.anki.R
 import kotlin.math.abs
 
 class AudioRecordView : FrameLayout {
-    //region Views
+    // region Views
     private val recordButton: View
     private val lockArrow: View
     private val imageViewLock: View
@@ -75,15 +53,15 @@ class AudioRecordView : FrameLayout {
     private val layoutLock: View
     private val chronometer: Chronometer
     private val textViewSlide: TextView
-    //endregion
+    // endregion
 
-    //region Animations
+    // region Animations
     private val animBlink = AnimationUtils.loadAnimation(context, R.anim.blink)
     private val animJump = AnimationUtils.loadAnimation(context, R.anim.jump)
     private val animJumpFast = AnimationUtils.loadAnimation(context, R.anim.jump_fast)
-    //endregion
+    // endregion
 
-    //region State & Logic
+    // region State & Logic
     private var isDeleting = false
     private var stopTrackingAction = false
 
@@ -96,16 +74,18 @@ class AudioRecordView : FrameLayout {
     private val lockOffset: Float
     private val dp = TypedValueCompat.dpToPx(1F, resources.displayMetrics)
     private var isLocked = false
+    private var isRecording = false
 
     private var userBehavior = UserBehavior.NONE
 
     private var recordingListener: RecordingListener? = null
+    private lateinit var gestureDetector: GestureDetector
 
     fun setRecordingListener(recordingListener: RecordingListener) {
         this.recordingListener = recordingListener
     }
 
-    //endregion
+    // endregion
 
     constructor(context: Context) : this(context, null, 0, 0)
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0, 0)
@@ -134,7 +114,6 @@ class AudioRecordView : FrameLayout {
 
         setupTouchListener()
         imageViewStop.setOnClickListener {
-            isLocked = false
             stopRecording(RecordingBehaviour.LOCK_DONE)
         }
     }
@@ -164,42 +143,70 @@ class AudioRecordView : FrameLayout {
 
     @SuppressLint("ClickableViewAccessibility")
     private fun setupTouchListener() {
+        gestureDetector =
+            GestureDetector(
+                context,
+                object : GestureDetector.SimpleOnGestureListener() {
+                    // Called for a quick tap.
+                    override fun onSingleTapUp(e: MotionEvent): Boolean {
+                        if (!hasMicrophonePermission()) {
+                            recordingListener?.onRecordingPermissionRequired()
+                            return true
+                        }
+                        startRecord(showHints = false)
+                        lock()
+                        return true
+                    }
+
+                    // Called for a press-and-hold.
+                    override fun onLongPress(e: MotionEvent) {
+                        if (!hasMicrophonePermission()) {
+                            recordingListener?.onRecordingPermissionRequired()
+                            return
+                        }
+                        startRecord(showHints = true)
+                        firstX = e.rawX
+                        firstY = e.rawY
+                    }
+                },
+            )
+
         recordButton.setOnTouchListener { _, motionEvent ->
+            // Let the gesture detector inspect the event
+            gestureDetector.onTouchEvent(motionEvent)
+
             if (isDeleting) return@setOnTouchListener true
-            if (!hasMicrophonePermission()) {
-                recordingListener?.onRecordingPermissionRequired()
-                return@setOnTouchListener true
-            }
 
-            when (motionEvent.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    firstX = motionEvent.rawX
-                    firstY = motionEvent.rawY
-                    startRecord()
-                }
-                MotionEvent.ACTION_UP -> {
-                    stopRecording(RecordingBehaviour.RELEASED)
-                }
-                MotionEvent.ACTION_MOVE -> {
-                    if (stopTrackingAction) return@setOnTouchListener true
-
-                    val behavior = getBehaviorFromDirection(motionEvent.rawX, motionEvent.rawY)
-                    if (behavior != userBehavior) {
-                        // Set behavior only on the first detection of a swipe direction
-                        userBehavior = behavior
+            // Handle move and up actions only if a recording has been started by the gesture detector
+            if (isRecording) {
+                when (motionEvent.action) {
+                    MotionEvent.ACTION_UP -> {
+                        // This is the 'UP' for a long press, not a tap.
+                        // A tap's UP is consumed by onSingleTapUp.
+                        if (!isLocked) {
+                            stopRecording(RecordingBehaviour.RELEASED)
+                        }
                     }
+                    MotionEvent.ACTION_MOVE -> {
+                        if (stopTrackingAction) return@setOnTouchListener true
 
-                    when (userBehavior) {
-                        UserBehavior.CANCELING -> translateX(motionEvent.rawX - firstX)
-                        UserBehavior.LOCKING -> translateY(motionEvent.rawY - firstY)
-                        else -> {}
+                        val behavior = getBehaviorFromDirection(motionEvent.rawX, motionEvent.rawY)
+                        if (behavior != userBehavior) {
+                            userBehavior = behavior
+                        }
+
+                        when (userBehavior) {
+                            UserBehavior.CANCELING -> translateX(motionEvent.rawX - firstX)
+                            UserBehavior.LOCKING -> translateY(motionEvent.rawY - firstY)
+                            else -> {}
+                        }
+
+                        lastX = motionEvent.rawX
+                        lastY = motionEvent.rawY
                     }
-
-                    lastX = motionEvent.rawX
-                    lastY = motionEvent.rawY
                 }
             }
-            true
+            true // Always consume the event
         }
     }
 
@@ -265,8 +272,11 @@ class AudioRecordView : FrameLayout {
 
     private fun lock() {
         stopTrackingAction = true
-        stopRecording(RecordingBehaviour.LOCKED)
         isLocked = true
+        imageViewStop.visibility = VISIBLE
+        recordButton.visibility = GONE
+        layoutSlideCancel.visibility = GONE
+        layoutLock.visibility = GONE
     }
 
     private fun cancel() {
@@ -275,6 +285,10 @@ class AudioRecordView : FrameLayout {
     }
 
     private fun stopRecording(recordingBehaviour: RecordingBehaviour) {
+        if (!isRecording) return
+
+        isRecording = false
+        isLocked = false
         stopTrackingAction = true
         firstX = 0f
         firstY = 0f
@@ -299,13 +313,7 @@ class AudioRecordView : FrameLayout {
         lockArrow.clearAnimation()
         imageViewLock.clearAnimation()
 
-        if (isLocked) return
-
         when (recordingBehaviour) {
-            RecordingBehaviour.LOCKED -> {
-                imageViewStop.visibility = VISIBLE
-                recordButton.visibility = GONE
-            }
             RecordingBehaviour.CANCELED -> {
                 chronometer.clearAnimation()
                 chronometer.stop()
@@ -325,10 +333,15 @@ class AudioRecordView : FrameLayout {
                 recordButton.visibility = VISIBLE
                 recordingListener?.onRecordingCompleted()
             }
+            RecordingBehaviour.LOCKED -> {
+                // This case is now handled by the lock() method directly
+            }
         }
     }
 
-    private fun startRecord() {
+    private fun startRecord(showHints: Boolean) {
+        if (isRecording) return
+        isRecording = true
         recordingListener?.onRecordingStarted()
         stopTrackingAction = false
         recordButton
@@ -339,16 +352,16 @@ class AudioRecordView : FrameLayout {
             .setInterpolator(OvershootInterpolator())
             .start()
         chronometer.visibility = VISIBLE
-        layoutLock.visibility = VISIBLE
-        layoutSlideCancel.visibility = VISIBLE
         imageViewMic.visibility = VISIBLE
 
-        chronometer.startAnimation(animBlink)
-        lockArrow.clearAnimation()
-        imageViewLock.clearAnimation()
-        lockArrow.startAnimation(animJumpFast)
-        imageViewLock.startAnimation(animJump)
+        if (showHints) {
+            layoutLock.visibility = VISIBLE
+            layoutSlideCancel.visibility = VISIBLE
+            lockArrow.startAnimation(animJumpFast)
+            imageViewLock.startAnimation(animJump)
+        }
 
+        chronometer.startAnimation(animBlink)
         chronometer.base = SystemClock.elapsedRealtime()
         chronometer.start()
     }
@@ -430,7 +443,7 @@ class AudioRecordView : FrameLayout {
     }
 
     fun cancelRecording() {
-        if (chronometer.visibility != VISIBLE || isDeleting) {
+        if (!isRecording || isDeleting) {
             return
         }
         if (isLocked) {
