@@ -91,7 +91,11 @@ class AudioPlayView : ConstraintLayout {
     }
 
     fun setPlaybackProgress(progress: Int) {
-        progressBar.setProgress(progress, true)
+        if (progress < progressBar.progress) {
+            progressBar.progress = progress // animate = false wasn't working for some reason
+        } else {
+            progressBar.setProgress(progress, true)
+        }
     }
 
     fun setPlaybackProgressBarMax(max: Int) {
