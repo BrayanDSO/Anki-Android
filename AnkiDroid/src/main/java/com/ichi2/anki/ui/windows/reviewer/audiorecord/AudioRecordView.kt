@@ -64,7 +64,6 @@ class AudioRecordView : FrameLayout {
 
     // region State & Logic
     private var state = ViewState.IDLE
-    private var userBehavior = UserBehavior.NONE
     private var stopTrackingAction = false
 
     private var firstX = 0f
@@ -119,16 +118,10 @@ class AudioRecordView : FrameLayout {
         DELETING,
     }
 
-    enum class UserBehavior {
-        CANCELING,
-        LOCKING,
-        NONE,
-    }
-
-    enum class RecordingOutcome {
-        CANCELED,
-        LOCK_DONE,
-        RELEASED,
+    enum class RecordingBehavior {
+        CANCEL,
+        LOCK,
+        RELEASE,
     }
 
     interface RecordingListener {
@@ -196,7 +189,7 @@ class AudioRecordView : FrameLayout {
 
             if (state == ViewState.RECORDING) {
                 when (motionEvent.action) {
-                    MotionEvent.ACTION_UP -> stopRecording(RecordingOutcome.RELEASED)
+                    MotionEvent.ACTION_UP -> stopRecording(RecordingBehavior.RELEASE)
                     MotionEvent.ACTION_MOVE -> handleMove(motionEvent)
                 }
             }
@@ -207,13 +200,9 @@ class AudioRecordView : FrameLayout {
         if (stopTrackingAction) return
 
         val behavior = getBehaviorFromDirection(motionEvent.rawX, motionEvent.rawY)
-        if (behavior != userBehavior) {
-            userBehavior = behavior
-        }
-
-        when (userBehavior) {
-            UserBehavior.CANCELING -> translateX(motionEvent.rawX - firstX)
-            UserBehavior.LOCKING -> translateY(motionEvent.rawY - firstY)
+        when (behavior) {
+            RecordingBehavior.CANCEL -> translateX(motionEvent.rawX - firstX)
+            RecordingBehavior.LOCK -> translateY(motionEvent.rawY - firstY)
             else -> {}
         }
 
@@ -230,14 +219,14 @@ class AudioRecordView : FrameLayout {
     private fun getBehaviorFromDirection(
         currentX: Float,
         currentY: Float,
-    ): UserBehavior {
+    ): RecordingBehavior? {
         val motionX = abs(firstX - currentX)
         val motionY = abs(firstY - currentY)
 
         return when {
-            motionY > motionX && currentY < firstY -> UserBehavior.LOCKING
-            motionX > motionY && currentX < firstX -> UserBehavior.CANCELING
-            else -> UserBehavior.NONE
+            motionY > motionX && currentY < firstY -> RecordingBehavior.LOCK
+            motionX > motionY && currentX < firstX -> RecordingBehavior.CANCEL
+            else -> null
         }
     }
 
@@ -320,7 +309,7 @@ class AudioRecordView : FrameLayout {
 
         recordButton.setOnTouchListener(null)
         recordButton.setOnClickListener {
-            stopRecording(RecordingOutcome.LOCK_DONE)
+            stopRecording(RecordingBehavior.LOCK)
         }
         layoutSlideCancel.visibility = GONE
         layoutLock.visibility = GONE
@@ -328,22 +317,22 @@ class AudioRecordView : FrameLayout {
 
     private fun cancel() {
         stopTrackingAction = true
-        stopRecording(RecordingOutcome.CANCELED)
+        stopRecording(RecordingBehavior.CANCEL)
     }
 
-    private fun stopRecording(outcome: RecordingOutcome) {
+    private fun stopRecording(outcome: RecordingBehavior) {
         if (state != ViewState.RECORDING && state != ViewState.LOCKED) return
 
-        val animateRelease = outcome == RecordingOutcome.RELEASED
+        val animateRelease = outcome == RecordingBehavior.RELEASE
         reset(animate = animateRelease)
         chronometer.stop()
 
         when (outcome) {
-            RecordingOutcome.CANCELED -> {
+            RecordingBehavior.CANCEL -> {
                 delete()
                 recordingListener?.onRecordingCanceled()
             }
-            RecordingOutcome.RELEASED, RecordingOutcome.LOCK_DONE -> {
+            RecordingBehavior.RELEASE, RecordingBehavior.LOCK -> {
                 recordingListener?.onRecordingCompleted()
             }
         }
@@ -356,7 +345,6 @@ class AudioRecordView : FrameLayout {
         firstY = 0f
         lastX = 0f
         lastY = 0f
-        userBehavior = UserBehavior.NONE
 
         recordIcon.setImageResource(R.drawable.ic_action_mic)
         recordButton.setOnClickListener(null)
@@ -471,7 +459,7 @@ class AudioRecordView : FrameLayout {
         if (state == ViewState.IDLE || state == ViewState.DELETING) {
             return
         }
-        stopRecording(RecordingOutcome.CANCELED)
+        stopRecording(RecordingBehavior.CANCEL)
     }
 
     companion object {
