@@ -64,11 +64,11 @@ class CheckPronunciationFragment : Fragment(R.layout.check_pronunciation_fragmen
         playView.setButtonPressListener(
             object : AudioPlayView.ButtonPressListener {
                 override fun onPlayButtonPressed() {
-                    viewModel.handleEvent(CheckPronunciationUiEvent.PlayOrReplay)
+                    viewModel.onPlayOrReplay()
                 }
 
                 override fun onCancelButtonPressed() {
-                    viewModel.handleEvent(CheckPronunciationUiEvent.CancelPlayback)
+                    viewModel.onCancelPlayback()
                 }
             },
         )
@@ -83,15 +83,15 @@ class CheckPronunciationFragment : Fragment(R.layout.check_pronunciation_fragmen
                 }
 
                 override fun onRecordingStarted() {
-                    viewModel.handleEvent(CheckPronunciationUiEvent.RecordingStarted)
+                    viewModel.onRecordingStarted()
                 }
 
                 override fun onRecordingCanceled() {
-                    viewModel.handleEvent(CheckPronunciationUiEvent.RecordingCancelled)
+                    viewModel.onRecordingCancelled()
                 }
 
                 override fun onRecordingCompleted() {
-                    viewModel.handleEvent(CheckPronunciationUiEvent.RecordingCompleted)
+                    viewModel.onRecordingCompleted()
                 }
             },
         )
@@ -131,7 +131,7 @@ class CheckPronunciationFragment : Fragment(R.layout.check_pronunciation_fragmen
         studyScreenViewModel.replayVoiceFlow
             .flowWithLifecycle(lifecycle)
             .collectIn(lifecycleScope) {
-                viewModel.handleEvent(CheckPronunciationUiEvent.ReplayFromAction)
+                viewModel.onReplayFromAction()
             }
     }
 }

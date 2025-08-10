@@ -51,14 +51,51 @@ class CheckPronunciationViewModel(
     private val currentFile get() = audioRecorder.currentFile
     private val isPlaying get() = audioPlayer.isPlaying
 
-    fun handleEvent(event: CheckPronunciationUiEvent) {
-        when (event) {
-            is CheckPronunciationUiEvent.RecordingStarted -> onRecordingStarted()
-            is CheckPronunciationUiEvent.RecordingCompleted -> onRecordingCompleted()
-            is CheckPronunciationUiEvent.RecordingCancelled -> onRecordingCancelled()
-            is CheckPronunciationUiEvent.PlayOrReplay -> onPlayOrReplay()
-            is CheckPronunciationUiEvent.CancelPlayback -> onCancelPlayback()
-            is CheckPronunciationUiEvent.ReplayFromAction -> onReplayFromAction()
+    fun onRecordingStarted() {
+        audioRecorder.startRecording()
+        viewModelScope.launch {
+            onCancelPlayback()
+        }
+    }
+
+    fun onRecordingCancelled() {
+        audioRecorder.close()
+    }
+
+    fun onRecordingCompleted() {
+        audioRecorder.stop()
+        viewModelScope.launch {
+            isPlaybackVisibleFlow.emit(true)
+            playbackProgressFlow.emit(0)
+        }
+    }
+
+    fun onPlayOrReplay() {
+        if (!isPlaying) {
+            viewModelScope.launch { playIconFlow.emit(R.drawable.ic_replay) }
+        }
+
+        if (isPlaying) {
+            replayCurrentFile()
+            viewModelScope.launch {
+                replayFlow.emit(Unit)
+            }
+        } else {
+            playCurrentFile()
+        }
+    }
+
+    fun onReplayFromAction() {
+        if (!isPlaybackVisibleFlow.value) return
+        onPlayOrReplay()
+    }
+
+    fun onCancelPlayback() {
+        progressBarUpdateJob?.cancel()
+        audioPlayer.close()
+        viewModelScope.launch {
+            isPlaybackVisibleFlow.emit(false)
+            playbackProgressFlow.emit(0)
         }
     }
 
@@ -82,15 +119,6 @@ class CheckPronunciationViewModel(
         launchProgressBarUpdateJob()
     }
 
-    private fun onCancelPlayback() {
-        progressBarUpdateJob?.cancel()
-        audioPlayer.close()
-        viewModelScope.launch {
-            isPlaybackVisibleFlow.emit(false)
-            playbackProgressFlow.emit(0)
-        }
-    }
-
     private fun launchProgressBarUpdateJob() {
         progressBarUpdateJob?.cancel()
         progressBarUpdateJob =
@@ -101,61 +129,4 @@ class CheckPronunciationViewModel(
                 }
             }
     }
-
-    private fun onReplayFromAction() {
-        if (!isPlaybackVisibleFlow.value) return
-        onPlayOrReplay()
-    }
-
-    private fun onPlayOrReplay() {
-        if (!isPlaying) {
-            viewModelScope.launch { playIconFlow.emit(R.drawable.ic_replay) }
-        }
-
-        if (isPlaying) {
-            replayCurrentFile()
-            viewModelScope.launch {
-                replayFlow.emit(Unit)
-            }
-        } else {
-            playCurrentFile()
-        }
-    }
-
-    private fun onRecordingStarted() {
-        audioRecorder.startRecording()
-        viewModelScope.launch {
-            onCancelPlayback()
-        }
-    }
-
-    private fun onRecordingCancelled() {
-        audioRecorder.close()
-    }
-
-    private fun onRecordingCompleted() {
-        audioRecorder.stop()
-        viewModelScope.launch {
-            isPlaybackVisibleFlow.emit(true)
-            playIconFlow.emit(R.drawable.ic_play)
-            playbackProgressFlow.emit(0)
-        }
-    }
-}
-
-/**
- * Represents all the user actions or events that can occur in the UI.
- */
-sealed interface CheckPronunciationUiEvent {
-    data object PlayOrReplay : CheckPronunciationUiEvent
-
-    data object CancelPlayback : CheckPronunciationUiEvent
-
-    data object RecordingStarted : CheckPronunciationUiEvent
-
-    data object RecordingCompleted : CheckPronunciationUiEvent
-
-    data object RecordingCancelled : CheckPronunciationUiEvent
-
-    data object ReplayFromAction : CheckPronunciationUiEvent
 }
