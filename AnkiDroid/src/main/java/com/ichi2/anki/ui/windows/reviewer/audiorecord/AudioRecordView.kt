@@ -441,16 +441,13 @@ class AudioRecordView : FrameLayout {
                                 .setDuration(DURATION_DELETE_TRASH_SLIDE_OUT)
                                 .setStartDelay(DELAY_DELETE_TRASH_SLIDE_OUT)
                                 .setInterpolator(DecelerateInterpolator())
-                                .withEndAction {
-                                    // Reset state only after delete animation is fully complete
-                                    if (view == dustin) { // Only do this once
-                                        state = ViewState.IDLE
-                                        recordButton.isEnabled = true
-                                    }
-                                }.start()
                         }
-                        slideOutAnimator(dustin)
+                        slideOutAnimator(dustin).start()
                         slideOutAnimator(dustinCover)
+                            .withEndAction {
+                                state = ViewState.IDLE
+                                recordButton.isEnabled = true
+                            }.start()
                     }.start()
             }.start()
     }
@@ -460,12 +457,10 @@ class AudioRecordView : FrameLayout {
      */
     fun forceReset() {
         chronometer.stop()
-
-        recordButton.animate().cancel()
-        imageViewMic.animate().cancel()
-        dustin.animate().cancel()
-        dustinCover.animate().cancel()
-
+        recordButton.clearAnimation()
+        imageViewMic.clearAnimation()
+        dustin.clearAnimation()
+        dustinCover.clearAnimation()
         reset(animate = false)
     }
 
