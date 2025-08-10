@@ -110,12 +110,15 @@ class CheckPronunciationViewModel :
     val isPlaybackVisibleFlow = MutableStateFlow(false)
 
     private var progressBarUpdateJob: Job? = null
+    private var isPlaying = false
 
-    suspend fun playCurrentFile() {
+    fun playCurrentFile() {
         val file = currentFile ?: return
         audioPlayer.play(file)
         val duration = audioPlayer.duration
-        playbackProgressBarMaxFlow.emit(duration)
+        viewModelScope.launch {
+            playbackProgressBarMaxFlow.emit(duration)
+        }
         launchProgressBarUpdateJob()
     }
 
@@ -125,9 +128,12 @@ class CheckPronunciationViewModel :
         audioPlayer.replay()
     }
 
-    suspend fun cancelPlayback() {
+    fun cancelPlayback() {
         progressBarUpdateJob?.cancel()
-        playbackProgressFlow.emit(0)
+        audioPlayer.cancel()
+        viewModelScope.launch {
+            playbackProgressFlow.emit(0)
+        }
     }
 
     private fun launchProgressBarUpdateJob() {
@@ -139,30 +145,36 @@ class CheckPronunciationViewModel :
                         delay(50L)
                     }
                 } finally {
+                    isPlaying = false
                     playbackProgressFlow.emit(playbackProgressBarMaxFlow.value)
                 }
             }
     }
 
-    suspend fun onReplayVoiceAction() {
+    fun onReplayVoiceAction() {
         if (isRecording) return
-        val isPlaying = true
-        if (isPlaying) {
-            replayCurrentFile()
-            replayFlow.emit(Unit)
-        } else {
-            playCurrentFile()
-        }
+        onPlayButtonPressed()
     }
     //endregion
 
     //region AudioPlayView.ButtonPressListener
     override fun onPlayButtonPressed() {
-        viewModelScope.launch { playCurrentFile() }
+        viewModelScope.launch {
+            playIconFlow.emit(R.drawable.ic_replay)
+        }
+        if (isPlaying) {
+            replayCurrentFile()
+            viewModelScope.launch {
+                replayFlow.emit(Unit)
+            }
+        } else {
+            playCurrentFile()
+        }
     }
 
     override fun onCancelButtonPressed() {
         viewModelScope.launch {
+            isPlaybackVisibleFlow.emit(false)
             cancelPlayback()
         }
     }

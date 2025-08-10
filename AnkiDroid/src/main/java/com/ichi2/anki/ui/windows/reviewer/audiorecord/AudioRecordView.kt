@@ -32,10 +32,10 @@
  * https://github.com/varunjohn/Audio-Recording-Animation/blob/d5fef5bbf051e81f4ff35bb58496b7848bde6dd4/WhatsappMessengerView/src/main/java/com/varunjohn1990/audio_record_view/AudioRecordView.java
  *
  * CHANGES:
+ * * Convert to Kotlin
  * * Removed layoutEffect1 and layoutEffect2
  * * Removed imageViewSend
  * * Removed "Attachments" and "Message" views
- * * Added clipChildren to some elements
  * * Simplified the layouts hierarchy
  * * Changed the icons, strings and style
  */
