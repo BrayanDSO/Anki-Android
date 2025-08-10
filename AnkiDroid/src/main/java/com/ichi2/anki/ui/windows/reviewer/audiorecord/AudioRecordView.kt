@@ -392,7 +392,7 @@ class AudioRecordView : FrameLayout {
             .rotation(360f)
             .scaleX(0.6f)
             .scaleY(0.6f)
-            .setDuration(DURATION_DELETE_MIC_FLY_UP)
+            .setDuration(400L)
             .setInterpolator(DecelerateInterpolator())
             .withStartAction {
                 dustin.translationX = trashCanDisplacement
@@ -402,14 +402,14 @@ class AudioRecordView : FrameLayout {
                     .animate()
                     .translationX(0f)
                     .rotation(-120f)
-                    .setDuration(DURATION_DELETE_TRASH_SLIDE_IN)
+                    .setDuration(250L)
                     .setInterpolator(DecelerateInterpolator())
                     .start()
 
                 dustin
                     .animate()
                     .translationX(0f)
-                    .setDuration(DURATION_DELETE_TRASH_SLIDE_IN)
+                    .setDuration(250L)
                     .setInterpolator(DecelerateInterpolator())
                     .withStartAction {
                         dustin.visibility = VISIBLE
@@ -421,7 +421,7 @@ class AudioRecordView : FrameLayout {
                     .translationY(0f)
                     .scaleX(1f)
                     .scaleY(1f)
-                    .setDuration(DURATION_DELETE_MIC_DROP)
+                    .setDuration(250L)
                     .setInterpolator(LinearInterpolator())
                     .withEndAction {
                         imageViewMic.visibility = INVISIBLE
@@ -430,16 +430,16 @@ class AudioRecordView : FrameLayout {
                         dustinCover
                             .animate()
                             .rotation(0f)
-                            .setDuration(DURATION_DELETE_COVER_CLOSE)
-                            .setStartDelay(DELAY_DELETE_COVER_CLOSE)
+                            .setDuration(150L)
+                            .setStartDelay(50L)
                             .start()
 
                         val slideOutAnimator = { view: View ->
                             view
                                 .animate()
                                 .translationX(trashCanDisplacement)
-                                .setDuration(DURATION_DELETE_TRASH_SLIDE_OUT)
-                                .setStartDelay(DELAY_DELETE_TRASH_SLIDE_OUT)
+                                .setDuration(200L)
+                                .setStartDelay(200L)
                                 .setInterpolator(DecelerateInterpolator())
                         }
                         slideOutAnimator(dustin).start()
@@ -462,15 +462,5 @@ class AudioRecordView : FrameLayout {
         dustin.clearAnimation()
         dustinCover.clearAnimation()
         reset(animate = false)
-    }
-
-    companion object {
-        private const val DURATION_DELETE_MIC_FLY_UP = 400L
-        private const val DURATION_DELETE_TRASH_SLIDE_IN = 250L
-        private const val DURATION_DELETE_MIC_DROP = 250L
-        private const val DURATION_DELETE_COVER_CLOSE = 150L
-        private const val DELAY_DELETE_COVER_CLOSE = 50L
-        private const val DURATION_DELETE_TRASH_SLIDE_OUT = 200L
-        private const val DELAY_DELETE_TRASH_SLIDE_OUT = 200L
     }
 }
