@@ -386,7 +386,7 @@ class AudioRecordView : FrameLayout {
         imageViewMic.rotation = 0f
         recordButton.isEnabled = false
 
-        val trashCanDisplacement = -dp * 40
+        val trashCanDisplacement = -dp * 60
         imageViewMic
             .animate()
             .translationY(-dp * 150)
