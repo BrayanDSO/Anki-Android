@@ -73,6 +73,15 @@ class CheckPronunciationFragment : Fragment(R.layout.check_pronunciation_fragmen
         observeStudyScreenViewModel()
     }
 
+    override fun onPause() {
+        super.onPause()
+        if (requireActivity().isChangingConfigurations) {
+            return
+        }
+        viewModel.cancelAll()
+        recordView.forceReset()
+    }
+
     private fun setupViewListeners() {
         playView.setButtonPressListener(
             object : AudioPlayView.ButtonPressListener {
