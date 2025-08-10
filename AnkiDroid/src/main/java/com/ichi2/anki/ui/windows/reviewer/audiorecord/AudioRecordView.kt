@@ -21,6 +21,8 @@ package com.ichi2.anki.ui.windows.reviewer.audiorecord
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.os.Parcel
+import android.os.Parcelable
 import android.os.SystemClock
 import android.util.AttributeSet
 import android.view.GestureDetector
@@ -65,6 +67,7 @@ class AudioRecordView : FrameLayout {
     // region State & Logic
     private var state = ViewState.IDLE
     private var stopTrackingAction = false
+    private var chronometerBase: Long = 0
 
     private var firstX = 0f
     private var firstY = 0f
@@ -76,6 +79,11 @@ class AudioRecordView : FrameLayout {
     private val dp = TypedValueCompat.dpToPx(1F, resources.displayMetrics)
 
     private var recordingListener: RecordingListener? = null
+
+    fun setRecordingListener(recordingListener: RecordingListener) {
+        this.recordingListener = recordingListener
+    }
+
     private lateinit var gestureDetector: GestureDetector
     // endregion
 
@@ -107,10 +115,6 @@ class AudioRecordView : FrameLayout {
         setupTouchListener()
     }
 
-    fun setRecordingListener(recordingListener: RecordingListener) {
-        this.recordingListener = recordingListener
-    }
-
     private enum class ViewState {
         IDLE,
         RECORDING,
@@ -132,8 +136,6 @@ class AudioRecordView : FrameLayout {
         fun onRecordingCanceled()
 
         fun onRecordingCompleted()
-
-        fun onLock()
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -158,7 +160,7 @@ class AudioRecordView : FrameLayout {
                             reset(animate = true)
                             return true
                         }
-                        startRecord(showHints = false)
+                        startRecording(showCancelAndLockSliders = false)
                         lock()
                         return true
                     }
@@ -168,7 +170,7 @@ class AudioRecordView : FrameLayout {
                             recordingListener?.onRecordingPermissionRequired()
                             return
                         }
-                        startRecord(showHints = true)
+                        startRecording(showCancelAndLockSliders = true)
                         firstX = e.rawX
                         firstY = e.rawY
                     }
@@ -265,24 +267,13 @@ class AudioRecordView : FrameLayout {
         }
     }
 
-    private fun startRecord(showHints: Boolean) {
-        if (state != ViewState.IDLE) return
-
+    fun startRecording(showCancelAndLockSliders: Boolean) {
         state = ViewState.RECORDING
         stopTrackingAction = false
         recordingListener?.onRecordingStarted()
+        displayRecordStatus()
 
-        showRecordingAnimation(showHints)
-    }
-
-    private fun showRecordingAnimation(showHints: Boolean) {
-        chronometer.visibility = VISIBLE
-        imageViewMic.visibility = VISIBLE
-        chronometer.base = SystemClock.elapsedRealtime()
-        chronometer.startAnimation(animBlink)
-        chronometer.start()
-
-        if (showHints) {
+        if (showCancelAndLockSliders) {
             recordButton
                 .animate()
                 .scaleX(1.8f)
@@ -298,14 +289,19 @@ class AudioRecordView : FrameLayout {
         }
     }
 
+    fun displayRecordStatus() {
+        chronometer.visibility = VISIBLE
+        imageViewMic.visibility = VISIBLE
+        chronometer.base = if (chronometerBase > 0) chronometerBase else SystemClock.elapsedRealtime()
+        chronometer.startAnimation(animBlink)
+        chronometer.start()
+    }
+
     private fun lock() {
-        if (state != ViewState.RECORDING) return
-        recordingListener?.onLock()
         state = ViewState.LOCKED
         stopTrackingAction = true
 
         recordIcon.setImageResource(R.drawable.ic_stop)
-
         recordButton.animate().cancel()
         recordButton.scaleX = 1f
         recordButton.scaleY = 1f
@@ -348,6 +344,7 @@ class AudioRecordView : FrameLayout {
         firstY = 0f
         lastX = 0f
         lastY = 0f
+        chronometerBase = 0
 
         recordIcon.setImageResource(R.drawable.ic_action_mic)
         recordButton.setOnClickListener(null)
@@ -375,6 +372,7 @@ class AudioRecordView : FrameLayout {
         layoutLock.visibility = GONE
         chronometer.visibility = INVISIBLE
         imageViewMic.visibility = INVISIBLE
+        layoutSlideCancel.translationX = 0f
         layoutLock.translationY = 0f
 
         chronometer.clearAnimation()
@@ -465,5 +463,58 @@ class AudioRecordView : FrameLayout {
         dustin.clearAnimation()
         dustinCover.clearAnimation()
         reset(animate = false)
+    }
+
+    override fun onSaveInstanceState(): Parcelable {
+        val superState = super.onSaveInstanceState()
+        val savedState = SavedState(superState)
+        savedState.state = state
+        savedState.chronometerBase = chronometer.base
+        return savedState
+    }
+
+    override fun onRestoreInstanceState(state: Parcelable?) {
+        if (state is SavedState) {
+            super.onRestoreInstanceState(state.superState)
+            this.state = state.state
+            this.chronometerBase = state.chronometerBase
+            when (this.state) {
+                ViewState.RECORDING -> startRecording(true)
+                ViewState.LOCKED -> {
+                    displayRecordStatus()
+                    lock()
+                }
+                else -> reset(false)
+            }
+        } else {
+            super.onRestoreInstanceState(state)
+        }
+    }
+
+    private class SavedState : BaseSavedState {
+        var state: ViewState = ViewState.IDLE
+        var chronometerBase: Long = 0
+
+        constructor(superState: Parcelable?) : super(superState)
+
+        private constructor(source: Parcel) : super(source) {
+            state = ViewState.valueOf(source.readString() ?: ViewState.IDLE.name)
+            chronometerBase = source.readLong()
+        }
+
+        override fun writeToParcel(
+            out: Parcel,
+            flags: Int,
+        ) {
+            super.writeToParcel(out, flags)
+            out.writeString(state.name)
+            out.writeLong(chronometerBase)
+        }
+
+        companion object CREATOR : Parcelable.Creator<SavedState> {
+            override fun createFromParcel(source: Parcel): SavedState = SavedState(source)
+
+            override fun newArray(size: Int): Array<SavedState?> = arrayOfNulls(size)
+        }
     }
 }

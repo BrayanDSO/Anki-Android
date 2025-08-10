@@ -25,14 +25,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
-sealed class RecordingState {
-    object Idle : RecordingState()
-
-    object Recording : RecordingState()
-
-    object Locked : RecordingState()
-}
-
 class CheckPronunciationViewModel(
     private val audioRecorder: AudioRecorder = AudioRecorder(AnkiDroidApp.instance),
     private val audioPlayer: AudioPlayer = AudioPlayer(),
@@ -48,8 +40,6 @@ class CheckPronunciationViewModel(
             }
         }
     }
-
-    private val recordingState = MutableStateFlow<RecordingState>(RecordingState.Idle)
 
     val playbackProgressFlow = MutableStateFlow(0)
     val playbackProgressBarMaxFlow = MutableStateFlow(1)

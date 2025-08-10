@@ -60,8 +60,12 @@ class AudioRecorder(
 
     fun stop() {
         if (!isRecording) return
-        recorder.stop()
-        isRecording = false
+        try {
+            recorder.stop()
+            isRecording = false
+        } catch (exception: Exception) {
+            Timber.w(exception)
+        }
     }
 
     fun reset() {
