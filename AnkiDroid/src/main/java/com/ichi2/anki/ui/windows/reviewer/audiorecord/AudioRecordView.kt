@@ -329,7 +329,7 @@ class AudioRecordView : FrameLayout {
 
         when (outcome) {
             RecordingBehavior.CANCEL -> {
-                delete()
+                showDeleteAnimation()
                 recordingListener?.onRecordingCanceled()
             }
             RecordingBehavior.RELEASE, RecordingBehavior.LOCK -> {
@@ -379,7 +379,7 @@ class AudioRecordView : FrameLayout {
         imageViewLock.clearAnimation()
     }
 
-    private fun delete() {
+    private fun showDeleteAnimation() {
         state = ViewState.DELETING
         imageViewMic.visibility = VISIBLE
         imageViewMic.rotation = 0f
