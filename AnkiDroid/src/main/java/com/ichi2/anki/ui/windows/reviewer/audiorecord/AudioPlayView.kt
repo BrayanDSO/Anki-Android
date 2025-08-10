@@ -16,34 +16,19 @@
 package com.ichi2.anki.ui.windows.reviewer.audiorecord
 
 import android.content.Context
-import android.os.CountDownTimer
-import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.view.animation.DecelerateInterpolator
 import android.widget.ImageView
+import androidx.annotation.DrawableRes
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.view.isVisible
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.ichi2.anki.R
-import kotlinx.parcelize.Parcelize
 
 class AudioPlayView : ConstraintLayout {
     private val progressBar: LinearProgressIndicator
     private val playIconView: ImageView
-    private var audioPlayer: AudioPlayer? = null
-
-    fun setAudioPlayer(audioPlayer: AudioPlayer) {
-        this.audioPlayer = audioPlayer
-    }
-
-    private val playIcon get() = if (isPlaying) R.drawable.ic_replay else R.drawable.ic_play
-    var isPlaying: Boolean = false
-        private set(value) {
-            field = value
-            changePlayIcon()
-        }
 
     constructor(context: Context) : this(context, null, 0, 0)
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0, 0)
@@ -58,61 +43,26 @@ class AudioPlayView : ConstraintLayout {
         progressBar = findViewById(R.id.progress_indicator)
         playIconView = findViewById(R.id.play_icon)
         findViewById<View>(R.id.play_button).setOnClickListener {
-            if (isPlaying) {
-                replay()
-            } else {
-                playListener?.onPlayButtonPressed()
-            }
+            buttonPressListener?.onPlayButtonPressed()
         }
         findViewById<View>(R.id.cancel_button).setOnClickListener {
-            cancel()
-            playListener?.onCancelButtonPressed()
+            buttonPressListener?.onCancelButtonPressed()
         }
     }
 
-    interface PlayListener {
+    interface ButtonPressListener {
         fun onPlayButtonPressed()
 
         fun onCancelButtonPressed()
     }
 
-    private var timer: CountDownTimer? = null
-    private var playListener: PlayListener? = null
+    private var buttonPressListener: ButtonPressListener? = null
 
-    fun setPlayListener(playListener: PlayListener) {
-        this.playListener = playListener
+    fun setButtonPressListener(playListener: ButtonPressListener) {
+        this.buttonPressListener = playListener
     }
 
-    fun play(filePath: String) {
-        val player = audioPlayer ?: return
-        player.play(filePath)
-
-        val duration = player.duration
-        progressBar.progress = 0
-        progressBar.max = duration
-        timer =
-            object : CountDownTimer(duration.toLong(), 50L) {
-                override fun onTick(millisUntilFinished: Long) {
-                    val progress = duration - millisUntilFinished
-                    progressBar.setProgress(progress.toInt(), true)
-                }
-
-                override fun onFinish() {
-                    progressBar.setProgress(progressBar.max, true)
-                }
-            }.start()
-
-        isPlaying = true
-    }
-
-    fun replay() {
-        progressBar.progress = 0
-
-        timer?.run {
-            cancel()
-            start()
-        }
-
+    fun rotateReplayIcon() {
         playIconView.rotation = 0F
         playIconView
             .animate()
@@ -121,25 +71,17 @@ class AudioPlayView : ConstraintLayout {
             .setInterpolator(
                 DecelerateInterpolator(),
             ).start()
-
-        audioPlayer?.replay()
     }
 
-    fun cancel() {
-        visibility = GONE
-        progressBar.progress = 0
-        isPlaying = false
-        timer?.cancel()
-        audioPlayer?.cancel()
-    }
-
-    fun changePlayIcon() {
+    fun changePlayIcon(
+        @DrawableRes iconRes: Int,
+    ) {
         playIconView
             .animate()
             .alpha(0f)
             .setDuration(100)
             .withEndAction {
-                playIconView.setImageResource(playIcon)
+                playIconView.setImageResource(iconRes)
                 playIconView
                     .animate()
                     .alpha(1f)
@@ -148,32 +90,11 @@ class AudioPlayView : ConstraintLayout {
             }.start()
     }
 
-    override fun onSaveInstanceState(): Parcelable =
-        SavedState(
-            state = super.onSaveInstanceState(),
-            isPlaying = isPlaying,
-            isVisible = isVisible,
-            progress = progressBar.progress,
-        )
-
-    override fun onRestoreInstanceState(state: Parcelable?) {
-        if (state !is SavedState) {
-            super.onRestoreInstanceState(state)
-            return
-        }
-        isVisible = state.isVisible
-        isPlaying = state.isPlaying
-        progressBar.progress = state.progress // TODO redefinir o max, talvez fazer versão melhorada da progress bar
-        playIconView.setImageResource(playIcon)
-
-        super.onRestoreInstanceState(state.superState)
+    fun setPlaybackProgress(progress: Int) {
+        progressBar.setProgress(progress, true)
     }
 
-    @Parcelize
-    private data class SavedState(
-        val state: Parcelable?,
-        val isPlaying: Boolean,
-        val isVisible: Boolean,
-        val progress: Int,
-    ) : BaseSavedState(state)
+    fun setPlaybackProgressBarMax(max: Int) {
+        progressBar.max = max
+    }
 }

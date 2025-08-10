@@ -98,9 +98,6 @@ class AudioRecordView : FrameLayout {
     private val lockOffset: Float
     private val dp = TypedValueCompat.dpToPx(1F, resources.displayMetrics)
     private var isLocked = false
-    private val audioRecorder: AudioRecorder
-    val isRecording get() = audioRecorder.isRecording
-    val currentFile get() = audioRecorder.currentFile
 
     private var userBehavior = UserBehavior.NONE
 
@@ -133,7 +130,6 @@ class AudioRecordView : FrameLayout {
         imageViewMic = findViewById(R.id.imageViewMic)
         dustin = findViewById(R.id.dustin)
         dustinCover = findViewById(R.id.dustin_cover)
-        audioRecorder = AudioRecorder(context)
 
         cancelOffset = (resources.displayMetrics.widthPixels / 4F)
         lockOffset = (resources.displayMetrics.heightPixels / 4F)
@@ -160,6 +156,8 @@ class AudioRecordView : FrameLayout {
 
     interface RecordingListener {
         fun onRecordingStarted()
+
+        fun onRecordingCanceled()
 
         fun onRecordingCompleted()
     }
@@ -307,7 +305,7 @@ class AudioRecordView : FrameLayout {
                 imageViewStop.visibility = GONE
                 recordButton.visibility = VISIBLE
                 delete()
-                audioRecorder.cancel()
+                recordingListener?.onRecordingCanceled()
             }
             RecordingBehaviour.RELEASED, RecordingBehaviour.LOCK_DONE -> {
                 chronometer.clearAnimation()
@@ -316,16 +314,13 @@ class AudioRecordView : FrameLayout {
                 imageViewMic.visibility = INVISIBLE
                 imageViewStop.visibility = GONE
                 recordButton.visibility = VISIBLE
-                audioRecorder.stop()
                 recordingListener?.onRecordingCompleted()
             }
         }
     }
 
     private fun startRecord() {
-        audioRecorder.startRecording()
         recordingListener?.onRecordingStarted()
-
         stopTrackingAction = false
         recordButton
             .animate()
@@ -425,7 +420,7 @@ class AudioRecordView : FrameLayout {
             }.start()
     }
 
-    private fun requireMicrophonePermission(context: Context): Boolean {
+    private fun requireMicrophonePermission(context: Context): Boolean { // TODO analisar botar isso no checkpronunciationfragment
         val isGranted =
             ContextCompat.checkSelfPermission(
                 context,
