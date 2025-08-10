@@ -22,6 +22,9 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.ichi2.anki.AnkiDroidApp
 import com.ichi2.anki.R
 import com.ichi2.anki.ui.windows.reviewer.ReviewerViewModel
 import com.ichi2.anki.utils.ext.collectIn
@@ -31,11 +34,17 @@ import com.ichi2.anki.utils.ext.collectIn
  * to play the recorded audios.
  */
 class CheckPronunciationFragment : Fragment(R.layout.check_pronunciation_fragment) {
+    private val viewModel: CheckPronunciationViewModel by viewModels {
+        viewModelFactory {
+            initializer {
+                CheckPronunciationViewModel(AudioRecorder(AnkiDroidApp.instance))
+            }
+        }
+    }
+    private val studyScreenViewModel: ReviewerViewModel by viewModels({ requireParentFragment() })
+
     private lateinit var playView: AudioPlayView
     private lateinit var recordView: AudioRecordView
-
-    private val viewModel: CheckPronunciationViewModel by viewModels()
-    private val studyScreenViewModel: ReviewerViewModel by viewModels({ requireParentFragment() })
 
     override fun onViewCreated(
         view: View,

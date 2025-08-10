@@ -17,7 +17,6 @@ package com.ichi2.anki.ui.windows.reviewer.audiorecord
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ichi2.anki.AnkiDroidApp
 import com.ichi2.anki.R
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -25,13 +24,13 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
-class CheckPronunciationViewModel :
-    ViewModel(),
+class CheckPronunciationViewModel(
+    private val audioRecorder: AudioRecorder,
+    private val audioPlayer: AudioPlayer = AudioPlayer(),
+) : ViewModel(),
     AudioPlayView.ButtonPressListener,
     AudioRecordView.RecordingListener {
     //region Playback
-    val audioPlayer = AudioPlayer()
-
     val playbackProgressFlow = MutableStateFlow(0)
     val playbackProgressBarMaxFlow = MutableStateFlow(1)
     val playIconFlow = MutableStateFlow(R.drawable.ic_play)
@@ -45,11 +44,12 @@ class CheckPronunciationViewModel :
     fun playCurrentFile() {
         val file = currentFile ?: return
         audioPlayer.play(file)
-        val duration = audioPlayer.duration
-        viewModelScope.launch {
-            playbackProgressBarMaxFlow.emit(duration)
-        }
+
         launchProgressBarUpdateJob()
+        viewModelScope.launch {
+            playbackProgressBarMaxFlow.emit(audioPlayer.duration)
+            isPlaybackVisibleFlow.emit(true)
+        }
     }
 
     fun replayCurrentFile() {
@@ -111,7 +111,6 @@ class CheckPronunciationViewModel :
     //endregion
 
     //region Recording
-    private val audioRecorder = AudioRecorder(AnkiDroidApp.instance)
     private val currentFile get() = audioRecorder.currentFile
     private val isRecording get() = audioRecorder.isRecording
 
