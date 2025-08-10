@@ -601,7 +601,6 @@ class ReviewerFragment :
         viewModel.voiceRecorderEnabledFlow.flowWithLifecycle(lifecycle).collectIn(lifecycleScope) { isEnabled ->
             container.isVisible = isEnabled
         }
-        container.isVisible = true // TODO remove. just for testing
     }
 
     override fun onSelectedTags(

@@ -31,6 +31,11 @@ class CheckPronunciationViewModel(
 ) : ViewModel(),
     AudioPlayView.ButtonPressListener,
     AudioRecordView.RecordingListener {
+    init {
+        addCloseable(audioPlayer)
+        addCloseable(audioRecorder)
+    }
+
     //region Playback
     val playbackProgressFlow = MutableStateFlow(0)
     val playbackProgressBarMaxFlow = MutableStateFlow(1)
@@ -70,6 +75,7 @@ class CheckPronunciationViewModel(
     private fun launchProgressBarUpdateJob() {
         progressBarUpdateJob =
             viewModelScope.launch {
+                playbackProgressFlow.emit(0)
                 try {
                     for (elapsedTime in 0..playbackProgressBarMaxFlow.value step 50) {
                         playbackProgressFlow.emit(elapsedTime)
@@ -82,7 +88,7 @@ class CheckPronunciationViewModel(
     }
 
     fun onReplayVoiceAction() {
-        if (isRecording) return
+        if (!isPlaybackVisibleFlow.value) return
         onPlayButtonPressed()
     }
     //endregion
@@ -112,10 +118,9 @@ class CheckPronunciationViewModel(
 
     //region Recording
     private val currentFile get() = audioRecorder.currentFile
-    private val isRecording get() = audioRecorder.isRecording
 
     fun cancelRecording() {
-        audioRecorder.cancel()
+        audioRecorder.close()
     }
 
     //endregion
@@ -130,7 +135,7 @@ class CheckPronunciationViewModel(
     }
 
     override fun onRecordingCanceled() {
-        audioRecorder.cancel()
+        audioRecorder.close()
     }
 
     override fun onRecordingCompleted() {

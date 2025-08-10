@@ -20,12 +20,13 @@ import android.content.Context
 import android.media.MediaRecorder
 import android.os.Build
 import timber.log.Timber
+import java.io.Closeable
 import java.io.File
 import java.io.IOException
 
 class AudioRecorder(
     context: Context,
-) {
+) : Closeable {
     @Suppress("DEPRECATION")
     private val recorder =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -35,8 +36,6 @@ class AudioRecorder(
         }
 
     private val cacheDir = context.cacheDir
-    var isRecording: Boolean = false
-        private set
     var currentFile: String? = null
         private set
 
@@ -60,18 +59,15 @@ class AudioRecorder(
             prepare()
             start()
         }
-        isRecording = true
     }
 
     fun stop() {
         recorder.stop()
-        isRecording = false
     }
 
-    fun cancel() {
+    override fun close() {
         recorder.reset()
         currentFile = null
-        isRecording = false
     }
 
     private fun createTempRecordingFile() =
