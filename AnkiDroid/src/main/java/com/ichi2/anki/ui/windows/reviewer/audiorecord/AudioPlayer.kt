@@ -16,24 +16,31 @@
 package com.ichi2.anki.ui.windows.reviewer.audiorecord
 
 import android.media.MediaPlayer
+import java.io.Closeable
 
-class AudioPlayer {
+class AudioPlayer : Closeable {
     private val mediaPlayer = MediaPlayer()
+    var isPlaying = false
+        private set
+    val duration: Int get() = mediaPlayer.duration
 
     fun play(filePath: String) {
         mediaPlayer.setDataSource(filePath)
         mediaPlayer.prepare()
         mediaPlayer.start()
+        isPlaying = true
+        mediaPlayer.setOnCompletionListener {
+            isPlaying = false
+        }
     }
-
-    val duration: Int get() = mediaPlayer.duration
 
     fun replay() {
         mediaPlayer.seekTo(0)
         mediaPlayer.start()
+        isPlaying = true
     }
 
-    fun cancel() {
+    override fun close() {
         mediaPlayer.reset()
     }
 }
