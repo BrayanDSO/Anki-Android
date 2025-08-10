@@ -122,7 +122,6 @@ class AudioRecordView : FrameLayout {
 
     enum class RecordingBehaviour {
         CANCELED,
-        LOCKED,
         LOCK_DONE,
         RELEASED,
     }
@@ -341,8 +340,6 @@ class AudioRecordView : FrameLayout {
             RecordingBehaviour.RELEASED, RecordingBehaviour.LOCK_DONE -> {
                 recordingListener?.onRecordingCompleted()
             }
-            else -> { // No-op
-            }
         }
     }
 
@@ -382,6 +379,7 @@ class AudioRecordView : FrameLayout {
         layoutLock.visibility = GONE
         chronometer.visibility = INVISIBLE
         imageViewMic.visibility = INVISIBLE
+        layoutLock.translationY = 0f
 
         chronometer.clearAnimation()
         lockArrow.clearAnimation()
