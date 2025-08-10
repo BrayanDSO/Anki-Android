@@ -26,7 +26,6 @@ class AudioPlayer : Closeable {
         private set
     private var isPrepared = false
 
-    /** A callback that fires when playback is complete. */
     var onCompletion: (() -> Unit)? = null
 
     val duration: Int
@@ -37,7 +36,6 @@ class AudioPlayer : Closeable {
     init {
         mediaPlayer.setOnCompletionListener {
             isPlaying = false
-            // Invoke the callback when playback completes
             onCompletion?.invoke()
         }
     }
@@ -59,7 +57,7 @@ class AudioPlayer : Closeable {
                 onPrepared()
             }
             mediaPlayer.prepareAsync()
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             close()
         }
     }

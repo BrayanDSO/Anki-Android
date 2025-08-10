@@ -99,7 +99,6 @@ class CheckPronunciationViewModel(
 
     //region AudioPlayView.ButtonPressListener
     override fun onPlayButtonPressed() {
-        // Change the icon immediately for better responsiveness
         if (!isPlaying) {
             viewModelScope.launch { playIconFlow.emit(R.drawable.ic_replay) }
         }
