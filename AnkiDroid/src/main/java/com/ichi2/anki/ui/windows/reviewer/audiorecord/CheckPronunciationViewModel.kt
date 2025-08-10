@@ -34,6 +34,16 @@ class CheckPronunciationViewModel(
     init {
         addCloseable(audioPlayer)
         addCloseable(audioRecorder)
+
+        // Set the completion callback to handle UI updates when audio finishes
+        audioPlayer.onCompletion = {
+            viewModelScope.launch {
+                // Ensure the progress bar is set to 100%
+                playbackProgressFlow.emit(playbackProgressBarMaxFlow.value)
+                // Reset the icon back to 'play'
+                playIconFlow.emit(R.drawable.ic_play)
+            }
+        }
     }
 
     //region Playback
@@ -49,7 +59,6 @@ class CheckPronunciationViewModel(
 
     private fun playCurrentFile() {
         val file = currentFile ?: return
-        // Use the callback to sync UI updates with the player's state
         audioPlayer.play(file) {
             viewModelScope.launch {
                 playbackProgressBarMaxFlow.emit(audioPlayer.duration)
@@ -60,7 +69,6 @@ class CheckPronunciationViewModel(
 
     private fun replayCurrentFile() {
         audioPlayer.replay()
-        // Relaunch the job to update progress from the beginning
         launchProgressBarUpdateJob()
     }
 
@@ -73,17 +81,12 @@ class CheckPronunciationViewModel(
     }
 
     private fun launchProgressBarUpdateJob() {
-        progressBarUpdateJob?.cancel() // Cancel any existing job
+        progressBarUpdateJob?.cancel()
         progressBarUpdateJob =
             viewModelScope.launch {
-                // Poll the actual player position while it's playing
                 while (isPlaying) {
                     playbackProgressFlow.emit(audioPlayer.currentPosition)
-                    delay(50L) // Update ~20 times per second
-                }
-                // When playback is finished, ensure the progress bar is full
-                if (!isPlaying && audioPlayer.duration > 0) {
-                    playbackProgressFlow.emit(audioPlayer.duration)
+                    delay(50L)
                 }
             }
     }
@@ -96,16 +99,17 @@ class CheckPronunciationViewModel(
 
     //region AudioPlayView.ButtonPressListener
     override fun onPlayButtonPressed() {
-        viewModelScope.launch {
-            playIconFlow.emit(R.drawable.ic_replay)
+        // Change the icon immediately for better responsiveness
+        if (!isPlaying) {
+            viewModelScope.launch { playIconFlow.emit(R.drawable.ic_replay) }
         }
+
         if (isPlaying) {
             replayCurrentFile()
             viewModelScope.launch {
                 replayFlow.emit(Unit)
             }
         } else {
-            // This now correctly handles both the first play and replay after completion
             playCurrentFile()
         }
     }
@@ -124,7 +128,6 @@ class CheckPronunciationViewModel(
     fun cancelRecording() {
         audioRecorder.close()
     }
-
     //endregion
 
     //region AudioRecordView.RecordingListener
@@ -144,7 +147,6 @@ class CheckPronunciationViewModel(
         audioRecorder.stop()
         viewModelScope.launch {
             isPlaybackVisibleFlow.emit(true)
-            // Reset UI for the new recording
             playIconFlow.emit(R.drawable.ic_play)
             playbackProgressFlow.emit(0)
         }

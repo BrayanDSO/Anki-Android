@@ -21,12 +21,26 @@ import java.io.IOException
 
 class AudioPlayer : Closeable {
     private val mediaPlayer = MediaPlayer()
+
     var isPlaying = false
         private set
     private var isPrepared = false
 
-    val duration: Int get() = mediaPlayer.duration
-    val currentPosition: Int get() = mediaPlayer.currentPosition
+    /** A callback that fires when playback is complete. */
+    var onCompletion: (() -> Unit)? = null
+
+    val duration: Int
+        get() = if (isPrepared) mediaPlayer.duration else 0
+    val currentPosition: Int
+        get() = if (isPrepared) mediaPlayer.currentPosition else 0
+
+    init {
+        mediaPlayer.setOnCompletionListener {
+            isPlaying = false
+            // Invoke the callback when playback completes
+            onCompletion?.invoke()
+        }
+    }
 
     fun play(
         filePath: String,
@@ -45,7 +59,7 @@ class AudioPlayer : Closeable {
                 onPrepared()
             }
             mediaPlayer.prepareAsync()
-        } catch (_: IOException) {
+        } catch (e: IOException) {
             close()
         }
     }
