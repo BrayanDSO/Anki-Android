@@ -15,14 +15,17 @@
  */
 package com.ichi2.anki.ui.windows.reviewer.audiorecord
 
+import android.Manifest
 import android.os.Bundle
 import android.view.View
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.ichi2.anki.R
+import com.ichi2.anki.snackbar.showSnackbar
 import com.ichi2.anki.ui.windows.reviewer.ReviewerViewModel
 import com.ichi2.anki.utils.ext.collectIn
 
@@ -37,34 +40,64 @@ class CheckPronunciationFragment : Fragment(R.layout.check_pronunciation_fragmen
     private lateinit var playView: AudioPlayView
     private lateinit var recordView: AudioRecordView
 
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+            if (!isGranted) {
+                showSnackbar("Permission not granted, bro")
+            }
+        }
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-        playView =
-            view.findViewById<AudioPlayView>(R.id.audio_play_view).apply {
-                setButtonPressListener(viewModel)
-            }
-        recordView =
-            view.findViewById<AudioRecordView>(R.id.audio_record_view).apply {
-                setRecordingListener(viewModel)
-            }
+        playView = view.findViewById(R.id.audio_play_view)
+        recordView = view.findViewById(R.id.audio_record_view)
 
-        studyScreenViewModel.voiceRecorderEnabledFlow.flowWithLifecycle(lifecycle).collectIn(lifecycleScope) { isEnabled ->
-            if (!isEnabled) {
-                viewModel.cancelPlayback()
-                viewModel.cancelRecording()
-            }
-        }
-        studyScreenViewModel.replayVoiceFlow.flowWithLifecycle(lifecycle).collectIn(lifecycleScope) {
-            viewModel.onReplayVoiceAction()
-        }
-
-        setupPlaybackView()
+        setupViewListeners()
+        observeViewModel()
+        observeParentViewModel()
     }
 
-    fun setupPlaybackView() {
+    private fun setupViewListeners() {
+        playView.setButtonPressListener(
+            object : AudioPlayView.ButtonPressListener {
+                override fun onPlayButtonPressed() {
+                    viewModel.handleEvent(CheckPronunciationUiEvent.PlayOrReplay)
+                }
+
+                override fun onCancelButtonPressed() {
+                    viewModel.handleEvent(CheckPronunciationUiEvent.CancelPlayback)
+                }
+            },
+        )
+
+        recordView.setRecordingListener(
+            object : AudioRecordView.RecordingListener {
+                override fun onRecordingPermissionRequired(): Boolean {
+                    requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    // Return false because the action is asynchronous.
+                    // The user must tap again after granting permission.
+                    return false
+                }
+
+                override fun onRecordingStarted() {
+                    viewModel.handleEvent(CheckPronunciationUiEvent.RecordingStarted)
+                }
+
+                override fun onRecordingCanceled() {
+                    viewModel.handleEvent(CheckPronunciationUiEvent.RecordingCancelled)
+                }
+
+                override fun onRecordingCompleted() {
+                    viewModel.handleEvent(CheckPronunciationUiEvent.RecordingCompleted)
+                }
+            },
+        )
+    }
+
+    fun observeViewModel() {
         viewModel.isPlaybackVisibleFlow.flowWithLifecycle(lifecycle).collectIn(lifecycleScope) { isVisible ->
             playView.isVisible = isVisible
         }
@@ -84,5 +117,21 @@ class CheckPronunciationFragment : Fragment(R.layout.check_pronunciation_fragmen
         viewModel.replayFlow.flowWithLifecycle(lifecycle).collectIn(lifecycleScope) {
             playView.rotateReplayIcon()
         }
+    }
+
+    private fun observeParentViewModel() {
+        studyScreenViewModel.voiceRecorderEnabledFlow
+            .flowWithLifecycle(lifecycle)
+            .collectIn(lifecycleScope) { isEnabled ->
+                if (!isEnabled) {
+                    viewModel.cancelAll()
+                    recordView.cancelRecording() // Also reset view state
+                }
+            }
+        studyScreenViewModel.replayVoiceFlow
+            .flowWithLifecycle(lifecycle)
+            .collectIn(lifecycleScope) {
+                viewModel.handleEvent(CheckPronunciationUiEvent.ReplayFromAction)
+            }
     }
 }

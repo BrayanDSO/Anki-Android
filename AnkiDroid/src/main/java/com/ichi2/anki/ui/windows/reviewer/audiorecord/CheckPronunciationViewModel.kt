@@ -28,9 +28,7 @@ import kotlinx.coroutines.launch
 class CheckPronunciationViewModel(
     private val audioRecorder: AudioRecorder = AudioRecorder(AnkiDroidApp.instance),
     private val audioPlayer: AudioPlayer = AudioPlayer(),
-) : ViewModel(),
-    AudioPlayView.ButtonPressListener,
-    AudioRecordView.RecordingListener {
+) : ViewModel() {
     init {
         addCloseable(audioPlayer)
         addCloseable(audioRecorder)
@@ -53,6 +51,22 @@ class CheckPronunciationViewModel(
     private val currentFile get() = audioRecorder.currentFile
     private val isPlaying get() = audioPlayer.isPlaying
 
+    fun handleEvent(event: CheckPronunciationUiEvent) {
+        when (event) {
+            is CheckPronunciationUiEvent.RecordingStarted -> onRecordingStarted()
+            is CheckPronunciationUiEvent.RecordingCompleted -> onRecordingCompleted()
+            is CheckPronunciationUiEvent.RecordingCancelled -> onRecordingCancelled()
+            is CheckPronunciationUiEvent.PlayOrReplay -> onPlayOrReplay()
+            is CheckPronunciationUiEvent.CancelPlayback -> onCancelPlayback()
+            is CheckPronunciationUiEvent.ReplayFromAction -> onReplayFromAction()
+        }
+    }
+
+    fun cancelAll() {
+        onRecordingCancelled()
+        onCancelPlayback()
+    }
+
     private fun playCurrentFile() {
         val file = currentFile ?: return
         audioPlayer.play(file) {
@@ -68,10 +82,11 @@ class CheckPronunciationViewModel(
         launchProgressBarUpdateJob()
     }
 
-    fun cancelPlayback() {
+    private fun onCancelPlayback() {
         progressBarUpdateJob?.cancel()
         audioPlayer.close()
         viewModelScope.launch {
+            isPlaybackVisibleFlow.emit(false)
             playbackProgressFlow.emit(0)
         }
     }
@@ -87,12 +102,12 @@ class CheckPronunciationViewModel(
             }
     }
 
-    fun onReplayVoiceAction() {
+    private fun onReplayFromAction() {
         if (!isPlaybackVisibleFlow.value) return
-        onPlayButtonPressed()
+        onPlayOrReplay()
     }
 
-    override fun onPlayButtonPressed() {
+    private fun onPlayOrReplay() {
         if (!isPlaying) {
             viewModelScope.launch { playIconFlow.emit(R.drawable.ic_replay) }
         }
@@ -107,30 +122,18 @@ class CheckPronunciationViewModel(
         }
     }
 
-    override fun onCancelButtonPressed() {
-        viewModelScope.launch {
-            isPlaybackVisibleFlow.emit(false)
-            cancelPlayback()
-        }
-    }
-
-    fun cancelRecording() {
-        audioRecorder.close()
-    }
-
-    override fun onRecordingStarted() {
+    private fun onRecordingStarted() {
         audioRecorder.startRecording()
         viewModelScope.launch {
-            isPlaybackVisibleFlow.emit(false)
-            cancelPlayback()
+            onCancelPlayback()
         }
     }
 
-    override fun onRecordingCanceled() {
+    private fun onRecordingCancelled() {
         audioRecorder.close()
     }
 
-    override fun onRecordingCompleted() {
+    private fun onRecordingCompleted() {
         audioRecorder.stop()
         viewModelScope.launch {
             isPlaybackVisibleFlow.emit(true)
@@ -138,4 +141,21 @@ class CheckPronunciationViewModel(
             playbackProgressFlow.emit(0)
         }
     }
+}
+
+/**
+ * Represents all the user actions or events that can occur in the UI.
+ */
+sealed interface CheckPronunciationUiEvent {
+    data object PlayOrReplay : CheckPronunciationUiEvent
+
+    data object CancelPlayback : CheckPronunciationUiEvent
+
+    data object RecordingStarted : CheckPronunciationUiEvent
+
+    data object RecordingCompleted : CheckPronunciationUiEvent
+
+    data object RecordingCancelled : CheckPronunciationUiEvent
+
+    data object ReplayFromAction : CheckPronunciationUiEvent
 }

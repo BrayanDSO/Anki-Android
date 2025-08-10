@@ -155,6 +155,13 @@ class AudioRecordView : FrameLayout {
     }
 
     interface RecordingListener {
+        /**
+         * Called when the user tries to record but the permission is not granted.
+         * @return true if the listener will handle the permission request and recording can proceed,
+         * false otherwise.
+         */
+        fun onRecordingPermissionRequired(): Boolean
+
         fun onRecordingStarted()
 
         fun onRecordingCanceled()
@@ -165,14 +172,20 @@ class AudioRecordView : FrameLayout {
     @SuppressLint("ClickableViewAccessibility")
     private fun setupTouchListener() {
         recordButton.setOnTouchListener { _, motionEvent ->
-            if (!requireMicrophonePermission(context)) return@setOnTouchListener true // TODO decidir o fluxo de pedir a permissão
             if (isDeleting) return@setOnTouchListener true
 
             when (motionEvent.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    firstX = motionEvent.rawX
-                    firstY = motionEvent.rawY
-                    startRecord()
+                    if (!hasMicrophonePermission()) {
+                        val permissionRequestHandled = recordingListener?.onRecordingPermissionRequired() ?: false
+                        if (!permissionRequestHandled) {
+                            return@setOnTouchListener true
+                        }
+                    } else {
+                        firstX = motionEvent.rawX
+                        firstY = motionEvent.rawY
+                        startRecord()
+                    }
                 }
                 MotionEvent.ACTION_UP -> {
                     stopRecording(RecordingBehaviour.RELEASED)
@@ -199,6 +212,12 @@ class AudioRecordView : FrameLayout {
             true
         }
     }
+
+    private fun hasMicrophonePermission(): Boolean =
+        ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.RECORD_AUDIO,
+        ) == PermissionChecker.PERMISSION_GRANTED
 
     private fun getBehaviorFromDirection(
         currentX: Float,
