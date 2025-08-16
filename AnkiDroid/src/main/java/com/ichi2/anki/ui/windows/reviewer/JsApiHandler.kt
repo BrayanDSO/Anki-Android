@@ -24,6 +24,8 @@ import com.ichi2.anki.JvmString
 import com.ichi2.anki.libanki.Card
 import com.ichi2.anki.libanki.CardId
 import com.ichi2.anki.libanki.DeckId
+import com.ichi2.anki.libanki.NoteId
+import com.ichi2.anki.utils.ext.flag
 import org.json.JSONException
 import org.json.JSONObject
 import timber.log.Timber
@@ -66,15 +68,16 @@ class JsApiHandler {
             return null
         }
 
-        val (mainSegment, subSegment) = path.split('/', limit = 2)
+        val (mainSegment, endpoint) = path.split('/', limit = 2)
         return when (mainSegment) {
             "card" -> {
-                val id = request.data!!.getLong("id")
-                handleCardMethods(id, subSegment)
+                val cardId = request.data!!.getLong("id")
+                val endpoint = CardEndpoint.from(endpoint) ?: return null
+                handleCardMethods(cardId, endpoint)
             }
             "deck" -> {
-                val id = request.data!!.getLong("id")
-                handleDeckMethods(id, subSegment)
+                val deckId = request.data!!.getLong("id")
+                handleDeckMethods(deckId, endpoint)
             }
             else -> null
         }
@@ -82,28 +85,61 @@ class JsApiHandler {
 
     private suspend fun handleCardMethods(
         cardId: CardId,
-        subSegment: String,
+        endpoint: CardEndpoint,
     ): ByteArray? {
         val card = CollectionManager.withCol { Card(this, cardId) }
-        return when (subSegment) {
-            "getNid" -> toBytes(card.nid)
-            "getDid" -> toBytes(card.did)
-            else -> null
+        return when (endpoint) {
+            CardEndpoint.GET_NID -> toBytes(card.nid)
+            CardEndpoint.GET_FLAG -> toBytes(card.flag.code)
+            CardEndpoint.GET_REPS -> toBytes(card.reps)
+            CardEndpoint.GET_INTERVAL -> toBytes(card.ivl)
+            CardEndpoint.GET_FACTOR -> toBytes(card.factor)
+            CardEndpoint.GET_MOD -> toBytes(card.mod)
+            CardEndpoint.GET_TYPE -> toBytes(card.type.code)
+            CardEndpoint.GET_DID -> toBytes(card.did)
+            CardEndpoint.GET_LEFT -> toBytes(card.left)
+            CardEndpoint.GET_ODID -> toBytes(card.oDid)
+            CardEndpoint.GET_ODUE -> toBytes(card.oDue)
+            CardEndpoint.GET_QUEUE -> toBytes(card.queue.code)
+            CardEndpoint.GET_LAPSES -> toBytes(card.lapses)
+            CardEndpoint.GET_DUE -> toBytes(card.due)
+            CardEndpoint.BURY,
+            CardEndpoint.IS_MARKED,
+            CardEndpoint.SUSPEND,
+            CardEndpoint.RESET_PROGRESS,
+            CardEndpoint.TOGGLE_FLAG,
+            -> null
         }
     }
 
+    private suspend fun handleNoteMethods(
+        noteId: NoteId,
+        endpoint: String,
+    ): ByteArray? =
+        when (endpoint) {
+            "bury",
+            "suspend",
+            "getTags",
+            "setTags",
+            "toggleMark",
+            -> null
+            else -> null
+        }
+
     private suspend fun handleDeckMethods(
         deckId: DeckId,
-        subSegment: String,
+        endpoint: String,
     ): ByteArray? {
         val deck = CollectionManager.withCol { decks.get(deckId) } ?: return null
-        return when (subSegment) {
+        return when (endpoint) {
             "getName" -> toBytes(deck.name)
             else -> null
         }
     }
 
     private fun toBytes(value: Long): ByteArray = ApiResult.Long(true, value).toString().toByteArray()
+
+    private fun toBytes(value: Int): ByteArray = ApiResult.Integer(true, value).toString().toByteArray()
 
     private fun toBytes(value: String): ByteArray = ApiResult.String(true, value).toString().toByteArray()
 }
@@ -180,5 +216,34 @@ sealed class ApiResult protected constructor(
         fun success(value: JvmString) = ApiResult.String(true, value)
 
         fun failure(value: JvmString) = ApiResult.String(false, value)
+    }
+}
+
+enum class CardEndpoint(
+    val value: String,
+) {
+    IS_MARKED("isMarked"),
+    GET_FLAG("getFlag"),
+    GET_REPS("getReps"),
+    GET_INTERVAL("getInterval"),
+    GET_FACTOR("getFactor"),
+    GET_MOD("getMod"),
+    GET_NID("getNid"),
+    GET_TYPE("getType"),
+    GET_DID("getDid"),
+    GET_LEFT("getLeft"),
+    GET_ODID("getOdid"),
+    GET_ODUE("getOdue"),
+    GET_QUEUE("getQueue"),
+    GET_LAPSES("getLapses"),
+    GET_DUE("getDue"),
+    BURY("bury"),
+    SUSPEND("suspend"),
+    RESET_PROGRESS("resetProgress"),
+    TOGGLE_FLAG("toggleFlag"),
+    ;
+
+    companion object {
+        fun from(value: String): CardEndpoint? = entries.firstOrNull { it.value == value }
     }
 }
