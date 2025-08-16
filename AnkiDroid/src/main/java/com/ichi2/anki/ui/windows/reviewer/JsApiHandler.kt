@@ -43,12 +43,12 @@ class JsApiHandler {
     private fun parseContract(requestBody: JSONObject): JsApiContract {
         val version = requestBody.getStringOrNull("version")
         if (version != CURRENT_VERSION) {
-            throw InvalidContractException() // TODO
+            throw InvalidContractException.VersionError(version)
         }
 
         val developer = requestBody.getStringOrNull("developer")
         if (developer == null) {
-            throw InvalidContractException() // TODO
+            throw InvalidContractException.ContactError(developer)
         }
 
         return JsApiContract(version, developer)
@@ -64,12 +64,13 @@ class JsApiHandler {
         return when (mainSegment) {
             "card" -> {
                 val cardId = request.data!!.getLong("id")
-                val endpoint = CardEndpoint.from(endpoint) ?: return null
-                handleCardMethods(cardId, endpoint)
+                val cardEndpoint = CardEndpoint.from(endpoint) ?: return null
+                handleCardMethods(cardId, cardEndpoint)
             }
             "deck" -> {
                 val deckId = request.data!!.getLong("id")
-                handleDeckMethods(deckId, endpoint)
+                val deckEndpoint = DeckEndpoint.from(endpoint) ?: return null
+                handleDeckMethods(deckId, deckEndpoint)
             }
             else -> null
         }
@@ -106,12 +107,11 @@ class JsApiHandler {
 
     private suspend fun handleDeckMethods(
         deckId: DeckId,
-        endpoint: String,
+        endpoint: DeckEndpoint,
     ): ByteArray? {
         val deck = CollectionManager.withCol { decks.get(deckId) } ?: return null
         return when (endpoint) {
-            "getName" -> toBytes(deck.name)
-            else -> null
+            DeckEndpoint.GET_NAME -> toBytes(deck.name)
         }
     }
 
@@ -219,4 +219,23 @@ enum class CardEndpoint(
     }
 }
 
-class InvalidContractException : IllegalArgumentException()
+enum class DeckEndpoint(
+    val value: String,
+) {
+    GET_NAME("getName"),
+    ;
+
+    companion object {
+        fun from(value: String): DeckEndpoint? = entries.firstOrNull { it.value == value }
+    }
+}
+
+sealed class InvalidContractException : IllegalArgumentException() {
+    class VersionError(
+        val version: String?,
+    ) : InvalidContractException()
+
+    class ContactError(
+        val developer: String?,
+    ) : InvalidContractException()
+}
