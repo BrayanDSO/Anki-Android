@@ -21,41 +21,37 @@ import com.ichi2.anki.JvmFloat
 import com.ichi2.anki.JvmInt
 import com.ichi2.anki.JvmLong
 import com.ichi2.anki.JvmString
+import com.ichi2.anki.common.utils.ext.getStringOrNull
 import com.ichi2.anki.libanki.Card
 import com.ichi2.anki.libanki.CardId
 import com.ichi2.anki.libanki.DeckId
-import com.ichi2.anki.libanki.NoteId
 import com.ichi2.anki.utils.ext.flag
-import org.json.JSONException
 import org.json.JSONObject
-import timber.log.Timber
 
 const val CURRENT_VERSION = "0.0.4"
 const val VALUE_KEY = "value"
 const val SUCCESS_KEY = "success"
 
 class JsApiHandler {
-    /**
-     * The method parse json data and return api contract object
-     * @param byteArray
-     * @return apiContract or null
-     */
-    private fun parseRequest(byteArray: ByteArray): JsApiRequest? {
-        try {
-            val requestBody = JSONObject(byteArray.decodeToString())
+    private fun parseRequest(byteArray: ByteArray): JsApiRequest {
+        val requestBody = JSONObject(byteArray.decodeToString())
+        val contract = parseContract(requestBody)
+        val data = requestBody.optJSONObject("data")
+        return JsApiRequest(contract, data)
+    }
 
-            val version = requestBody.optString("version", "")
-            if (version != CURRENT_VERSION) return null
-
-            val developer = requestBody.optString("developer", "")
-            val contract = JsApiContract(version, developer)
-            val data = requestBody.optJSONObject("data")
-
-            return JsApiRequest(contract, data)
-        } catch (j: JSONException) {
-            Timber.w(j)
+    private fun parseContract(requestBody: JSONObject): JsApiContract {
+        val version = requestBody.getStringOrNull("version")
+        if (version != CURRENT_VERSION) {
+            throw InvalidContractException() // TODO
         }
-        return null
+
+        val developer = requestBody.getStringOrNull("developer")
+        if (developer == null) {
+            throw InvalidContractException() // TODO
+        }
+
+        return JsApiContract(version, developer)
     }
 
     suspend fun handleRequest(
@@ -63,10 +59,6 @@ class JsApiHandler {
         bytes: ByteArray,
     ): ByteArray? {
         val request = parseRequest(bytes)
-        if (request == null) {
-            Timber.w("INVALID CONTRACT< BRO")
-            return null
-        }
 
         val (mainSegment, endpoint) = path.split('/', limit = 2)
         return when (mainSegment) {
@@ -112,20 +104,6 @@ class JsApiHandler {
         }
     }
 
-    private suspend fun handleNoteMethods(
-        noteId: NoteId,
-        endpoint: String,
-    ): ByteArray? =
-        when (endpoint) {
-            "bury",
-            "suspend",
-            "getTags",
-            "setTags",
-            "toggleMark",
-            -> null
-            else -> null
-        }
-
     private suspend fun handleDeckMethods(
         deckId: DeckId,
         endpoint: String,
@@ -155,48 +133,48 @@ data class JsApiRequest(
 )
 
 sealed class ApiResult protected constructor(
-    private val status: JvmBoolean,
+    private val success: JvmBoolean,
 ) {
     class Boolean(
-        status: JvmBoolean,
+        success: JvmBoolean,
         val value: JvmBoolean,
-    ) : ApiResult(status) {
+    ) : ApiResult(success) {
         override fun putValue(o: JSONObject) {
             o.put(VALUE_KEY, value)
         }
     }
 
     class Integer(
-        status: JvmBoolean,
+        success: JvmBoolean,
         val value: JvmInt,
-    ) : ApiResult(status) {
+    ) : ApiResult(success) {
         override fun putValue(o: JSONObject) {
             o.put(VALUE_KEY, value)
         }
     }
 
     class Float(
-        status: JvmBoolean,
+        success: JvmBoolean,
         val value: JvmFloat,
-    ) : ApiResult(status) {
+    ) : ApiResult(success) {
         override fun putValue(o: JSONObject) {
             o.put(VALUE_KEY, value)
         }
     }
 
     class Long(
-        status: JvmBoolean,
+        success: JvmBoolean,
         val value: JvmLong,
-    ) : ApiResult(status) {
+    ) : ApiResult(success) {
         override fun putValue(o: JSONObject) {
             o.put(VALUE_KEY, value)
         }
     }
 
     class String(
-        status: JvmBoolean,
+        success: JvmBoolean,
         val value: JvmString,
-    ) : ApiResult(status) {
+    ) : ApiResult(success) {
         override fun putValue(o: JSONObject) {
             o.put(VALUE_KEY, value)
         }
@@ -207,16 +185,9 @@ sealed class ApiResult protected constructor(
     override fun toString() =
         JSONObject()
             .apply {
-                put(SUCCESS_KEY, status)
+                put(SUCCESS_KEY, success)
                 putValue(this)
             }.toString()
-
-    @Suppress("RemoveRedundantQualifierName") // we don't want `String(true, value)`
-    companion object {
-        fun success(value: JvmString) = ApiResult.String(true, value)
-
-        fun failure(value: JvmString) = ApiResult.String(false, value)
-    }
 }
 
 enum class CardEndpoint(
@@ -247,3 +218,5 @@ enum class CardEndpoint(
         fun from(value: String): CardEndpoint? = entries.firstOrNull { it.value == value }
     }
 }
+
+class InvalidContractException : IllegalArgumentException()
