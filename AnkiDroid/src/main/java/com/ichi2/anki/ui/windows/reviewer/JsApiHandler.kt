@@ -59,11 +59,11 @@ class JsApiHandler {
     suspend fun handleRequest(
         path: String,
         bytes: ByteArray,
-    ): ByteArray {
+    ): ByteArray? {
         val request = parseRequest(bytes)
         if (request == null) {
             Timber.w("INVALID CONTRACT< BRO")
-            return byteArrayOf()
+            return null
         }
 
         val (mainSegment, subSegment) = path.split('/', limit = 2)
@@ -76,30 +76,30 @@ class JsApiHandler {
                 val id = request.data!!.getLong("id")
                 handleDeckMethods(id, subSegment)
             }
-            else -> byteArrayOf()
+            else -> null
         }
     }
 
     private suspend fun handleCardMethods(
         cardId: CardId,
         subSegment: String,
-    ): ByteArray {
+    ): ByteArray? {
         val card = CollectionManager.withCol { Card(this, cardId) }
         return when (subSegment) {
             "getNid" -> toBytes(card.nid)
             "getDid" -> toBytes(card.did)
-            else -> byteArrayOf()
+            else -> null
         }
     }
 
     private suspend fun handleDeckMethods(
         deckId: DeckId,
         subSegment: String,
-    ): ByteArray {
-        val deck = CollectionManager.withCol { decks.get(deckId) }
+    ): ByteArray? {
+        val deck = CollectionManager.withCol { decks.get(deckId) } ?: return null
         return when (subSegment) {
-            "getName" -> toBytes(deck!!.name)
-            else -> byteArrayOf()
+            "getName" -> toBytes(deck.name)
+            else -> null
         }
     }
 
