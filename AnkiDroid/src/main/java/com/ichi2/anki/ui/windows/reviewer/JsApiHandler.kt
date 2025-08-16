@@ -15,7 +15,8 @@
  */
 package com.ichi2.anki.ui.windows.reviewer
 
-import com.ichi2.anki.CollectionManager
+import com.ichi2.anki.CollectionManager.withCol
+import com.ichi2.anki.Flag
 import com.ichi2.anki.JvmBoolean
 import com.ichi2.anki.JvmFloat
 import com.ichi2.anki.JvmInt
@@ -25,7 +26,10 @@ import com.ichi2.anki.common.utils.ext.getStringOrNull
 import com.ichi2.anki.libanki.Card
 import com.ichi2.anki.libanki.CardId
 import com.ichi2.anki.libanki.DeckId
+import com.ichi2.anki.observability.undoableOp
+import com.ichi2.anki.servicelayer.MARKED_TAG
 import com.ichi2.anki.utils.ext.flag
+import com.ichi2.anki.utils.ext.setUserFlagForCards
 import org.json.JSONObject
 
 const val CURRENT_VERSION = "0.0.4"
@@ -63,9 +67,10 @@ class JsApiHandler {
         val (mainSegment, endpoint) = path.split('/', limit = 2)
         return when (mainSegment) {
             "card" -> {
-                val cardId = request.data!!.getLong("id")
+                val data = request.data!!
+                val cardId = data.getLong("id")
                 val cardEndpoint = CardEndpoint.from(endpoint) ?: return null
-                handleCardMethods(cardId, cardEndpoint)
+                handleCardMethods(cardId, data, cardEndpoint)
             }
             "deck" -> {
                 val deckId = request.data!!.getLong("id")
@@ -78,9 +83,10 @@ class JsApiHandler {
 
     private suspend fun handleCardMethods(
         cardId: CardId,
+        data: JSONObject,
         endpoint: CardEndpoint,
     ): ByteArray? {
-        val card = CollectionManager.withCol { Card(this, cardId) }
+        val card = withCol { Card(this, cardId) }
         return when (endpoint) {
             CardEndpoint.GET_NID -> toBytes(card.nid)
             CardEndpoint.GET_FLAG -> toBytes(card.flag.code)
@@ -96,12 +102,42 @@ class JsApiHandler {
             CardEndpoint.GET_QUEUE -> toBytes(card.queue.code)
             CardEndpoint.GET_LAPSES -> toBytes(card.lapses)
             CardEndpoint.GET_DUE -> toBytes(card.due)
-            CardEndpoint.BURY,
-            CardEndpoint.IS_MARKED,
-            CardEndpoint.SUSPEND,
-            CardEndpoint.RESET_PROGRESS,
-            CardEndpoint.TOGGLE_FLAG,
-            -> null
+            CardEndpoint.BURY -> {
+                undoableOp {
+                    sched.buryCards(cids = listOf(cardId))
+                }.count
+                toBytes(true)
+            }
+            CardEndpoint.IS_MARKED -> {
+                val isMarked = withCol { card.note(this@withCol).hasTag(this@withCol, MARKED_TAG) }
+                toBytes(isMarked)
+            }
+            CardEndpoint.SUSPEND -> {
+                undoableOp {
+                    sched.suspendCards(ids = listOf(cardId))
+                }.count
+                toBytes(true)
+            }
+            CardEndpoint.RESET_PROGRESS -> {
+                undoableOp {
+                    sched.forgetCards(listOf(card.id), restorePosition = false, resetCounts = false)
+                }
+                toBytes(true)
+            }
+            CardEndpoint.TOGGLE_FLAG -> {
+                val requestFlag = data.getInt("flag")
+                val currentFlag = card.flag
+                val newFlag =
+                    if (requestFlag == currentFlag.code) {
+                        Flag.NONE
+                    } else {
+                        Flag.fromCode(requestFlag)
+                    }
+                undoableOp {
+                    setUserFlagForCards(listOf(card.id), newFlag)
+                }
+                toBytes(true)
+            }
         }
     }
 
@@ -109,7 +145,7 @@ class JsApiHandler {
         deckId: DeckId,
         endpoint: DeckEndpoint,
     ): ByteArray? {
-        val deck = CollectionManager.withCol { decks.get(deckId) } ?: return null
+        val deck = withCol { decks.get(deckId) } ?: return null
         return when (endpoint) {
             DeckEndpoint.GET_NAME -> toBytes(deck.name)
         }
@@ -120,6 +156,8 @@ class JsApiHandler {
     private fun toBytes(value: Int): ByteArray = ApiResult.Integer(true, value).toString().toByteArray()
 
     private fun toBytes(value: String): ByteArray = ApiResult.String(true, value).toString().toByteArray()
+
+    private fun toBytes(value: Boolean): ByteArray = ApiResult.Boolean(true, value).toString().toByteArray()
 }
 
 data class JsApiContract(

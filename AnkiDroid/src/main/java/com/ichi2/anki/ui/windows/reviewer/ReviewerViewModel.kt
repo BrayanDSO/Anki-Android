@@ -384,7 +384,7 @@ class ReviewerViewModel :
             if (path == "studyScreen/getCurrentCardId") {
                 ApiResult.Long(true, currentCard.await().id).toString().toByteArray()
             } else {
-                JsApiHandler().handleRequest(uri.substring(AnkiServer.ANKIDROID_JS_PREFIX.length), bytes)
+                JsApiHandler().handleRequest(uri.substring(AnkiServer.ANKIDROID_JS_PREFIX.length), bytes) ?: byteArrayOf()
             }
         } else {
             super.handlePostRequest(uri, bytes)
