@@ -66,13 +66,13 @@ class JsApiHandler {
 
         val (mainSegment, endpoint) = path.split('/', limit = 2)
         return when (mainSegment) {
-            "card" -> {
+            CardEndpoint.BASE -> {
                 val data = request.data!!
                 val cardId = data.getLong("id")
                 val cardEndpoint = CardEndpoint.from(endpoint) ?: return null
                 handleCardMethods(cardId, data, cardEndpoint)
             }
-            "deck" -> {
+            DeckEndpoint.BASE -> {
                 val deckId = request.data!!.getLong("id")
                 val deckEndpoint = DeckEndpoint.from(endpoint) ?: return null
                 handleDeckMethods(deckId, deckEndpoint)
@@ -253,6 +253,8 @@ enum class CardEndpoint(
     ;
 
     companion object {
+        const val BASE = "card"
+
         fun from(value: String): CardEndpoint? = entries.firstOrNull { it.value == value }
     }
 }
@@ -264,6 +266,8 @@ enum class DeckEndpoint(
     ;
 
     companion object {
+        const val BASE = "deck"
+
         fun from(value: String): DeckEndpoint? = entries.firstOrNull { it.value == value }
     }
 }
