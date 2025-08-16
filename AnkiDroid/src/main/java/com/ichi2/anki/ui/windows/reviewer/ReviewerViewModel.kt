@@ -380,7 +380,12 @@ class ReviewerViewModel :
                 else -> super.handlePostRequest(uri, bytes)
             }
         } else if (uri.startsWith(AnkiServer.ANKIDROID_JS_PREFIX)) {
-            JsApiHandler().handleRequest(uri.substring(AnkiServer.ANKIDROID_JS_PREFIX.length), bytes)
+            val path = uri.substring(AnkiServer.ANKIDROID_JS_PREFIX.length)
+            if (path == "studyScreen/getCurrentCardId") {
+                ApiResult.Long(true, currentCard.await().id).toString().toByteArray()
+            } else {
+                JsApiHandler().handleRequest(uri.substring(AnkiServer.ANKIDROID_JS_PREFIX.length), bytes)
+            }
         } else {
             super.handlePostRequest(uri, bytes)
         }

@@ -21,8 +21,9 @@ import com.ichi2.anki.JvmFloat
 import com.ichi2.anki.JvmInt
 import com.ichi2.anki.JvmLong
 import com.ichi2.anki.JvmString
-import com.ichi2.libanki.CardId
-import com.ichi2.libanki.DeckId
+import com.ichi2.anki.libanki.Card
+import com.ichi2.anki.libanki.CardId
+import com.ichi2.anki.libanki.DeckId
 import org.json.JSONException
 import org.json.JSONObject
 import timber.log.Timber
@@ -37,13 +38,18 @@ class JsApiHandler {
      * @param byteArray
      * @return apiContract or null
      */
-    private fun parseContract(byteArray: ByteArray): Contract? {
+    private fun parseRequest(byteArray: ByteArray): JsApiRequest? {
         try {
-            val data = JSONObject(byteArray.decodeToString())
-            val version = data.optString("version", "")
+            val requestBody = JSONObject(byteArray.decodeToString())
+
+            val version = requestBody.optString("version", "")
             if (version != CURRENT_VERSION) return null
-            val developer = data.optString("developer", "")
-            return Contract(version, developer)
+
+            val developer = requestBody.optString("developer", "")
+            val contract = JsApiContract(version, developer)
+            val data = requestBody.optJSONObject("data")
+
+            return JsApiRequest(contract, data)
         } catch (j: JSONException) {
             Timber.w(j)
         }
@@ -54,10 +60,22 @@ class JsApiHandler {
         path: String,
         bytes: ByteArray,
     ): ByteArray {
-        val (firstSegment, subSegment) = path.split('/', limit = 2)
-        return when (firstSegment) {
-            "card" -> byteArrayOf()
-            "deck" -> handleDeckMethods(1, subSegment)
+        val request = parseRequest(bytes)
+        if (request == null) {
+            Timber.w("INVALID CONTRACT< BRO")
+            return byteArrayOf()
+        }
+
+        val (mainSegment, subSegment) = path.split('/', limit = 2)
+        return when (mainSegment) {
+            "card" -> {
+                val id = request.data!!.getLong("id")
+                handleCardMethods(id, subSegment)
+            }
+            "deck" -> {
+                val id = request.data!!.getLong("id")
+                handleDeckMethods(id, subSegment)
+            }
             else -> byteArrayOf()
         }
     }
@@ -65,7 +83,13 @@ class JsApiHandler {
     private suspend fun handleCardMethods(
         cardId: CardId,
         subSegment: String,
-    ) {
+    ): ByteArray {
+        val card = CollectionManager.withCol { Card(this, cardId) }
+        return when (subSegment) {
+            "getNid" -> toBytes(card.nid)
+            "getDid" -> toBytes(card.did)
+            else -> byteArrayOf()
+        }
     }
 
     private suspend fun handleDeckMethods(
@@ -74,20 +98,24 @@ class JsApiHandler {
     ): ByteArray {
         val deck = CollectionManager.withCol { decks.get(deckId) }
         return when (subSegment) {
-            "getId" -> bytes(deck!!.id)
-            "getName" -> bytes(deck!!.name)
+            "getName" -> toBytes(deck!!.name)
             else -> byteArrayOf()
         }
     }
 
-    private fun bytes(value: Long): ByteArray = ApiResult.Long(true, value).toString().toByteArray()
+    private fun toBytes(value: Long): ByteArray = ApiResult.Long(true, value).toString().toByteArray()
 
-    private fun bytes(value: String): ByteArray = ApiResult.String(true, value).toString().toByteArray()
+    private fun toBytes(value: String): ByteArray = ApiResult.String(true, value).toString().toByteArray()
 }
 
-data class Contract(
+data class JsApiContract(
     val version: String,
     val developer: String,
+)
+
+data class JsApiRequest(
+    val contract: JsApiContract,
+    val data: JSONObject?,
 )
 
 sealed class ApiResult protected constructor(
