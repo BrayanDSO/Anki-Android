@@ -94,6 +94,7 @@ object JsApi {
         endpoint: CardEndpoint,
     ): ByteArray? {
         val cardId = data.getLong("id")
+        val body = data.getJSONObject("data")
         val card = withCol { Card(this, cardId) }
         return when (endpoint) {
             CardEndpoint.GET_NID -> result(card.nid)
@@ -129,7 +130,7 @@ object JsApi {
                 success()
             }
             CardEndpoint.TOGGLE_FLAG -> {
-                val requestFlag = data.getInt("flag")
+                val requestFlag = body.getInt("flag")
                 val currentFlag = card.flag
                 val newFlag = if (requestFlag == currentFlag.code) Flag.NONE else Flag.fromCode(requestFlag)
                 undoableOp { setUserFlagForCards(listOf(card.id), newFlag) }
