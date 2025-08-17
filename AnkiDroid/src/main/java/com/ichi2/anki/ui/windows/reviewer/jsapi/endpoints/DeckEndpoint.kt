@@ -19,6 +19,7 @@ enum class DeckEndpoint(
     val value: String,
 ) {
     GET_NAME("getName"),
+    IS_FILTERED("isFiltered"),
     ;
 
     companion object {

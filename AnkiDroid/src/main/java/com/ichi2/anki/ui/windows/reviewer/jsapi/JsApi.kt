@@ -180,6 +180,7 @@ object JsApi {
         val deck = withCol { decks.get(deckId) } ?: return null
         return when (endpoint) {
             DeckEndpoint.GET_NAME -> result(deck.name)
+            DeckEndpoint.IS_FILTERED -> result(deck.isFiltered)
         }
     }
 
