@@ -15,6 +15,7 @@
  */
 package com.ichi2.anki.ui.windows.reviewer.jsapi
 
+import androidx.core.graphics.toColorInt
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import anki.scheduler.CardAnswer
@@ -57,6 +58,12 @@ fun ReviewerFragment.setupJsApi() {
                     val text = request.data!!.getString("text")
                     val duration = request.data.getInt("duration")
                     showSnackbar(text, duration)
+                    JsApi.success()
+                }
+                StudyScreenEndpoint.SET_BACKGROUND_COLOR -> {
+                    val hex = request.data!!.getString("hex")
+                    val color = hex.toColorInt()
+                    view?.setBackgroundColor(color)
                     JsApi.success()
                 }
                 else -> JsApi.fail()
@@ -118,6 +125,7 @@ private suspend fun handleStudyScreenRequest(
         }
         StudyScreenEndpoint.SEARCH,
         StudyScreenEndpoint.SHOW_SNACKBAR,
+        StudyScreenEndpoint.SET_BACKGROUND_COLOR,
         -> {
             val result = CompletableDeferred<ByteArray>()
             val request = UiRequest(endpoint, data, result)

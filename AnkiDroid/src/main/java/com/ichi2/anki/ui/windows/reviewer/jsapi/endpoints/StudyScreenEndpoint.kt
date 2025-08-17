@@ -30,6 +30,7 @@ enum class StudyScreenEndpoint(
     CARD_INFO("cardInfo"),
     EDIT_NOTE("editNote"),
     SEARCH("search"),
+    SET_BACKGROUND_COLOR("setBackgroundColor"),
     ;
 
     companion object {
