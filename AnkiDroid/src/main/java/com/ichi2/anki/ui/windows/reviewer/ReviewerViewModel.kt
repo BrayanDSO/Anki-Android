@@ -57,6 +57,7 @@ import com.ichi2.anki.servicelayer.isBuryNoteAvailable
 import com.ichi2.anki.servicelayer.isSuspendNoteAvailable
 import com.ichi2.anki.settings.Prefs
 import com.ichi2.anki.ui.windows.reviewer.autoadvance.AutoAdvance
+import com.ichi2.anki.ui.windows.reviewer.jsapi.JsApiHandler
 import com.ichi2.anki.utils.CollectionPreferences
 import com.ichi2.anki.utils.Destination
 import com.ichi2.anki.utils.ext.answerCard
@@ -382,9 +383,9 @@ class ReviewerViewModel :
         } else if (uri.startsWith(AnkiServer.ANKIDROID_JS_PREFIX)) {
             val path = uri.substring(AnkiServer.ANKIDROID_JS_PREFIX.length)
             if (path == "studyScreen/getCurrentCardId") {
-                ApiResult.Long(true, currentCard.await().id).toString().toByteArray()
+                JsApiHandler.result(currentCard.await().id)
             } else {
-                JsApiHandler().handleRequest(uri.substring(AnkiServer.ANKIDROID_JS_PREFIX.length), bytes) ?: byteArrayOf()
+                JsApiHandler.handleRequest(uri.substring(AnkiServer.ANKIDROID_JS_PREFIX.length), bytes) ?: byteArrayOf()
             }
         } else {
             super.handlePostRequest(uri, bytes)
