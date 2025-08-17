@@ -57,6 +57,7 @@ import com.ichi2.anki.servicelayer.isBuryNoteAvailable
 import com.ichi2.anki.servicelayer.isSuspendNoteAvailable
 import com.ichi2.anki.settings.Prefs
 import com.ichi2.anki.ui.windows.reviewer.autoadvance.AutoAdvance
+import com.ichi2.anki.ui.windows.reviewer.jsapi.UiRequest
 import com.ichi2.anki.ui.windows.reviewer.jsapi.handleJsApiRequest
 import com.ichi2.anki.utils.CollectionPreferences
 import com.ichi2.anki.utils.Destination
@@ -75,10 +76,11 @@ class ReviewerViewModel :
     CardViewerViewModel(),
     ChangeManager.Subscriber,
     BindingProcessor<ReviewerBinding, ViewerAction> {
-    private var queueState: Deferred<CurrentQueueState?> =
+    var queueState: Deferred<CurrentQueueState?> =
         asyncIO {
             withCol { sched.currentQueueState() }
         }
+        private set
     override var currentCard =
         asyncIO {
             queueState.await()?.topCard
@@ -101,6 +103,7 @@ class ReviewerViewModel :
     val answerTimerStatusFlow = MutableStateFlow<AnswerTimerStatus?>(null)
     val answerFeedbackFlow = MutableSharedFlow<Rating>()
     val timeBoxReachedFlow = MutableSharedFlow<Collection.TimeboxReached>()
+    val apiRequestFlow = MutableSharedFlow<UiRequest>()
 
     override val server: AnkiServer = AnkiServer(this, StudyScreenRepository.getServerPort()).also { it.start() }
     private val stateMutationKey = TimeManager.time.intTimeMS().toString()
@@ -226,10 +229,10 @@ class ReviewerViewModel :
         statesMutated = true
     }
 
-    suspend fun emitEditNoteDestination() {
-        val cardId = currentCard.await().id
-        val destination = NoteEditorLauncher.EditNoteFromPreviewer(cardId)
-        Timber.i("Opening 'edit note' for card %d", cardId)
+    suspend fun emitEditNoteDestination(cardId: CardId? = null) {
+        val id = cardId ?: currentCard.await().id
+        val destination = NoteEditorLauncher.EditNoteFromPreviewer(id)
+        Timber.i("Opening 'edit note' for card %d", id)
         destinationFlow.emit(destination)
     }
 

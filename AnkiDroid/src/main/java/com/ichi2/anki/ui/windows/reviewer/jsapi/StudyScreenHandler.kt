@@ -17,9 +17,18 @@ package com.ichi2.anki.ui.windows.reviewer.jsapi
 
 import anki.scheduler.CardAnswer
 import com.ichi2.anki.pages.AnkiServer
+import com.ichi2.anki.ui.windows.reviewer.AnswerButtonsNextTime
 import com.ichi2.anki.ui.windows.reviewer.ReviewerViewModel
 import com.ichi2.anki.ui.windows.reviewer.jsapi.endpoints.StudyScreenEndpoint
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
+
+data class UiRequest(
+    val endpoint: StudyScreenEndpoint,
+    val data: JSONObject?,
+    val result: CompletableDeferred<ByteArray>,
+)
 
 suspend fun ReviewerViewModel.handleJsApiRequest(
     uri: String,
@@ -32,7 +41,7 @@ suspend fun ReviewerViewModel.handleJsApiRequest(
     return when (base) {
         StudyScreenEndpoint.BASE -> handleStudyScreenRequest(this, endpoint, request.data)
         else -> JsApi.handleRequest(base, endpoint, bytes)
-    } ?: byteArrayOf()
+    } ?: JsApi.fail()
 }
 
 private suspend fun handleStudyScreenRequest(
@@ -45,11 +54,6 @@ private suspend fun handleStudyScreenRequest(
         StudyScreenEndpoint.GET_CURRENT_CARD_ID -> {
             val cardId = viewModel.currentCard.await().id
             JsApi.result(cardId)
-        }
-        StudyScreenEndpoint.SHOW_SNACKBAR -> {
-            val message = data?.getString("message") ?: return JsApi.fail()
-            viewModel.actionFeedbackFlow.emit(message)
-            JsApi.success()
         }
         StudyScreenEndpoint.GET_NEW_COUNT -> JsApi.result(viewModel.countsFlow.value.first.new)
         StudyScreenEndpoint.GET_LRN_COUNT -> JsApi.result(viewModel.countsFlow.value.first.lrn)
@@ -66,13 +70,40 @@ private suspend fun handleStudyScreenRequest(
             JsApi.success()
         }
         StudyScreenEndpoint.IS_SHOWING_ANSWER -> JsApi.result(viewModel.showingAnswer.value)
-        StudyScreenEndpoint.GET_NEXT_TIME -> TODO()
+        StudyScreenEndpoint.GET_NEXT_TIME -> {
+            val ratingNumber = data!!.getInt("rating")
+            val rating = CardAnswer.Rating.forNumber(ratingNumber)
+            val queueState = viewModel.queueState.await() ?: return JsApi.fail()
+            val nextTimes = AnswerButtonsNextTime.from(queueState)
+            val nextTime =
+                when (rating) {
+                    CardAnswer.Rating.AGAIN -> nextTimes.again
+                    CardAnswer.Rating.HARD -> nextTimes.hard
+                    CardAnswer.Rating.GOOD -> nextTimes.good
+                    CardAnswer.Rating.EASY -> nextTimes.easy
+                    CardAnswer.Rating.UNRECOGNIZED -> return JsApi.fail()
+                }
+            JsApi.result(nextTime)
+        }
         StudyScreenEndpoint.CARD_INFO -> {
             val cardId = data!!.getLong("cardId")
             viewModel.emitCardInfoDestination(cardId)
             JsApi.success()
         }
-        StudyScreenEndpoint.EDIT_NOTE -> TODO()
-        StudyScreenEndpoint.SEARCH -> TODO()
+        StudyScreenEndpoint.EDIT_NOTE -> {
+            val cardId = data!!.getLong("cardId")
+            viewModel.emitEditNoteDestination(cardId)
+            JsApi.success()
+        }
+        StudyScreenEndpoint.SEARCH,
+        StudyScreenEndpoint.SHOW_SNACKBAR,
+        -> {
+            val result = CompletableDeferred<ByteArray>()
+            val request = UiRequest(endpoint, data, result)
+            viewModel.apiRequestFlow.emit(request)
+            withTimeoutOrNull(1000L) {
+                result.await()
+            }
+        }
     }
 }

@@ -399,10 +399,10 @@ class ReviewerFragment :
         viewModel.answerButtonsNextTimeFlow
             .flowWithLifecycle(lifecycle)
             .collectIn(lifecycleScope) { times ->
-                againButton.setNextTime(times?.again)
-                hardButton.setNextTime(times?.hard)
-                goodButton.setNextTime(times?.good)
-                easyButton.setNextTime(times?.easy)
+                againButton.setNextTime(times.again)
+                hardButton.setNextTime(times.hard)
+                goodButton.setNextTime(times.good)
+                easyButton.setNextTime(times.easy)
             }
 
         val showAnswerButton =

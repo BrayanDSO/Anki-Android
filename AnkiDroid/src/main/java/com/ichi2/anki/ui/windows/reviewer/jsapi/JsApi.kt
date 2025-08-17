@@ -205,7 +205,7 @@ object JsApi {
         success: Boolean = true,
     ): ByteArray = buildApiResponse(success, value)
 
-    private fun result(
+    fun result(
         value: String,
         success: Boolean = true,
     ): ByteArray = buildApiResponse(success, value)
