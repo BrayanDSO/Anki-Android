@@ -50,24 +50,27 @@ suspend fun ReviewerViewModel.handleJsApiRequest(
     } ?: JsApi.fail()
 }
 
+private fun ReviewerFragment.handleJsRequest(request: UiRequest): ByteArray {
+    return when (request.endpoint) {
+        StudyScreenEndpoint.SHOW_SNACKBAR -> {
+            val text = request.data?.getString("text") ?: return JsApi.fail()
+            val duration = request.data.getInt("duration")
+            showSnackbar(text, duration)
+            JsApi.success()
+        }
+        StudyScreenEndpoint.SET_BACKGROUND_COLOR -> {
+            val hex = request.data?.getString("data") ?: return JsApi.fail()
+            val color = hex.toColorInt()
+            view?.setBackgroundColor(color)
+            JsApi.success()
+        }
+        else -> JsApi.fail()
+    }
+}
+
 fun ReviewerFragment.setupJsApi() {
     viewModel.apiRequestFlow.flowWithLifecycle(lifecycle).collectIn(lifecycleScope) { request ->
-        val result: ByteArray =
-            when (request.endpoint) {
-                StudyScreenEndpoint.SHOW_SNACKBAR -> {
-                    val text = request.data!!.getString("text")
-                    val duration = request.data.getInt("duration")
-                    showSnackbar(text, duration)
-                    JsApi.success()
-                }
-                StudyScreenEndpoint.SET_BACKGROUND_COLOR -> {
-                    val hex = request.data!!.getString("hex")
-                    val color = hex.toColorInt()
-                    view?.setBackgroundColor(color)
-                    JsApi.success()
-                }
-                else -> JsApi.fail()
-            }
+        val result = handleJsRequest(request)
         request.result.complete(result)
     }
 }
@@ -92,14 +95,14 @@ private suspend fun handleStudyScreenRequest(
             JsApi.success()
         }
         StudyScreenEndpoint.ANSWER -> {
-            val ratingNumber = data!!.getInt("rating") - 1
+            val ratingNumber = data!!.getInt("data") - 1
             val rating = CardAnswer.Rating.forNumber(ratingNumber)
             viewModel.answerCard(rating)
             JsApi.success()
         }
         StudyScreenEndpoint.IS_SHOWING_ANSWER -> JsApi.result(viewModel.showingAnswer.value)
         StudyScreenEndpoint.GET_NEXT_TIME -> {
-            val ratingNumber = data!!.getInt("rating")
+            val ratingNumber = data!!.getInt("data")
             val rating = CardAnswer.Rating.forNumber(ratingNumber)
             val queueState = viewModel.queueState.await() ?: return JsApi.fail()
             val nextTimes = AnswerButtonsNextTime.from(queueState)
@@ -114,12 +117,12 @@ private suspend fun handleStudyScreenRequest(
             JsApi.result(nextTime)
         }
         StudyScreenEndpoint.CARD_INFO -> {
-            val cardId = data!!.getLong("cardId")
+            val cardId = data!!.getLong("data")
             viewModel.emitCardInfoDestination(cardId)
             JsApi.success()
         }
         StudyScreenEndpoint.EDIT_NOTE -> {
-            val cardId = data!!.getLong("cardId")
+            val cardId = data!!.getLong("data")
             viewModel.emitEditNoteDestination(cardId)
             JsApi.success()
         }
