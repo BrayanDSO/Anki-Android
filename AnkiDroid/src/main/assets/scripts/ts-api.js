@@ -252,8 +252,8 @@
       this.getCard = (id) => new Card(this, id);
       this.getNote = (id) => new Note(this, id);
       this.getDeck = (id) => new Deck(this, id);
-      this.openCardInfo = (cardId) => this.request("cardInfo", cardId);
-      this.editNote = (noteId) => this.request("editNote", noteId);
+      this.openCardInfo = (cardId) => this.request("studyScreen/cardInfo", cardId);
+      this.editNote = (noteId) => this.request("studyScreen/editNote", noteId);
       /**
        * Shows an Android dismissable snackbar.
        * @param message the message to be shown in the snackbar.
@@ -305,6 +305,43 @@
         }
       });
     }
+    getNew() {
+      return this.request("studyScreen/getNew");
+    }
+    getLrn() {
+      return this.request("studyScreen/getLrn");
+    }
+    getRev() {
+      return this.request("studyScreen/getRev");
+    }
+    /**
+     * Reveals the answer side of the current card.
+     */
+    showAnswer() {
+      return this.request("studyScreen/showAnswer");
+    }
+    /**
+     * Answers the current card with the given rating.
+     * @param rating The rating for the card (1-4).
+     */
+    answer(rating) {
+      return this.request("studyScreen/answer", rating);
+    }
+    /**
+     * @returns whether the answer is being shown
+     */
+    isShowingAnswer() {
+      return this.request("studyScreen/isShowingAnswer");
+    }
+    getNextTime(ease) {
+      return this.request("studyScreen/getNextTime", ease);
+    }
+    cardInfo(id) {
+      return this.request("studyScreen/cardInfo", id);
+    }
+    editCard(id) {
+      return this.request("studyScreen/editCard", id);
+    }
     async request(endpoint, data) {
       const url = `/jsapi/${endpoint}`;
       try {
@@ -329,45 +366,6 @@
         throw error;
       }
     }
-    // public readonly counts: Counts = {
-    //     getNew: () => this.handleRequest("counts/new"),
-    //     getLrn: () => this.handleRequest("counts/lrn"),
-    //     getRev: () => this.handleRequest("counts/rev"),
-    // };
-    //
-    // /**
-    //  * Reveals the answer side of the current card.
-    //  */
-    // public showAnswer(): Promise<void> {
-    //     return this.handleRequest("showAnswer");
-    // }
-    //
-    // /**
-    //  * Answers the current card with the given ease.
-    //  * @param ease The ease rating for the card (1-4).
-    //  */
-    // public answer(ease: Ease): Promise<void> {
-    //     return this.handleRequest("answer", ease);
-    // }
-    //
-    // /**
-    //  * @returns whether the answer is being shown
-    //  */
-    // public isShowingAnswer(): Promise<BooleanResult> {
-    //     return this.handleRequest("isShowingAnswer");
-    // }
-    //
-    // public getNextTime(ease: Ease): Promise<StringResult> {
-    //     return this.handleRequest("getNextTime", ease);
-    // }
-    //
-    // public cardInfo(id: CardId | undefined): Promise<void> {
-    //     return this.handleRequest(endpoints.CARD_INFO, id);
-    // }
-    //
-    // public editCard(id: CardId | undefined): Promise<void> {
-    //     return this.handleRequest(endpoints.EDIT_CARD, id);
-    // }
   };
   globalThis.jsApi = { StudyScreen };
 })();

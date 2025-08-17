@@ -190,12 +190,12 @@ object JsApi {
         }
 
     // region Helpers
-    private fun result(
+    fun result(
         value: Boolean,
         success: Boolean = true,
     ): ByteArray = buildApiResponse(success, value)
 
-    private fun result(
+    fun result(
         value: Int,
         success: Boolean = true,
     ): ByteArray = buildApiResponse(success, value)

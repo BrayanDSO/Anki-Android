@@ -15,6 +15,7 @@
  */
 package com.ichi2.anki.ui.windows.reviewer.jsapi
 
+import anki.scheduler.CardAnswer
 import com.ichi2.anki.pages.AnkiServer
 import com.ichi2.anki.ui.windows.reviewer.ReviewerViewModel
 import com.ichi2.anki.ui.windows.reviewer.jsapi.endpoints.StudyScreenEndpoint
@@ -50,5 +51,28 @@ private suspend fun handleStudyScreenRequest(
             viewModel.actionFeedbackFlow.emit(message)
             JsApi.success()
         }
+        StudyScreenEndpoint.GET_NEW_COUNT -> JsApi.result(viewModel.countsFlow.value.first.new)
+        StudyScreenEndpoint.GET_LRN_COUNT -> JsApi.result(viewModel.countsFlow.value.first.lrn)
+        StudyScreenEndpoint.GET_REV_COUNT -> JsApi.result(viewModel.countsFlow.value.first.rev)
+        StudyScreenEndpoint.SHOW_ANSWER -> {
+            if (viewModel.showingAnswer.value) return JsApi.fail()
+            viewModel.onShowAnswer()
+            JsApi.success()
+        }
+        StudyScreenEndpoint.ANSWER -> {
+            val ratingNumber = data!!.getInt("rating") - 1
+            val rating = CardAnswer.Rating.forNumber(ratingNumber)
+            viewModel.answerCard(rating)
+            JsApi.success()
+        }
+        StudyScreenEndpoint.IS_SHOWING_ANSWER -> JsApi.result(viewModel.showingAnswer.value)
+        StudyScreenEndpoint.GET_NEXT_TIME -> TODO()
+        StudyScreenEndpoint.CARD_INFO -> {
+            val cardId = data!!.getLong("cardId")
+            viewModel.emitCardInfoDestination(cardId)
+            JsApi.success()
+        }
+        StudyScreenEndpoint.EDIT_NOTE -> TODO()
+        StudyScreenEndpoint.SEARCH -> TODO()
     }
 }

@@ -226,7 +226,7 @@ class ReviewerViewModel :
         statesMutated = true
     }
 
-    private suspend fun emitEditNoteDestination() {
+    suspend fun emitEditNoteDestination() {
         val cardId = currentCard.await().id
         val destination = NoteEditorLauncher.EditNoteFromPreviewer(cardId)
         Timber.i("Opening 'edit note' for card %d", cardId)
@@ -238,10 +238,10 @@ class ReviewerViewModel :
         destinationFlow.emit(NoteEditorLauncher.AddNoteFromReviewer())
     }
 
-    private suspend fun emitCardInfoDestination() {
-        val cardId = currentCard.await().id
-        val destination = CardInfoDestination(cardId)
-        Timber.i("Launching 'card info' for card %d", cardId)
+    suspend fun emitCardInfoDestination(cardId: CardId? = null) {
+        val id = cardId ?: currentCard.await().id
+        val destination = CardInfoDestination(id)
+        Timber.i("Launching 'card info' for card %d", id)
         destinationFlow.emit(destination)
     }
 

@@ -20,6 +20,16 @@ enum class StudyScreenEndpoint(
 ) {
     GET_CURRENT_CARD_ID("getCurrentCardId"),
     SHOW_SNACKBAR("showSnackbar"),
+    GET_NEW_COUNT("getNewCount"),
+    GET_LRN_COUNT("getLrnCount"),
+    GET_REV_COUNT("getRevCount"),
+    SHOW_ANSWER("showAnswer"),
+    ANSWER("answer"),
+    IS_SHOWING_ANSWER("isShowingAnswer"),
+    GET_NEXT_TIME("rating"),
+    CARD_INFO("cardInfo"),
+    EDIT_NOTE("editNote"),
+    SEARCH("search"),
     ;
 
     companion object {
