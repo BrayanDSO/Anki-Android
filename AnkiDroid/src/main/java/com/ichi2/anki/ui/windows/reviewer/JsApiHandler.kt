@@ -17,18 +17,12 @@ package com.ichi2.anki.ui.windows.reviewer
 
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.Flag
-import com.ichi2.anki.JvmBoolean
-import com.ichi2.anki.JvmFloat
-import com.ichi2.anki.JvmInt
-import com.ichi2.anki.JvmLong
-import com.ichi2.anki.JvmString
 import com.ichi2.anki.common.utils.ext.getStringOrNull
 import com.ichi2.anki.libanki.Card
 import com.ichi2.anki.libanki.Note
 import com.ichi2.anki.observability.undoableOp
 import com.ichi2.anki.servicelayer.MARKED_TAG
 import com.ichi2.anki.servicelayer.NoteService
-import com.ichi2.anki.servicelayer.NoteService.isMarked
 import com.ichi2.anki.utils.ext.flag
 import com.ichi2.anki.utils.ext.setUserFlagForCards
 import org.json.JSONObject
@@ -91,43 +85,43 @@ class JsApiHandler {
         val cardId = data.getLong("id")
         val card = withCol { Card(this, cardId) }
         return when (endpoint) {
-            CardEndpoint.GET_NID -> toBytes(card.nid)
-            CardEndpoint.GET_FLAG -> toBytes(card.flag.code)
-            CardEndpoint.GET_REPS -> toBytes(card.reps)
-            CardEndpoint.GET_INTERVAL -> toBytes(card.ivl)
-            CardEndpoint.GET_FACTOR -> toBytes(card.factor)
-            CardEndpoint.GET_MOD -> toBytes(card.mod)
-            CardEndpoint.GET_TYPE -> toBytes(card.type.code)
-            CardEndpoint.GET_DID -> toBytes(card.did)
-            CardEndpoint.GET_LEFT -> toBytes(card.left)
-            CardEndpoint.GET_ODID -> toBytes(card.oDid)
-            CardEndpoint.GET_ODUE -> toBytes(card.oDue)
-            CardEndpoint.GET_QUEUE -> toBytes(card.queue.code)
-            CardEndpoint.GET_LAPSES -> toBytes(card.lapses)
-            CardEndpoint.GET_DUE -> toBytes(card.due)
+            CardEndpoint.GET_NID -> card.nid.result()
+            CardEndpoint.GET_FLAG -> card.flag.code.result()
+            CardEndpoint.GET_REPS -> card.reps.result()
+            CardEndpoint.GET_INTERVAL -> card.ivl.result()
+            CardEndpoint.GET_FACTOR -> card.factor.result()
+            CardEndpoint.GET_MOD -> card.mod.result()
+            CardEndpoint.GET_TYPE -> card.type.code.result()
+            CardEndpoint.GET_DID -> card.did.result()
+            CardEndpoint.GET_LEFT -> card.left.result()
+            CardEndpoint.GET_ODID -> card.oDid.result()
+            CardEndpoint.GET_ODUE -> card.oDue.result()
+            CardEndpoint.GET_QUEUE -> card.queue.code.result()
+            CardEndpoint.GET_LAPSES -> card.lapses.result()
+            CardEndpoint.GET_DUE -> card.due.result()
             CardEndpoint.BURY -> {
                 val count =
                     undoableOp {
                         sched.buryCards(cids = listOf(cardId))
                     }.count
-                toBytes(count)
+                count.result()
             }
             CardEndpoint.IS_MARKED -> {
                 val isMarked = withCol { card.note(this@withCol).hasTag(this@withCol, MARKED_TAG) }
-                toBytes(isMarked)
+                isMarked.result()
             }
             CardEndpoint.SUSPEND -> {
                 val count =
                     undoableOp {
                         sched.suspendCards(ids = listOf(cardId))
                     }.count
-                toBytes(count)
+                count.result()
             }
             CardEndpoint.RESET_PROGRESS -> {
                 undoableOp {
                     sched.forgetCards(listOf(card.id), restorePosition = false, resetCounts = false)
                 }
-                toBytes(true)
+                success()
             }
             CardEndpoint.TOGGLE_FLAG -> {
                 val requestFlag = data.getInt("flag")
@@ -141,7 +135,7 @@ class JsApiHandler {
                 undoableOp {
                     setUserFlagForCards(listOf(card.id), newFlag)
                 }
-                toBytes(true)
+                success()
             }
         }
     }
@@ -158,18 +152,18 @@ class JsApiHandler {
                     undoableOp {
                         sched.buryNotes(listOf(note.id))
                     }.count
-                toBytes(count)
+                count.result()
             }
             NoteEndpoint.SUSPEND -> {
                 val count =
                     undoableOp {
                         sched.suspendNotes(listOf(note.id))
                     }.count
-                toBytes(count)
+                count.result()
             }
             NoteEndpoint.GET_TAGS -> {
                 val tags = withCol { note.stringTags(this) }
-                toBytes(tags)
+                tags.result()
             }
             NoteEndpoint.SET_TAGS -> {
                 val tags = data.getString("data")
@@ -177,11 +171,11 @@ class JsApiHandler {
                     note.setTagsFromStr(this, tags)
                     updateNote(note)
                 }
-                toBytes(true)
+                success()
             }
             NoteEndpoint.TOGGLE_MARK -> {
                 NoteService.toggleMark(note)
-                toBytes(true)
+                success()
             }
         }
     }
@@ -193,17 +187,30 @@ class JsApiHandler {
         val deckId = data.getLong("id")
         val deck = withCol { decks.get(deckId) } ?: return null
         return when (endpoint) {
-            DeckEndpoint.GET_NAME -> toBytes(deck.name)
+            DeckEndpoint.GET_NAME -> deck.name.result()
         }
     }
 
-    private fun toBytes(value: Long): ByteArray = ApiResult.Long(true, value).toString().toByteArray()
+    private fun buildApiResponse(
+        success: Boolean,
+        value: Any?,
+    ): ByteArray =
+        JSONObject()
+            .apply {
+                put(SUCCESS_KEY, success)
+                value?.let { put(VALUE_KEY, it) }
+            }.toString()
+            .toByteArray()
 
-    private fun toBytes(value: Int): ByteArray = ApiResult.Integer(true, value).toString().toByteArray()
+    private fun Boolean.result(success: Boolean = true): ByteArray = buildApiResponse(success, this)
 
-    private fun toBytes(value: String): ByteArray = ApiResult.String(true, value).toString().toByteArray()
+    private fun Int.result(success: Boolean = true): ByteArray = buildApiResponse(success, this)
 
-    private fun toBytes(value: Boolean): ByteArray = ApiResult.Boolean(true, value).toString().toByteArray()
+    private fun Long.result(success: Boolean = true): ByteArray = buildApiResponse(success, this)
+
+    private fun String.result(success: Boolean = true): ByteArray = buildApiResponse(success, this)
+
+    private fun success(): ByteArray = buildApiResponse(true, null)
 }
 
 data class JsApiContract(
@@ -215,64 +222,6 @@ data class JsApiRequest(
     val contract: JsApiContract,
     val data: JSONObject?,
 )
-
-sealed class ApiResult protected constructor(
-    private val success: JvmBoolean,
-) {
-    class Boolean(
-        success: JvmBoolean,
-        val value: JvmBoolean,
-    ) : ApiResult(success) {
-        override fun putValue(o: JSONObject) {
-            o.put(VALUE_KEY, value)
-        }
-    }
-
-    class Integer(
-        success: JvmBoolean,
-        val value: JvmInt,
-    ) : ApiResult(success) {
-        override fun putValue(o: JSONObject) {
-            o.put(VALUE_KEY, value)
-        }
-    }
-
-    class Float(
-        success: JvmBoolean,
-        val value: JvmFloat,
-    ) : ApiResult(success) {
-        override fun putValue(o: JSONObject) {
-            o.put(VALUE_KEY, value)
-        }
-    }
-
-    class Long(
-        success: JvmBoolean,
-        val value: JvmLong,
-    ) : ApiResult(success) {
-        override fun putValue(o: JSONObject) {
-            o.put(VALUE_KEY, value)
-        }
-    }
-
-    class String(
-        success: JvmBoolean,
-        val value: JvmString,
-    ) : ApiResult(success) {
-        override fun putValue(o: JSONObject) {
-            o.put(VALUE_KEY, value)
-        }
-    }
-
-    abstract fun putValue(o: JSONObject)
-
-    override fun toString() =
-        JSONObject()
-            .apply {
-                put(SUCCESS_KEY, success)
-                putValue(this)
-            }.toString()
-}
 
 enum class CardEndpoint(
     val value: String,
