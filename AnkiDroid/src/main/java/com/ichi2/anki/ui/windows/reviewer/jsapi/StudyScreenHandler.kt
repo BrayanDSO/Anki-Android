@@ -124,7 +124,7 @@ private suspend fun handleStudyScreenRequest(
             viewModel.apiRequestFlow.emit(request)
             // there may be no listeners for the flow, so fail the result after some time
             // e.g. the fragment uses flowWithLifecycle and is at a different lifecycleState
-            withTimeoutOrNull(1000L) {
+            withTimeoutOrNull(2000L) {
                 result.await()
             } ?: JsApi.fail()
         }

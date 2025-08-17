@@ -66,20 +66,19 @@ object JsApi {
         bytes: ByteArray,
     ): ByteArray? {
         val request = parseRequest(bytes)
-        val data = request.data ?: return null
 
         return when (base) {
             CardEndpoint.BASE -> {
                 val cardEndpoint = CardEndpoint.from(endpoint) ?: return null
-                handleCardMethods(data, cardEndpoint)
+                handleCardMethods(request.data!!, cardEndpoint)
             }
             NoteEndpoint.BASE -> {
                 val noteEndpoint = NoteEndpoint.from(endpoint) ?: return null
-                handleNoteMethods(data, noteEndpoint)
+                handleNoteMethods(request.data!!, noteEndpoint)
             }
             DeckEndpoint.BASE -> {
                 val deckEndpoint = DeckEndpoint.from(endpoint) ?: return null
-                handleDeckMethods(data, deckEndpoint)
+                handleDeckMethods(request.data!!, deckEndpoint)
             }
             AndroidEndpoint.BASE -> {
                 val androidEndpoint = AndroidEndpoint.from(endpoint) ?: return null
@@ -94,7 +93,6 @@ object JsApi {
         endpoint: CardEndpoint,
     ): ByteArray? {
         val cardId = data.getLong("id")
-        val body = data.getJSONObject("data")
         val card = withCol { Card(this, cardId) }
         return when (endpoint) {
             CardEndpoint.GET_NID -> result(card.nid)
@@ -130,7 +128,8 @@ object JsApi {
                 success()
             }
             CardEndpoint.TOGGLE_FLAG -> {
-                val requestFlag = body.getInt("flag")
+                val requestBody = data.getJSONObject("data")
+                val requestFlag = requestBody.getInt("flag")
                 val currentFlag = card.flag
                 val newFlag = if (requestFlag == currentFlag.code) Flag.NONE else Flag.fromCode(requestFlag)
                 undoableOp { setUserFlagForCards(listOf(card.id), newFlag) }
