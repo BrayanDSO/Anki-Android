@@ -16,6 +16,7 @@
  */
 package com.ichi2.anki.ui.windows.reviewer.jsapi
 
+import com.ichi2.anki.AnkiDroidApp
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.Flag
 import com.ichi2.anki.common.utils.ext.getStringOrNull
@@ -24,11 +25,14 @@ import com.ichi2.anki.libanki.Note
 import com.ichi2.anki.observability.undoableOp
 import com.ichi2.anki.servicelayer.MARKED_TAG
 import com.ichi2.anki.servicelayer.NoteService
+import com.ichi2.anki.ui.windows.reviewer.jsapi.endpoints.AndroidEndpoint
 import com.ichi2.anki.ui.windows.reviewer.jsapi.endpoints.CardEndpoint
 import com.ichi2.anki.ui.windows.reviewer.jsapi.endpoints.DeckEndpoint
 import com.ichi2.anki.ui.windows.reviewer.jsapi.endpoints.NoteEndpoint
 import com.ichi2.anki.utils.ext.flag
 import com.ichi2.anki.utils.ext.setUserFlagForCards
+import com.ichi2.themes.Themes
+import com.ichi2.utils.NetworkUtils
 import org.json.JSONObject
 
 object JsApiHandler {
@@ -62,9 +66,9 @@ object JsApiHandler {
     ): ByteArray? {
         val request = parseRequest(bytes)
         val data = request.data ?: return null
-        val (mainSegment, endpoint) = path.split('/', limit = 2)
+        val (base, endpoint) = path.split('/', limit = 2)
 
-        return when (mainSegment) {
+        return when (base) {
             CardEndpoint.BASE -> {
                 val cardEndpoint = CardEndpoint.from(endpoint) ?: return null
                 handleCardMethods(data, cardEndpoint)
@@ -76,6 +80,10 @@ object JsApiHandler {
             DeckEndpoint.BASE -> {
                 val deckEndpoint = DeckEndpoint.from(endpoint) ?: return null
                 handleDeckMethods(data, deckEndpoint)
+            }
+            AndroidEndpoint.BASE -> {
+                val androidEndpoint = AndroidEndpoint.from(endpoint) ?: return null
+                handleAndroidEndpoints(androidEndpoint)
             }
             else -> null
         }
@@ -174,6 +182,12 @@ object JsApiHandler {
             DeckEndpoint.GET_NAME -> result(deck.name)
         }
     }
+
+    private fun handleAndroidEndpoints(endpoint: AndroidEndpoint): ByteArray? =
+        when (endpoint) {
+            AndroidEndpoint.IS_SYSTEM_IN_DARK_MODE -> result(Themes.systemIsInNightMode(AnkiDroidApp.instance))
+            AndroidEndpoint.IS_NETWORK_METERED -> result(NetworkUtils.isActiveNetworkMetered())
+        }
 
     // region Helpers
     private fun result(
