@@ -15,11 +15,16 @@
  */
 package com.ichi2.anki.ui.windows.reviewer.jsapi
 
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import anki.scheduler.CardAnswer
 import com.ichi2.anki.pages.AnkiServer
+import com.ichi2.anki.snackbar.showSnackbar
 import com.ichi2.anki.ui.windows.reviewer.AnswerButtonsNextTime
+import com.ichi2.anki.ui.windows.reviewer.ReviewerFragment
 import com.ichi2.anki.ui.windows.reviewer.ReviewerViewModel
 import com.ichi2.anki.ui.windows.reviewer.jsapi.endpoints.StudyScreenEndpoint
+import com.ichi2.anki.utils.ext.collectIn
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
@@ -42,6 +47,22 @@ suspend fun ReviewerViewModel.handleJsApiRequest(
         StudyScreenEndpoint.BASE -> handleStudyScreenRequest(this, endpoint, request.data)
         else -> JsApi.handleRequest(base, endpoint, bytes)
     } ?: JsApi.fail()
+}
+
+fun ReviewerFragment.setupJsApi() {
+    viewModel.apiRequestFlow.flowWithLifecycle(lifecycle).collectIn(lifecycleScope) { request ->
+        val result: ByteArray =
+            when (request.endpoint) {
+                StudyScreenEndpoint.SHOW_SNACKBAR -> {
+                    val text = request.data!!.getString("text")
+                    val duration = request.data.getInt("duration")
+                    showSnackbar(text, duration)
+                    JsApi.success()
+                }
+                else -> JsApi.fail()
+            }
+        request.result.complete(result)
+    }
 }
 
 private suspend fun handleStudyScreenRequest(
@@ -101,9 +122,11 @@ private suspend fun handleStudyScreenRequest(
             val result = CompletableDeferred<ByteArray>()
             val request = UiRequest(endpoint, data, result)
             viewModel.apiRequestFlow.emit(request)
+            // there may be no listeners for the flow, so fail the result after some time
+            // e.g. the fragment uses flowWithLifecycle and is at a different lifecycleState
             withTimeoutOrNull(1000L) {
                 result.await()
-            }
+            } ?: JsApi.fail()
         }
     }
 }

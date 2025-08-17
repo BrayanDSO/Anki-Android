@@ -233,8 +233,6 @@
 
   // src/main.ts
   var jsApiList = {
-    ankiSearchCard: "searchCard",
-    ankiSearchCardWithCallback: "searchCardWithCallback",
     ankiSttSetLanguage: "sttSetLanguage",
     ankiSttStart: "sttStart",
     ankiSttStop: "sttStop",
@@ -252,15 +250,13 @@
       this.getCard = (id) => new Card(this, id);
       this.getNote = (id) => new Note(this, id);
       this.getDeck = (id) => new Deck(this, id);
-      this.openCardInfo = (cardId) => this.request("studyScreen/cardInfo", cardId);
-      this.editNote = (noteId) => this.request("studyScreen/editNote", noteId);
       /**
        * Shows an Android dismissable snackbar.
-       * @param message the message to be shown in the snackbar.
+       * @param text the message to be shown in the snackbar.
        * @param duration the duration in milliseconds to show the snackbar.
        * For Android standard durations, use 0 for long, -1 for short, and -2 for indefinite.
        */
-      this.showSnackbar = (message, duration) => this.request("studyScreen/showSnackbar", { message, duration });
+      this.showSnackbar = (text, duration) => this.request("studyScreen/showSnackbar", { text, duration });
       this.android = new Android(this);
       this.card = this.createProxy(this.cardPromise);
       this.note = this.createProxy(this.notePromise);
@@ -305,14 +301,14 @@
         }
       });
     }
-    getNew() {
-      return this.request("studyScreen/getNew");
+    getNewCount() {
+      return this.request("studyScreen/getNewCount");
     }
-    getLrn() {
-      return this.request("studyScreen/getLrn");
+    getLearningCount() {
+      return this.request("studyScreen/getLrnCount");
     }
-    getRev() {
-      return this.request("studyScreen/getRev");
+    getReviewingCount() {
+      return this.request("studyScreen/getRevCount");
     }
     /**
      * Reveals the answer side of the current card.
@@ -333,14 +329,17 @@
     isShowingAnswer() {
       return this.request("studyScreen/isShowingAnswer");
     }
-    getNextTime(ease) {
-      return this.request("studyScreen/getNextTime", ease);
+    getNextTime(rating) {
+      return this.request("studyScreen/getNextTime", rating);
     }
-    cardInfo(id) {
-      return this.request("studyScreen/cardInfo", id);
+    cardInfo(cardId) {
+      return this.request("studyScreen/cardInfo", cardId);
     }
-    editCard(id) {
-      return this.request("studyScreen/editCard", id);
+    editNote(cardId) {
+      return this.request("studyScreen/editNote", cardId);
+    }
+    search(query) {
+      return this.request("studyScreen/search", query);
     }
     async request(endpoint, data) {
       const url = `/jsapi/${endpoint}`;
