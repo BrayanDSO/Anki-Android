@@ -40,7 +40,7 @@ object JsApiHandler {
     private const val VALUE_KEY = "value"
     private const val SUCCESS_KEY = "success"
 
-    private fun parseRequest(byteArray: ByteArray): JsApiRequest {
+    fun parseRequest(byteArray: ByteArray): JsApiRequest {
         val requestBody = JSONObject(byteArray.decodeToString())
         val contract = parseContract(requestBody)
         val data = requestBody.optJSONObject("data")
@@ -61,12 +61,12 @@ object JsApiHandler {
     }
 
     suspend fun handleRequest(
-        path: String,
+        base: String,
+        endpoint: String,
         bytes: ByteArray,
     ): ByteArray? {
         val request = parseRequest(bytes)
         val data = request.data ?: return null
-        val (base, endpoint) = path.split('/', limit = 2)
 
         return when (base) {
             CardEndpoint.BASE -> {
@@ -210,7 +210,7 @@ object JsApiHandler {
         success: Boolean = true,
     ): ByteArray = buildApiResponse(success, value)
 
-    private fun success(): ByteArray = buildApiResponse(true, null)
+    fun success(): ByteArray = buildApiResponse(true, null)
 
     private fun buildApiResponse(
         success: Boolean,

@@ -17,15 +17,38 @@ package com.ichi2.anki.ui.windows.reviewer.jsapi
 
 import com.ichi2.anki.pages.AnkiServer
 import com.ichi2.anki.ui.windows.reviewer.ReviewerViewModel
+import com.ichi2.anki.ui.windows.reviewer.jsapi.endpoints.StudyScreenEndpoint
+import org.json.JSONObject
 
 suspend fun ReviewerViewModel.handleJsApiRequest(
     uri: String,
     bytes: ByteArray,
 ): ByteArray {
     val path = uri.substring(AnkiServer.ANKIDROID_JS_PREFIX.length)
-    return if (path == "studyScreen/getCurrentCardId") {
-        JsApiHandler.result(currentCard.await().id)
-    } else {
-        JsApiHandler.handleRequest(path, bytes) ?: byteArrayOf()
+    val (base, endpoint) = path.split('/', limit = 2)
+    val request = JsApiHandler.parseRequest(bytes)
+
+    return when (base) {
+        StudyScreenEndpoint.BASE -> handleStudyScreenRequest(this, endpoint, request.data!!)
+        else -> JsApiHandler.handleRequest(base, endpoint, bytes)
+    } ?: byteArrayOf()
+}
+
+private suspend fun handleStudyScreenRequest(
+    viewModel: ReviewerViewModel,
+    endpointString: String,
+    data: JSONObject,
+): ByteArray? {
+    val endpoint = StudyScreenEndpoint.from(endpointString) ?: return null
+    return when (endpoint) {
+        StudyScreenEndpoint.GET_CURRENT_CARD_ID -> {
+            val cardId = viewModel.currentCard.await().id
+            JsApiHandler.result(cardId)
+        }
+        StudyScreenEndpoint.SHOW_SNACKBAR -> {
+            val message = data.getString("data")
+            viewModel.actionFeedbackFlow.emit(message)
+            JsApiHandler.success()
+        }
     }
 }
