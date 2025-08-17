@@ -18,6 +18,7 @@ package com.ichi2.anki.ui.windows.reviewer.jsapi.endpoints
 enum class DeckEndpoint(
     override val value: String,
 ) : Endpoint {
+    GET_ID("getId"),
     GET_NAME("getName"),
     IS_FILTERED("isFiltered"),
     ;

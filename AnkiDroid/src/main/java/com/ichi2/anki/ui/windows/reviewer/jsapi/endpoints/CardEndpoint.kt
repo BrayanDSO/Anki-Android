@@ -18,6 +18,7 @@ package com.ichi2.anki.ui.windows.reviewer.jsapi.endpoints
 enum class CardEndpoint(
     override val value: String,
 ) : Endpoint {
+    GET_ID("getId"),
     IS_MARKED("isMarked"),
     GET_FLAG("getFlag"),
     GET_REPS("getReps"),

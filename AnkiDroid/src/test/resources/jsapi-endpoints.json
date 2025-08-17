@@ -1,6 +1,5 @@
 {
   "studyScreen": [
-    "getCurrentCardId",
     "showSnackbar",
     "getNewCount",
     "getLrnCount",
@@ -19,6 +18,7 @@
     "isNetworkMetered"
   ],
   "card": [
+    "getId",
     "isMarked",
     "getFlag",
     "getReps",
@@ -40,10 +40,12 @@
     "toggleFlag"
   ],
   "deck": [
+    "getId",
     "getName",
     "isFiltered"
   ],
   "note": [
+    "getId",
     "bury",
     "suspend",
     "getTags",

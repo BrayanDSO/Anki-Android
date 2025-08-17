@@ -18,6 +18,7 @@ package com.ichi2.anki.ui.windows.reviewer.jsapi.endpoints
 enum class NoteEndpoint(
     override val value: String,
 ) : Endpoint {
+    GET_ID("getId"),
     BURY("bury"),
     SUSPEND("suspend"),
     GET_TAGS("getTags"),

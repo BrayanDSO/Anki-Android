@@ -82,10 +82,6 @@ private suspend fun handleStudyScreenRequest(
 ): ByteArray? {
     val endpoint = StudyScreenEndpoint.from(endpointString) ?: return null
     return when (endpoint) {
-        StudyScreenEndpoint.GET_CURRENT_CARD_ID -> {
-            val cardId = viewModel.currentCard.await().id
-            JsApi.result(cardId)
-        }
         StudyScreenEndpoint.GET_NEW_COUNT -> JsApi.result(viewModel.countsFlow.value.first.new)
         StudyScreenEndpoint.GET_LRN_COUNT -> JsApi.result(viewModel.countsFlow.value.first.lrn)
         StudyScreenEndpoint.GET_REV_COUNT -> JsApi.result(viewModel.countsFlow.value.first.rev)
@@ -102,7 +98,7 @@ private suspend fun handleStudyScreenRequest(
         }
         StudyScreenEndpoint.IS_SHOWING_ANSWER -> JsApi.result(viewModel.showingAnswer.value)
         StudyScreenEndpoint.GET_NEXT_TIME -> {
-            val ratingNumber = data!!.getInt("data")
+            val ratingNumber = data!!.getInt("data") - 1
             val rating = CardAnswer.Rating.forNumber(ratingNumber)
             val queueState = viewModel.queueState.await() ?: return JsApi.fail()
             val nextTimes = AnswerButtonsNextTime.from(queueState)
@@ -117,12 +113,12 @@ private suspend fun handleStudyScreenRequest(
             JsApi.result(nextTime)
         }
         StudyScreenEndpoint.CARD_INFO -> {
-            val cardId = data!!.getLong("data")
+            val cardId = data?.getLong("data")
             viewModel.emitCardInfoDestination(cardId)
             JsApi.success()
         }
         StudyScreenEndpoint.EDIT_NOTE -> {
-            val cardId = data!!.getLong("data")
+            val cardId = data?.getLong("data")
             viewModel.emitEditNoteDestination(cardId)
             JsApi.success()
         }

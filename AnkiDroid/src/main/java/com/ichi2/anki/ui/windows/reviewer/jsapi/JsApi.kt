@@ -19,6 +19,7 @@ package com.ichi2.anki.ui.windows.reviewer.jsapi
 import com.ichi2.anki.AnkiDroidApp
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.Flag
+import com.ichi2.anki.common.utils.ext.getLongOrNull
 import com.ichi2.anki.common.utils.ext.getStringOrNull
 import com.ichi2.anki.libanki.Card
 import com.ichi2.anki.libanki.Note
@@ -34,6 +35,7 @@ import com.ichi2.anki.utils.ext.setUserFlagForCards
 import com.ichi2.themes.Themes
 import com.ichi2.utils.NetworkUtils
 import org.json.JSONObject
+import timber.log.Timber
 
 object JsApi {
     private const val CURRENT_VERSION = "0.0.4"
@@ -70,31 +72,40 @@ object JsApi {
         return when (base) {
             CardEndpoint.BASE -> {
                 val cardEndpoint = CardEndpoint.from(endpoint) ?: return null
-                handleCardMethods(request.data!!, cardEndpoint)
+                handleCardMethods(request.data, cardEndpoint)
             }
             NoteEndpoint.BASE -> {
                 val noteEndpoint = NoteEndpoint.from(endpoint) ?: return null
-                handleNoteMethods(request.data!!, noteEndpoint)
+                handleNoteMethods(request.data, noteEndpoint)
             }
             DeckEndpoint.BASE -> {
                 val deckEndpoint = DeckEndpoint.from(endpoint) ?: return null
-                handleDeckMethods(request.data!!, deckEndpoint)
+                handleDeckMethods(request.data, deckEndpoint)
             }
             AndroidEndpoint.BASE -> {
                 val androidEndpoint = AndroidEndpoint.from(endpoint) ?: return null
                 handleAndroidEndpoints(androidEndpoint)
             }
-            else -> null
+            else -> {
+                Timber.w("Unhandled base: %s", base)
+                null
+            }
         }
     }
 
     private suspend fun handleCardMethods(
-        data: JSONObject,
+        data: JSONObject?,
         endpoint: CardEndpoint,
     ): ByteArray? {
-        val cardId = data.getLong("id")
-        val card = withCol { Card(this, cardId) }
+        val cardId = data?.getLongOrNull("id")
+        val card =
+            if (cardId != null) {
+                withCol { Card(this, cardId) }
+            } else {
+                getTopCard() ?: return null
+            }
         return when (endpoint) {
+            CardEndpoint.GET_ID -> result(card.id)
             CardEndpoint.GET_NID -> result(card.nid)
             CardEndpoint.GET_FLAG -> result(card.flag.code)
             CardEndpoint.GET_REPS -> result(card.reps)
@@ -110,7 +121,7 @@ object JsApi {
             CardEndpoint.GET_LAPSES -> result(card.lapses)
             CardEndpoint.GET_DUE -> result(card.due)
             CardEndpoint.BURY -> {
-                val count = undoableOp { sched.buryCards(cids = listOf(cardId)) }.count
+                val count = undoableOp { sched.buryCards(cids = listOf(card.id)) }.count
                 result(count)
             }
             CardEndpoint.IS_MARKED -> {
@@ -118,7 +129,7 @@ object JsApi {
                 result(isMarked)
             }
             CardEndpoint.SUSPEND -> {
-                val count = undoableOp { sched.suspendCards(ids = listOf(cardId)) }.count
+                val count = undoableOp { sched.suspendCards(ids = listOf(card.id)) }.count
                 result(count)
             }
             CardEndpoint.RESET_PROGRESS -> {
@@ -128,7 +139,7 @@ object JsApi {
                 success()
             }
             CardEndpoint.TOGGLE_FLAG -> {
-                val requestBody = data.getJSONObject("data")
+                val requestBody = data?.getJSONObject("data") ?: return fail()
                 val requestFlag = requestBody.getInt("flag")
                 val currentFlag = card.flag
                 val newFlag = if (requestFlag == currentFlag.code) Flag.NONE else Flag.fromCode(requestFlag)
@@ -139,12 +150,19 @@ object JsApi {
     }
 
     private suspend fun handleNoteMethods(
-        data: JSONObject,
+        data: JSONObject?,
         endpoint: NoteEndpoint,
     ): ByteArray? {
-        val noteId = data.getLong("id")
-        val note = withCol { Note(this, noteId) }
+        val noteId = data?.getLongOrNull("id")
+        val note =
+            if (noteId != null) {
+                withCol { Note(this, noteId) }
+            } else {
+                val topCard = getTopCard() ?: return null
+                withCol { topCard.note(this) }
+            }
         return when (endpoint) {
+            NoteEndpoint.GET_ID -> result(note.id)
             NoteEndpoint.BURY -> {
                 val count = undoableOp { sched.buryNotes(listOf(note.id)) }.count
                 result(count)
@@ -158,7 +176,7 @@ object JsApi {
                 result(tags)
             }
             NoteEndpoint.SET_TAGS -> {
-                val tags = data.getString("data")
+                val tags = data?.getString("data") ?: return fail()
                 undoableOp {
                     note.setTagsFromStr(this, tags)
                     updateNote(note)
@@ -173,12 +191,13 @@ object JsApi {
     }
 
     private suspend fun handleDeckMethods(
-        data: JSONObject,
+        data: JSONObject?,
         endpoint: DeckEndpoint,
     ): ByteArray? {
-        val deckId = data.getLong("id")
+        val deckId = data?.getLongOrNull("id") ?: getTopCard()?.did ?: return null
         val deck = withCol { decks.get(deckId) } ?: return null
         return when (endpoint) {
+            DeckEndpoint.GET_ID -> result(deck.id)
             DeckEndpoint.GET_NAME -> result(deck.name)
             DeckEndpoint.IS_FILTERED -> result(deck.isFiltered)
         }
@@ -189,6 +208,8 @@ object JsApi {
             AndroidEndpoint.IS_SYSTEM_IN_DARK_MODE -> result(Themes.systemIsInNightMode(AnkiDroidApp.instance))
             AndroidEndpoint.IS_NETWORK_METERED -> result(NetworkUtils.isActiveNetworkMetered())
         }
+
+    private suspend fun getTopCard() = withCol { sched }.currentQueueState()?.topCard
 
     // region Helpers
     fun result(
