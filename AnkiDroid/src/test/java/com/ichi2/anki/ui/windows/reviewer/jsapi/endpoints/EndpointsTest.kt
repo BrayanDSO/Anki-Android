@@ -1,0 +1,67 @@
+/*
+ * Copyright (c) 2025 Brayan Oliveira <69634269+brayandso@users.noreply.github.con>
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 3 of the License, or (at your option) any later
+ * version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+package com.ichi2.anki.ui.windows.reviewer.jsapi.endpoints
+
+import com.ichi2.anki.common.utils.ext.stringIterable
+import com.ichi2.utils.FileOperation.Companion.getFileResource
+import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.containsInAnyOrder
+import org.json.JSONObject
+import org.junit.Test
+import timber.log.Timber
+import java.io.File
+
+class EndpointsTest {
+    @Test
+    fun `endpoints JSON file matches Kotlin enums`() {
+        val file = File(getFileResource("jsapi-endpoints.json"))
+        val endpointsJson = JSONObject(file.readText())
+        val topLevelKeys =
+            endpointsJson
+                .keys()
+                .asSequence()
+                .toList()
+                .toTypedArray()
+
+        val endpointEnums =
+            mapOf(
+                AndroidEndpoint.BASE to AndroidEndpoint.entries,
+                CardEndpoint.BASE to CardEndpoint.entries,
+                DeckEndpoint.BASE to DeckEndpoint.entries,
+                NoteEndpoint.BASE to NoteEndpoint.entries,
+                StudyScreenEndpoint.BASE to StudyScreenEndpoint.entries,
+                TtsEndpoint.BASE to TtsEndpoint.entries,
+            )
+        assertThat(endpointEnums.keys, containsInAnyOrder(*topLevelKeys))
+
+        endpointEnums.forEach { (base, entries) ->
+            Timber.i("Verifying endpoints for: $base")
+            val jsonEndpoints =
+                endpointsJson
+                    .getJSONArray(base)
+                    .stringIterable()
+                    .toList()
+                    .toTypedArray()
+            val enumEndpoints = entries.map { it.value }
+
+            assertThat(
+                "Enum endpoints for '$base' should match the JSON keys",
+                enumEndpoints,
+                containsInAnyOrder(*jsonEndpoints),
+            )
+        }
+    }
+}

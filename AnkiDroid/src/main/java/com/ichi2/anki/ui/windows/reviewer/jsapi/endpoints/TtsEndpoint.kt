@@ -15,19 +15,18 @@
  */
 package com.ichi2.anki.ui.windows.reviewer.jsapi.endpoints
 
-enum class NoteEndpoint(
+enum class TtsEndpoint(
     override val value: String,
 ) : Endpoint {
-    BURY("bury"),
-    SUSPEND("suspend"),
-    GET_TAGS("getTags"),
-    SET_TAGS("setTags"),
-    TOGGLE_MARK("toggleMark"),
+    SPEAK("speak"),
+    SET_LANGUAGE("setLanguage"),
+    SET_PITCH("setPitch"),
+    SET_SPEECH_RATE("setSpeechRate"),
+    IS_SPEAKING("isSpeaking"),
+    STOP("stop"),
     ;
 
     companion object {
-        const val BASE = "note"
-
-        fun from(value: String): NoteEndpoint? = entries.firstOrNull { it.value == value }
+        const val BASE = "tts"
     }
 }

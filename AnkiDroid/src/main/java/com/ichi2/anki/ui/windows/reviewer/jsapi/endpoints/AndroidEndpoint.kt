@@ -16,8 +16,8 @@
 package com.ichi2.anki.ui.windows.reviewer.jsapi.endpoints
 
 enum class AndroidEndpoint(
-    val value: String,
-) {
+    override val value: String,
+) : Endpoint {
     IS_SYSTEM_IN_DARK_MODE("isSystemInDarkMode"),
     IS_NETWORK_METERED("isNetworkMetered"),
     ;

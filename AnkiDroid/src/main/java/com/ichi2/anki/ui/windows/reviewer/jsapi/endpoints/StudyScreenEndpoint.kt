@@ -16,8 +16,8 @@
 package com.ichi2.anki.ui.windows.reviewer.jsapi.endpoints
 
 enum class StudyScreenEndpoint(
-    val value: String,
-) {
+    override val value: String,
+) : Endpoint {
     GET_CURRENT_CARD_ID("getCurrentCardId"),
     SHOW_SNACKBAR("showSnackbar"),
     GET_NEW_COUNT("getNewCount"),
@@ -26,7 +26,7 @@ enum class StudyScreenEndpoint(
     SHOW_ANSWER("showAnswer"),
     ANSWER("answer"),
     IS_SHOWING_ANSWER("isShowingAnswer"),
-    GET_NEXT_TIME("rating"),
+    GET_NEXT_TIME("getNextTime"),
     CARD_INFO("cardInfo"),
     EDIT_NOTE("editNote"),
     SEARCH("search"),

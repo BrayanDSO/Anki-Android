@@ -1,0 +1,61 @@
+{
+  "studyScreen": [
+    "getCurrentCardId",
+    "showSnackbar",
+    "getNewCount",
+    "getLrnCount",
+    "getRevCount",
+    "showAnswer",
+    "answer",
+    "isShowingAnswer",
+    "getNextTime",
+    "cardInfo",
+    "editNote",
+    "search",
+    "setBackgroundColor"
+  ],
+  "android": [
+    "isSystemInDarkMode",
+    "isNetworkMetered"
+  ],
+  "card": [
+    "isMarked",
+    "getFlag",
+    "getReps",
+    "getInterval",
+    "getFactor",
+    "getMod",
+    "getNid",
+    "getType",
+    "getDid",
+    "getLeft",
+    "getOdid",
+    "getOdue",
+    "getQueue",
+    "getLapses",
+    "getDue",
+    "bury",
+    "suspend",
+    "resetProgress",
+    "toggleFlag"
+  ],
+  "deck": [
+    "getName",
+    "isFiltered"
+  ],
+  "note": [
+    "bury",
+    "suspend",
+    "getTags",
+    "setTags",
+    "toggleMark"
+  ],
+  "tts": [
+    "speak",
+    "setLanguage",
+    "setPitch",
+    "setSpeechRate",
+    "isSpeaking",
+    "stop"
+  ]
+}

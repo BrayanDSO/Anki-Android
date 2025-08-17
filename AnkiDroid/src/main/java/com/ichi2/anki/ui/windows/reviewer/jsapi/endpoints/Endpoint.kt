@@ -15,19 +15,6 @@
  */
 package com.ichi2.anki.ui.windows.reviewer.jsapi.endpoints
 
-enum class NoteEndpoint(
-    override val value: String,
-) : Endpoint {
-    BURY("bury"),
-    SUSPEND("suspend"),
-    GET_TAGS("getTags"),
-    SET_TAGS("setTags"),
-    TOGGLE_MARK("toggleMark"),
-    ;
-
-    companion object {
-        const val BASE = "note"
-
-        fun from(value: String): NoteEndpoint? = entries.firstOrNull { it.value == value }
-    }
+interface Endpoint {
+    val value: String
 }
