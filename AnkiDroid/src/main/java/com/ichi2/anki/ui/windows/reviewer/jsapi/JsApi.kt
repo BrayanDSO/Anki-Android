@@ -35,7 +35,7 @@ import com.ichi2.themes.Themes
 import com.ichi2.utils.NetworkUtils
 import org.json.JSONObject
 
-object JsApiHandler {
+object JsApi {
     private const val CURRENT_VERSION = "0.0.4"
     private const val VALUE_KEY = "value"
     private const val SUCCESS_KEY = "success"
@@ -211,6 +211,8 @@ object JsApiHandler {
     ): ByteArray = buildApiResponse(success, value)
 
     fun success(): ByteArray = buildApiResponse(true, null)
+
+    fun fail(): ByteArray = buildApiResponse(false, null)
 
     private fun buildApiResponse(
         success: Boolean,

@@ -202,8 +202,7 @@
   // src/types/android.ts
   var androidEndpoints = {
     IS_SYSTEM_IN_DARK_MODE: "isSystemInDarkMode",
-    IS_NETWORK_METERED: "isNetworkMetered",
-    SHOW_SNACKBAR: "showSnackbar"
+    IS_NETWORK_METERED: "isNetworkMetered"
   };
   var Android = class {
     constructor(handler) {
@@ -222,13 +221,6 @@
        * @returns whether the system is using night mode.
        */
       this.isSystemInDarkMode = () => this.handleRequest(androidEndpoints.IS_SYSTEM_IN_DARK_MODE);
-      /**
-       * Shows an Android dismissable snackbar.
-       * @param message the message to be shown in the snackbar.
-       * @param duration the duration in milliseconds to show the snackbar.
-       * For Android standard durations, use 0 for long, -1 for short, and -2 for indefinite.
-       */
-      this.showSnackbar = (message, duration) => this.handleRequest(androidEndpoints.SHOW_SNACKBAR, { message, duration });
       /**
        * @returns whether the active network is metered
        */
@@ -262,6 +254,13 @@
       this.getDeck = (id) => new Deck(this, id);
       this.openCardInfo = (cardId) => this.request("cardInfo", cardId);
       this.editNote = (noteId) => this.request("editNote", noteId);
+      /**
+       * Shows an Android dismissable snackbar.
+       * @param message the message to be shown in the snackbar.
+       * @param duration the duration in milliseconds to show the snackbar.
+       * For Android standard durations, use 0 for long, -1 for short, and -2 for indefinite.
+       */
+      this.showSnackbar = (message, duration) => this.request("studyScreen/showSnackbar", { message, duration });
       this.android = new Android(this);
       this.card = this.createProxy(this.cardPromise);
       this.note = this.createProxy(this.notePromise);
@@ -298,7 +297,7 @@
     }
     createProxy(promise) {
       return new Proxy({}, {
-        get: (target, prop) => {
+        get: (_target, prop) => {
           return async (...args) => {
             const obj = await promise;
             return obj[prop](...args);

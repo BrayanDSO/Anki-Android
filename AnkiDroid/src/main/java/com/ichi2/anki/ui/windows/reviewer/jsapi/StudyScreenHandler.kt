@@ -26,29 +26,29 @@ suspend fun ReviewerViewModel.handleJsApiRequest(
 ): ByteArray {
     val path = uri.substring(AnkiServer.ANKIDROID_JS_PREFIX.length)
     val (base, endpoint) = path.split('/', limit = 2)
-    val request = JsApiHandler.parseRequest(bytes)
+    val request = JsApi.parseRequest(bytes)
 
     return when (base) {
-        StudyScreenEndpoint.BASE -> handleStudyScreenRequest(this, endpoint, request.data!!)
-        else -> JsApiHandler.handleRequest(base, endpoint, bytes)
+        StudyScreenEndpoint.BASE -> handleStudyScreenRequest(this, endpoint, request.data)
+        else -> JsApi.handleRequest(base, endpoint, bytes)
     } ?: byteArrayOf()
 }
 
 private suspend fun handleStudyScreenRequest(
     viewModel: ReviewerViewModel,
     endpointString: String,
-    data: JSONObject,
+    data: JSONObject?,
 ): ByteArray? {
     val endpoint = StudyScreenEndpoint.from(endpointString) ?: return null
     return when (endpoint) {
         StudyScreenEndpoint.GET_CURRENT_CARD_ID -> {
             val cardId = viewModel.currentCard.await().id
-            JsApiHandler.result(cardId)
+            JsApi.result(cardId)
         }
         StudyScreenEndpoint.SHOW_SNACKBAR -> {
-            val message = data.getString("data")
+            val message = data?.getString("message") ?: return JsApi.fail()
             viewModel.actionFeedbackFlow.emit(message)
-            JsApiHandler.success()
+            JsApi.success()
         }
     }
 }
