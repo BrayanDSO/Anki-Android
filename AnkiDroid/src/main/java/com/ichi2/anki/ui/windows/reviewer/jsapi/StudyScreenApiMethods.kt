@@ -62,8 +62,13 @@ private fun ReviewerFragment.handleJsUiRequest(request: UiRequest): ByteArray {
             JsApi.success()
         }
         Endpoint.StudyScreen.SET_BACKGROUND_COLOR -> {
-            val hex = request.data?.getString("data") ?: return JsApi.fail("Missing hex")
-            val color = hex.toColorInt()
+            val hex = request.data?.getString("data") ?: return JsApi.fail("Missing hex code")
+            val color =
+                try {
+                    hex.toColorInt()
+                } catch (_: IllegalArgumentException) {
+                    return JsApi.fail("Invalid hex code")
+                }
             view?.setBackgroundColor(color)
             JsApi.success()
         }
