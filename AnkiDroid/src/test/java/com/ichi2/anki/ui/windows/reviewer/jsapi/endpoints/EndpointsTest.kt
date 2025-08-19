@@ -27,7 +27,7 @@ import java.io.File
 class EndpointsTest {
     @Test
     fun `endpoints JSON file matches Kotlin enums`() {
-        val file = File(getFileResource("jsapi-endpoints.json"))
+        val file = File(getFileResource("js-api-endpoints.json"))
         val endpointsJson = JSONObject(file.readText())
         val topLevelKeys =
             endpointsJson
