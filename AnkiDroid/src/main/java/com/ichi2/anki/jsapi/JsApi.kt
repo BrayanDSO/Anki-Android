@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.ichi2.anki.ui.windows.reviewer.jsapi
+package com.ichi2.anki.jsapi
 
 import android.speech.tts.TextToSpeech
 import com.ichi2.anki.AnkiDroidApp
@@ -30,7 +30,6 @@ import com.ichi2.anki.libanki.Note
 import com.ichi2.anki.observability.undoableOp
 import com.ichi2.anki.servicelayer.MARKED_TAG
 import com.ichi2.anki.servicelayer.NoteService
-import com.ichi2.anki.ui.windows.reviewer.jsapi.Endpoint
 import com.ichi2.anki.utils.ext.flag
 import com.ichi2.anki.utils.ext.setUserFlagForCards
 import com.ichi2.themes.Themes

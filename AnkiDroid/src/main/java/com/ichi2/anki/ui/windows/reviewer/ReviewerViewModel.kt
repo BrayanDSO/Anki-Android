@@ -27,6 +27,7 @@ import com.ichi2.anki.Flag
 import com.ichi2.anki.Reviewer
 import com.ichi2.anki.asyncIO
 import com.ichi2.anki.common.time.TimeManager
+import com.ichi2.anki.jsapi.UiRequest
 import com.ichi2.anki.launchCatchingIO
 import com.ichi2.anki.libanki.Card
 import com.ichi2.anki.libanki.CardId
@@ -57,8 +58,6 @@ import com.ichi2.anki.servicelayer.isBuryNoteAvailable
 import com.ichi2.anki.servicelayer.isSuspendNoteAvailable
 import com.ichi2.anki.settings.Prefs
 import com.ichi2.anki.ui.windows.reviewer.autoadvance.AutoAdvance
-import com.ichi2.anki.ui.windows.reviewer.jsapi.UiRequest
-import com.ichi2.anki.ui.windows.reviewer.jsapi.handleJsApiRequest
 import com.ichi2.anki.utils.CollectionPreferences
 import com.ichi2.anki.utils.Destination
 import com.ichi2.anki.utils.ext.answerCard

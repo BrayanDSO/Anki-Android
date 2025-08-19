@@ -13,13 +13,14 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.ichi2.anki.ui.windows.reviewer.jsapi
+package com.ichi2.anki.jsapi
 
-import kotlinx.coroutines.CompletableDeferred
-import org.json.JSONObject
+sealed class InvalidContractException : IllegalArgumentException() {
+    class VersionError(
+        val version: String?,
+    ) : InvalidContractException()
 
-data class UiRequest(
-    val endpoint: Endpoint.StudyScreen,
-    val data: JSONObject?,
-    val result: CompletableDeferred<ByteArray>,
-)
+    class ContactError(
+        val developer: String?,
+    ) : InvalidContractException()
+}

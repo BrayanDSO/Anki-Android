@@ -15,6 +15,7 @@
  */
 package com.ichi2.anki.ui.windows.reviewer.jsapi
 
+import com.ichi2.anki.jsapi.Endpoint
 import com.ichi2.utils.FileOperation.Companion.getFileResource
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsInAnyOrder

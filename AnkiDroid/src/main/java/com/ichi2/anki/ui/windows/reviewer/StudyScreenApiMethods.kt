@@ -13,18 +13,18 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.ichi2.anki.ui.windows.reviewer.jsapi
+package com.ichi2.anki.ui.windows.reviewer
 
 import androidx.core.graphics.toColorInt
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import anki.scheduler.CardAnswer
 import com.ichi2.anki.common.utils.ext.getIntOrNull
+import com.ichi2.anki.jsapi.Endpoint
+import com.ichi2.anki.jsapi.JsApi
+import com.ichi2.anki.jsapi.UiRequest
 import com.ichi2.anki.pages.AnkiServer
 import com.ichi2.anki.snackbar.showSnackbar
-import com.ichi2.anki.ui.windows.reviewer.AnswerButtonsNextTime
-import com.ichi2.anki.ui.windows.reviewer.ReviewerFragment
-import com.ichi2.anki.ui.windows.reviewer.ReviewerViewModel
 import com.ichi2.anki.utils.ext.collectIn
 import com.ichi2.anki.utils.ext.window
 import kotlinx.coroutines.CompletableDeferred
