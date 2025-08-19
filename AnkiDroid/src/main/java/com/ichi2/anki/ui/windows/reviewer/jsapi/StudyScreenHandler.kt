@@ -19,6 +19,7 @@ import androidx.core.graphics.toColorInt
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import anki.scheduler.CardAnswer
+import com.ichi2.anki.common.utils.ext.getIntOrNull
 import com.ichi2.anki.pages.AnkiServer
 import com.ichi2.anki.snackbar.showSnackbar
 import com.ichi2.anki.ui.windows.reviewer.AnswerButtonsNextTime
@@ -47,24 +48,25 @@ suspend fun ReviewerViewModel.handleJsApiRequest(
     return when (base) {
         StudyScreenEndpoint.BASE -> handleStudyScreenRequest(this, endpoint, request.data)
         else -> JsApi.handleRequest(base, endpoint, bytes)
-    } ?: JsApi.fail()
+    }
 }
 
 private fun ReviewerFragment.handleJsRequest(request: UiRequest): ByteArray {
     return when (request.endpoint) {
         StudyScreenEndpoint.SHOW_SNACKBAR -> {
-            val text = request.data?.getString("text") ?: return JsApi.fail()
-            val duration = request.data.getInt("duration")
+            val data = request.data ?: return JsApi.fail("Missing request data")
+            val text = data.optString("text") ?: return JsApi.fail("Missing text")
+            val duration = data.getIntOrNull("duration") ?: return JsApi.fail("Missing duration")
             showSnackbar(text, duration)
             JsApi.success()
         }
         StudyScreenEndpoint.SET_BACKGROUND_COLOR -> {
-            val hex = request.data?.getString("data") ?: return JsApi.fail()
+            val hex = request.data?.getString("data") ?: return JsApi.fail("Missing hex")
             val color = hex.toColorInt()
             view?.setBackgroundColor(color)
             JsApi.success()
         }
-        else -> JsApi.fail()
+        else -> JsApi.fail("Unhandled API method")
     }
 }
 
@@ -79,14 +81,14 @@ private suspend fun handleStudyScreenRequest(
     viewModel: ReviewerViewModel,
     endpointString: String,
     data: JSONObject?,
-): ByteArray? {
-    val endpoint = StudyScreenEndpoint.from(endpointString) ?: return null
+): ByteArray {
+    val endpoint = StudyScreenEndpoint.from(endpointString) ?: return JsApi.fail("Invalid endpoint")
     return when (endpoint) {
-        StudyScreenEndpoint.GET_NEW_COUNT -> JsApi.result(viewModel.countsFlow.value.first.new)
-        StudyScreenEndpoint.GET_LRN_COUNT -> JsApi.result(viewModel.countsFlow.value.first.lrn)
-        StudyScreenEndpoint.GET_REV_COUNT -> JsApi.result(viewModel.countsFlow.value.first.rev)
+        StudyScreenEndpoint.GET_NEW_COUNT -> JsApi.success(viewModel.countsFlow.value.first.new)
+        StudyScreenEndpoint.GET_LRN_COUNT -> JsApi.success(viewModel.countsFlow.value.first.lrn)
+        StudyScreenEndpoint.GET_REV_COUNT -> JsApi.success(viewModel.countsFlow.value.first.rev)
         StudyScreenEndpoint.SHOW_ANSWER -> {
-            if (viewModel.showingAnswer.value) return JsApi.fail()
+            if (viewModel.showingAnswer.value) return JsApi.success()
             viewModel.onShowAnswer()
             JsApi.success()
         }
@@ -96,11 +98,11 @@ private suspend fun handleStudyScreenRequest(
             viewModel.answerCard(rating)
             JsApi.success()
         }
-        StudyScreenEndpoint.IS_SHOWING_ANSWER -> JsApi.result(viewModel.showingAnswer.value)
+        StudyScreenEndpoint.IS_SHOWING_ANSWER -> JsApi.success(viewModel.showingAnswer.value)
         StudyScreenEndpoint.GET_NEXT_TIME -> {
             val ratingNumber = data!!.getInt("data") - 1
             val rating = CardAnswer.Rating.forNumber(ratingNumber)
-            val queueState = viewModel.queueState.await() ?: return JsApi.fail()
+            val queueState = viewModel.queueState.await() ?: return JsApi.fail("There is no card at top of the queue")
             val nextTimes = AnswerButtonsNextTime.from(queueState)
             val nextTime =
                 when (rating) {
@@ -108,9 +110,9 @@ private suspend fun handleStudyScreenRequest(
                     CardAnswer.Rating.HARD -> nextTimes.hard
                     CardAnswer.Rating.GOOD -> nextTimes.good
                     CardAnswer.Rating.EASY -> nextTimes.easy
-                    CardAnswer.Rating.UNRECOGNIZED -> return JsApi.fail()
+                    CardAnswer.Rating.UNRECOGNIZED -> return JsApi.fail("Invalid rating")
                 }
-            JsApi.result(nextTime)
+            JsApi.success(nextTime)
         }
         StudyScreenEndpoint.CARD_INFO -> {
             val cardId = data?.getLong("data")
@@ -133,7 +135,7 @@ private suspend fun handleStudyScreenRequest(
             // e.g. the fragment uses flowWithLifecycle and is at a different lifecycleState
             withTimeoutOrNull(2000L) {
                 result.await()
-            } ?: JsApi.fail()
+            } ?: JsApi.fail("Method was not handled")
         }
     }
 }

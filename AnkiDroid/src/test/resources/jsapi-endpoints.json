@@ -1,63 +1,50 @@
 {
-  "studyScreen": [
-    "showSnackbar",
-    "getNewCount",
-    "getLrnCount",
-    "getRevCount",
-    "showAnswer",
-    "answer",
-    "isShowingAnswer",
-    "getNextTime",
-    "cardInfo",
-    "editNote",
-    "search",
-    "setBackgroundColor"
-  ],
-  "android": [
-    "isSystemInDarkMode",
-    "isNetworkMetered"
-  ],
-  "card": [
-    "getId",
-    "isMarked",
-    "getFlag",
-    "getReps",
-    "getInterval",
-    "getFactor",
-    "getMod",
-    "getNid",
-    "getType",
-    "getDid",
-    "getLeft",
-    "getOdid",
-    "getOdue",
-    "getQueue",
-    "getLapses",
-    "getDue",
-    "bury",
-    "suspend",
-    "resetProgress",
-    "toggleFlag"
-  ],
-  "deck": [
-    "getId",
-    "getName",
-    "isFiltered"
-  ],
-  "note": [
-    "getId",
-    "bury",
-    "suspend",
-    "getTags",
-    "setTags",
-    "toggleMark"
-  ],
-  "tts": [
-    "speak",
-    "setLanguage",
-    "setPitch",
-    "setSpeechRate",
-    "isSpeaking",
-    "stop"
-  ]
+  "android": {
+    "is-system-in-dark-mode": "boolean",
+    "is-network-metered": "boolean"
+  },
+  "card": {
+    "get-id": "number",
+    "is-marked": "boolean",
+    "get-flag": "number",
+    "get-reps": "number",
+    "get-interval": "number",
+    "get-factor": "number",
+    "get-mod": "number",
+    "get-nid": "number",
+    "get-type": "number",
+    "get-did": "number",
+    "get-left": "string",
+    "get-o-did": "number",
+    "get-o-due": "number",
+    "get-queue": "number",
+    "get-lapses": "number",
+    "get-due": "number",
+    "bury": "number",
+    "suspend": "number",
+    "reset-progress": "void",
+    "toggle-flag": "void",
+    "answer": "void"
+  },
+  "deck": {
+    "get-id": "number",
+    "get-name": "string",
+    "is-filtered": "boolean"
+  },
+  "note": {
+    "get-id": "number",
+    "bury": "number",
+    "suspend": "number",
+    "get-tags": "string",
+    "set-tags": "void",
+    "toggle-mark": "void"
+  },
+  "tts": {
+    "speak": "void",
+    "set-language": "void",
+    "set-pitch": "void",
+    "set-speech-rate": "void",
+    "is-speaking": "void",
+    "stop": "void"
+  }
 }

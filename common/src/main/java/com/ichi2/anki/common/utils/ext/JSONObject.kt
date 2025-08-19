@@ -132,3 +132,18 @@ fun JSONObject.getLongOrNull(key: String): Long? {
         null
     }
 }
+
+/**
+ * @return `null` if:
+ * * The key does not exist
+ * * The value is [null][JSONObject.NULL]
+ */
+fun JSONObject.getIntOrNull(key: String): Int? {
+    if (!has(key)) return null
+    if (isNull(key)) return null
+    return try {
+        getInt(key)
+    } catch (_: Exception) {
+        null
+    }
+}

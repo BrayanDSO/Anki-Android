@@ -39,8 +39,9 @@ import timber.log.Timber
 
 object JsApi {
     private const val CURRENT_VERSION = "0.0.4"
-    private const val VALUE_KEY = "value"
     private const val SUCCESS_KEY = "success"
+    private const val VALUE_KEY = "value"
+    private const val ERROR_KEY = "error"
 
     fun parseRequest(byteArray: ByteArray): JsApiRequest {
         val requestBody = JSONObject(byteArray.decodeToString())
@@ -66,29 +67,29 @@ object JsApi {
         base: String,
         endpoint: String,
         bytes: ByteArray,
-    ): ByteArray? {
+    ): ByteArray {
         val request = parseRequest(bytes)
 
         return when (base) {
             CardEndpoint.BASE -> {
-                val cardEndpoint = CardEndpoint.from(endpoint) ?: return null
+                val cardEndpoint = CardEndpoint.from(endpoint) ?: return fail("Invalid Card endpoint")
                 handleCardMethods(request.data, cardEndpoint)
             }
             NoteEndpoint.BASE -> {
-                val noteEndpoint = NoteEndpoint.from(endpoint) ?: return null
+                val noteEndpoint = NoteEndpoint.from(endpoint) ?: return fail("Invalid Note endpoint")
                 handleNoteMethods(request.data, noteEndpoint)
             }
             DeckEndpoint.BASE -> {
-                val deckEndpoint = DeckEndpoint.from(endpoint) ?: return null
+                val deckEndpoint = DeckEndpoint.from(endpoint) ?: return fail("Invalid Deck endpoint")
                 handleDeckMethods(request.data, deckEndpoint)
             }
             AndroidEndpoint.BASE -> {
-                val androidEndpoint = AndroidEndpoint.from(endpoint) ?: return null
+                val androidEndpoint = AndroidEndpoint.from(endpoint) ?: return fail("Invalid Android endpoint")
                 handleAndroidEndpoints(androidEndpoint)
             }
             else -> {
                 Timber.w("Unhandled base: %s", base)
-                null
+                fail("Unhandled base")
             }
         }
     }
@@ -96,41 +97,41 @@ object JsApi {
     private suspend fun handleCardMethods(
         data: JSONObject?,
         endpoint: CardEndpoint,
-    ): ByteArray? {
+    ): ByteArray {
         val cardId = data?.getLongOrNull("id")
         val card =
             if (cardId != null) {
                 withCol { Card(this, cardId) }
             } else {
-                getTopCard() ?: return null
+                getTopCard() ?: return fail("There is no card at top of the queue")
             }
         return when (endpoint) {
-            CardEndpoint.GET_ID -> result(card.id)
-            CardEndpoint.GET_NID -> result(card.nid)
-            CardEndpoint.GET_FLAG -> result(card.flag.code)
-            CardEndpoint.GET_REPS -> result(card.reps)
-            CardEndpoint.GET_INTERVAL -> result(card.ivl)
-            CardEndpoint.GET_FACTOR -> result(card.factor)
-            CardEndpoint.GET_MOD -> result(card.mod)
-            CardEndpoint.GET_TYPE -> result(card.type.code)
-            CardEndpoint.GET_DID -> result(card.did)
-            CardEndpoint.GET_LEFT -> result(card.left)
-            CardEndpoint.GET_ODID -> result(card.oDid)
-            CardEndpoint.GET_ODUE -> result(card.oDue)
-            CardEndpoint.GET_QUEUE -> result(card.queue.code)
-            CardEndpoint.GET_LAPSES -> result(card.lapses)
-            CardEndpoint.GET_DUE -> result(card.due)
+            CardEndpoint.GET_ID -> success(card.id)
+            CardEndpoint.GET_NID -> success(card.nid)
+            CardEndpoint.GET_FLAG -> success(card.flag.code)
+            CardEndpoint.GET_REPS -> success(card.reps)
+            CardEndpoint.GET_INTERVAL -> success(card.ivl)
+            CardEndpoint.GET_FACTOR -> success(card.factor)
+            CardEndpoint.GET_MOD -> success(card.mod)
+            CardEndpoint.GET_TYPE -> success(card.type.code)
+            CardEndpoint.GET_DID -> success(card.did)
+            CardEndpoint.GET_LEFT -> success(card.left)
+            CardEndpoint.GET_ODID -> success(card.oDid)
+            CardEndpoint.GET_ODUE -> success(card.oDue)
+            CardEndpoint.GET_QUEUE -> success(card.queue.code)
+            CardEndpoint.GET_LAPSES -> success(card.lapses)
+            CardEndpoint.GET_DUE -> success(card.due)
             CardEndpoint.BURY -> {
                 val count = undoableOp { sched.buryCards(cids = listOf(card.id)) }.count
-                result(count)
+                success(count)
             }
             CardEndpoint.IS_MARKED -> {
                 val isMarked = withCol { card.note(this).hasTag(this, MARKED_TAG) }
-                result(isMarked)
+                success(isMarked)
             }
             CardEndpoint.SUSPEND -> {
                 val count = undoableOp { sched.suspendCards(ids = listOf(card.id)) }.count
-                result(count)
+                success(count)
             }
             CardEndpoint.RESET_PROGRESS -> {
                 undoableOp {
@@ -139,7 +140,7 @@ object JsApi {
                 success()
             }
             CardEndpoint.TOGGLE_FLAG -> {
-                val requestBody = data?.getJSONObject("data") ?: return fail()
+                val requestBody = data?.getJSONObject("data") ?: return fail("Missing data")
                 val requestFlag = requestBody.getInt("flag")
                 val currentFlag = card.flag
                 val newFlag = if (requestFlag == currentFlag.code) Flag.NONE else Flag.fromCode(requestFlag)
@@ -152,31 +153,31 @@ object JsApi {
     private suspend fun handleNoteMethods(
         data: JSONObject?,
         endpoint: NoteEndpoint,
-    ): ByteArray? {
+    ): ByteArray {
         val noteId = data?.getLongOrNull("id")
         val note =
             if (noteId != null) {
                 withCol { Note(this, noteId) }
             } else {
-                val topCard = getTopCard() ?: return null
+                val topCard = getTopCard() ?: return fail("There is no card at top of the queue")
                 withCol { topCard.note(this) }
             }
         return when (endpoint) {
-            NoteEndpoint.GET_ID -> result(note.id)
+            NoteEndpoint.GET_ID -> success(note.id)
             NoteEndpoint.BURY -> {
                 val count = undoableOp { sched.buryNotes(listOf(note.id)) }.count
-                result(count)
+                success(count)
             }
             NoteEndpoint.SUSPEND -> {
                 val count = undoableOp { sched.suspendNotes(listOf(note.id)) }.count
-                result(count)
+                success(count)
             }
             NoteEndpoint.GET_TAGS -> {
                 val tags = withCol { note.stringTags(this) }
-                result(tags)
+                success(tags)
             }
             NoteEndpoint.SET_TAGS -> {
-                val tags = data?.getString("data") ?: return fail()
+                val tags = data?.getString("data") ?: return fail("Missing tags")
                 undoableOp {
                     note.setTagsFromStr(this, tags)
                     updateNote(note)
@@ -193,57 +194,48 @@ object JsApi {
     private suspend fun handleDeckMethods(
         data: JSONObject?,
         endpoint: DeckEndpoint,
-    ): ByteArray? {
-        val deckId = data?.getLongOrNull("id") ?: getTopCard()?.did ?: return null
-        val deck = withCol { decks.get(deckId) } ?: return null
+    ): ByteArray {
+        val deckId = data?.getLongOrNull("id") ?: getTopCard()?.did ?: return fail("There is no card at top of the queue")
+        val deck = withCol { decks.get(deckId) } ?: return fail("Found no deck with the id '$deckId'")
         return when (endpoint) {
-            DeckEndpoint.GET_ID -> result(deck.id)
-            DeckEndpoint.GET_NAME -> result(deck.name)
-            DeckEndpoint.IS_FILTERED -> result(deck.isFiltered)
+            DeckEndpoint.GET_ID -> success(deck.id)
+            DeckEndpoint.GET_NAME -> success(deck.name)
+            DeckEndpoint.IS_FILTERED -> success(deck.isFiltered)
         }
     }
 
-    private fun handleAndroidEndpoints(endpoint: AndroidEndpoint): ByteArray? =
+    private fun handleAndroidEndpoints(endpoint: AndroidEndpoint): ByteArray =
         when (endpoint) {
-            AndroidEndpoint.IS_SYSTEM_IN_DARK_MODE -> result(Themes.systemIsInNightMode(AnkiDroidApp.instance))
-            AndroidEndpoint.IS_NETWORK_METERED -> result(NetworkUtils.isActiveNetworkMetered())
+            AndroidEndpoint.IS_SYSTEM_IN_DARK_MODE -> success(Themes.systemIsInNightMode(AnkiDroidApp.instance))
+            AndroidEndpoint.IS_NETWORK_METERED -> success(NetworkUtils.isActiveNetworkMetered())
         }
 
     private suspend fun getTopCard() = withCol { sched }.currentQueueState()?.topCard
 
     // region Helpers
-    fun result(
-        value: Boolean,
-        success: Boolean = true,
-    ): ByteArray = buildApiResponse(success, value)
+    fun success() = successResult(null)
 
-    fun result(
-        value: Int,
-        success: Boolean = true,
-    ): ByteArray = buildApiResponse(success, value)
+    fun success(string: String) = successResult(string)
 
-    fun result(
-        value: Long,
-        success: Boolean = true,
-    ): ByteArray = buildApiResponse(success, value)
+    fun success(boolean: Boolean) = successResult(boolean)
 
-    fun result(
-        value: String,
-        success: Boolean = true,
-    ): ByteArray = buildApiResponse(success, value)
+    fun success(number: Int) = successResult(number)
 
-    fun success(): ByteArray = buildApiResponse(true, null)
+    fun success(number: Long) = successResult(number)
 
-    fun fail(): ByteArray = buildApiResponse(false, null)
-
-    private fun buildApiResponse(
-        success: Boolean,
-        value: Any?,
-    ): ByteArray =
+    private fun successResult(value: Any?): ByteArray =
         JSONObject()
             .apply {
-                put(SUCCESS_KEY, success)
-                value?.let { put(VALUE_KEY, it) }
+                put(SUCCESS_KEY, true)
+                put(VALUE_KEY, value)
+            }.toString()
+            .toByteArray()
+
+    fun fail(error: String): ByteArray =
+        JSONObject()
+            .apply {
+                put(SUCCESS_KEY, false)
+                put(ERROR_KEY, error)
             }.toString()
             .toByteArray()
     // endregion
