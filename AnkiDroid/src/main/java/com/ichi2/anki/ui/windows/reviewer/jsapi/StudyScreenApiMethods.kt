@@ -83,8 +83,8 @@ private fun ReviewerFragment.handleJsUiRequest(request: UiRequest): ByteArray {
                 }
             @Suppress("DEPRECATION") // the status bar is supposed to blend in with the
             // view background, which is what the study screen does by default. For setting just the
-            // status bar color, this is by far the most practical way. If this method stops working
-            // in a future version of Android, the API method should be deprecated.
+            // status bar color, this is by far the most practical way. If Window.setStatusBarColor
+            // stops working in a future version of Android, this API method should be deprecated.
             window.statusBarColor = color
             JsApi.success()
         }

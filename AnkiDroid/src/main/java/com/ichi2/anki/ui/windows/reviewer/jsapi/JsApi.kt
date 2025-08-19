@@ -233,7 +233,6 @@ object JsApi {
 
     private suspend fun getTopCard() = withCol { sched }.currentQueueState()?.topCard
 
-    // region Helpers
     fun success() = successResult(null)
 
     fun success(string: String) = successResult(string)
@@ -261,6 +260,4 @@ object JsApi {
             }.toString()
             .toByteArray()
     }
-
-    // endregion
 }
