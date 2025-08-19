@@ -5,7 +5,6 @@
   },
   "card": {
     "get-id": "number",
-    "is-marked": "boolean",
     "get-flag": "number",
     "get-reps": "number",
     "get-interval": "number",
@@ -20,6 +19,7 @@
     "get-queue": "number",
     "get-lapses": "number",
     "get-due": "number",
+    "is-marked": "boolean",
     "bury": "number",
     "suspend": "number",
     "reset-progress": "void",
@@ -42,16 +42,16 @@
     "show-snackbar": "void",
     "get-new-count": "number",
     "get-learning-count": "number",
-    "get-reviewing-count": "number",
+    "get-to-review-count": "number",
     "show-answer": "void",
     "is-showing-answer": "boolean",
     "get-next-time": "string",
-    "card-info": "void",
-    "edit-note": "void",
+    "open-card-info": "void",
+    "open-note-editor": "void",
     "search": "void",
     "set-background-color": "void",
     "answer": "void",
-    "undo": "string"
+    "undo": "void"
   },
   "tts": {
     "speak": "void",

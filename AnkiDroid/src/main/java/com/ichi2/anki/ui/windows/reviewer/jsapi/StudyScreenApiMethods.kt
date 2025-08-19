@@ -84,7 +84,7 @@ private suspend fun handleStudyScreenRequest(
     return when (endpoint) {
         Endpoint.StudyScreen.GET_NEW_COUNT -> JsApi.success(viewModel.countsFlow.value.first.new)
         Endpoint.StudyScreen.GET_LEARNING_COUNT -> JsApi.success(viewModel.countsFlow.value.first.lrn)
-        Endpoint.StudyScreen.GET_REVIEWING_COUNT -> JsApi.success(viewModel.countsFlow.value.first.rev)
+        Endpoint.StudyScreen.GET_TO_REVIEW_COUNT -> JsApi.success(viewModel.countsFlow.value.first.rev)
         Endpoint.StudyScreen.SHOW_ANSWER -> {
             if (viewModel.showingAnswer.value) return JsApi.success()
             viewModel.onShowAnswer()
@@ -112,12 +112,12 @@ private suspend fun handleStudyScreenRequest(
                 }
             JsApi.success(nextTime)
         }
-        Endpoint.StudyScreen.CARD_INFO -> {
+        Endpoint.StudyScreen.OPEN_CARD_INFO -> {
             val cardId = data?.getLong("data")
             viewModel.emitCardInfoDestination(cardId)
             JsApi.success()
         }
-        Endpoint.StudyScreen.EDIT_NOTE -> {
+        Endpoint.StudyScreen.OPEN_NOTE_EDITOR -> {
             val cardId = data?.getLong("data")
             viewModel.emitEditNoteDestination(cardId)
             JsApi.success()
