@@ -30,12 +30,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
 
-data class UiRequest(
-    val endpoint: Endpoint.StudyScreen,
-    val data: JSONObject?,
-    val result: CompletableDeferred<ByteArray>,
-)
-
 suspend fun ReviewerViewModel.handleJsApiRequest(
     uri: String,
     bytes: ByteArray,
@@ -51,7 +45,14 @@ suspend fun ReviewerViewModel.handleJsApiRequest(
     }
 }
 
-private fun ReviewerFragment.handleJsRequest(request: UiRequest): ByteArray {
+fun ReviewerFragment.setupJsApi() {
+    viewModel.apiRequestFlow.flowWithLifecycle(lifecycle).collectIn(lifecycleScope) { request ->
+        val result = handleJsUiRequest(request)
+        request.result.complete(result)
+    }
+}
+
+private fun ReviewerFragment.handleJsUiRequest(request: UiRequest): ByteArray {
     return when (request.endpoint) {
         Endpoint.StudyScreen.SHOW_SNACKBAR -> {
             val data = request.data ?: return JsApi.fail("Missing request data")
@@ -67,13 +68,6 @@ private fun ReviewerFragment.handleJsRequest(request: UiRequest): ByteArray {
             JsApi.success()
         }
         else -> JsApi.fail("Unhandled API method")
-    }
-}
-
-fun ReviewerFragment.setupJsApi() {
-    viewModel.apiRequestFlow.flowWithLifecycle(lifecycle).collectIn(lifecycleScope) { request ->
-        val result = handleJsRequest(request)
-        request.result.complete(result)
     }
 }
 
