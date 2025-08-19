@@ -97,6 +97,7 @@ sealed interface Endpoint {
         OPEN_NOTE_EDITOR("open-note-editor"),
         SEARCH("search"),
         SET_BACKGROUND_COLOR("set-background-color"),
+        SET_STATUS_BAR_COLOR("set-status-bar-color"),
         UNDO("undo"),
         DELETE_NOTE("delete-note"),
         ;
@@ -124,9 +125,9 @@ sealed interface Endpoint {
          */
         private val allEndpoints by lazy {
             Endpoint::class
-                .sealedSubclasses // 1. Find all enums (Card, Deck, etc.) automatically
-                .flatMap { it.java.enumConstants?.asList() ?: emptyList() } // 2. Get all constants from each enum
-                .associateBy { it.base to it.value } // 3. Create the final map for lookups
+                .sealedSubclasses
+                .flatMap { it.java.enumConstants?.asList() ?: emptyList() }
+                .associateBy { it.base to it.value }
         }
 
         /**

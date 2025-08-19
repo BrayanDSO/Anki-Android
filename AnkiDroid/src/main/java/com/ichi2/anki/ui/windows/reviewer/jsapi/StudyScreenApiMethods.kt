@@ -26,10 +26,10 @@ import com.ichi2.anki.ui.windows.reviewer.AnswerButtonsNextTime
 import com.ichi2.anki.ui.windows.reviewer.ReviewerFragment
 import com.ichi2.anki.ui.windows.reviewer.ReviewerViewModel
 import com.ichi2.anki.utils.ext.collectIn
+import com.ichi2.anki.utils.ext.window
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
-import kotlin.test.fail
 
 suspend fun ReviewerViewModel.handleJsApiRequest(
     uri: String,
@@ -63,14 +63,29 @@ private fun ReviewerFragment.handleJsUiRequest(request: UiRequest): ByteArray {
             JsApi.success()
         }
         Endpoint.StudyScreen.SET_BACKGROUND_COLOR -> {
-            val hexCode = request.data?.getString("hexCode") ?: return JsApi.fail("Missing hex code")
+            val colorHex = request.data?.optString("colorHex") ?: return JsApi.fail("Missing hex code")
             val color =
                 try {
-                    hexCode.toColorInt()
+                    colorHex.toColorInt()
                 } catch (_: IllegalArgumentException) {
                     return JsApi.fail("Invalid hex code")
                 }
             view?.setBackgroundColor(color)
+            JsApi.success()
+        }
+        Endpoint.StudyScreen.SET_STATUS_BAR_COLOR -> {
+            val colorHex = request.data?.optString("colorHex") ?: return JsApi.fail("Missing hex code")
+            val color =
+                try {
+                    colorHex.toColorInt()
+                } catch (_: IllegalArgumentException) {
+                    return JsApi.fail("Invalid hex code")
+                }
+            @Suppress("DEPRECATION") // the status bar is supposed to blend in with the
+            // view background, which is what the study screen does by default. For setting just the
+            // status bar color, this is by far the most practical way. If this method stops working
+            // in a future version of Android, the API method should be deprecated.
+            window.statusBarColor = color
             JsApi.success()
         }
         else -> JsApi.fail("Unhandled API method")
@@ -143,6 +158,7 @@ private suspend fun handleStudyScreenRequest(
         Endpoint.StudyScreen.SEARCH,
         Endpoint.StudyScreen.SHOW_SNACKBAR,
         Endpoint.StudyScreen.SET_BACKGROUND_COLOR,
+        Endpoint.StudyScreen.SET_STATUS_BAR_COLOR,
         -> {
             val result = CompletableDeferred<ByteArray>()
             val request = UiRequest(endpoint, data, result)
