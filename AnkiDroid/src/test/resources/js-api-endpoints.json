@@ -51,14 +51,15 @@
     "search": "void",
     "set-background-color": "void",
     "answer": "void",
-    "undo": "void"
+    "undo": "void",
+    "delete-note": "void"
   },
   "tts": {
-    "speak": "void",
-    "set-language": "void",
-    "set-pitch": "void",
-    "set-speech-rate": "void",
-    "is-speaking": "void",
-    "stop": "void"
+    "speak": "number",
+    "set-language": "number",
+    "set-pitch": "number",
+    "set-speech-rate": "number",
+    "is-speaking": "boolean",
+    "stop": "number"
   }
 }

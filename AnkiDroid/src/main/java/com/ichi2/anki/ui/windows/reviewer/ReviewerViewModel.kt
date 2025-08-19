@@ -256,7 +256,7 @@ class ReviewerViewModel :
         destinationFlow.emit(destination)
     }
 
-    private suspend fun deleteNote() {
+    suspend fun deleteNote() {
         val cardId = currentCard.await().id
         val noteCount =
             undoableOp {

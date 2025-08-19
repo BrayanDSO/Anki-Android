@@ -98,6 +98,7 @@ sealed interface Endpoint {
         SEARCH("search"),
         SET_BACKGROUND_COLOR("set-background-color"),
         UNDO("undo"),
+        DELETE_NOTE("delete-note"),
         ;
 
         override val base = "study-screen"

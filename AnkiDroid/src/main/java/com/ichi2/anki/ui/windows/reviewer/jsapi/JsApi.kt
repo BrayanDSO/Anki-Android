@@ -164,7 +164,7 @@ object JsApi {
                 success(tags)
             }
             Endpoint.Note.SET_TAGS -> {
-                val tags = data?.getString("data") ?: return fail("Missing tags")
+                val tags = data?.getString("tags") ?: return fail("Missing tags")
                 undoableOp {
                     note.setTagsFromStr(this, tags)
                     updateNote(note)

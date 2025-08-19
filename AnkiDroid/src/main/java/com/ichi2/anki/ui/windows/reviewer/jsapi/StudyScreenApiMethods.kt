@@ -29,6 +29,7 @@ import com.ichi2.anki.utils.ext.collectIn
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
+import kotlin.test.fail
 
 suspend fun ReviewerViewModel.handleJsApiRequest(
     uri: String,
@@ -62,10 +63,10 @@ private fun ReviewerFragment.handleJsUiRequest(request: UiRequest): ByteArray {
             JsApi.success()
         }
         Endpoint.StudyScreen.SET_BACKGROUND_COLOR -> {
-            val hex = request.data?.getString("data") ?: return JsApi.fail("Missing hex code")
+            val hexCode = request.data?.getString("hexCode") ?: return JsApi.fail("Missing hex code")
             val color =
                 try {
-                    hex.toColorInt()
+                    hexCode.toColorInt()
                 } catch (_: IllegalArgumentException) {
                     return JsApi.fail("Invalid hex code")
                 }
@@ -91,16 +92,24 @@ private suspend fun handleStudyScreenRequest(
             JsApi.success()
         }
         Endpoint.StudyScreen.ANSWER -> {
-            val ratingNumber = data!!.getInt("data") - 1
-            val rating = CardAnswer.Rating.forNumber(ratingNumber)
+            val ratingNumber = data?.getIntOrNull("rating") ?: return JsApi.fail("Missing rating")
+            if (ratingNumber !in 1..4) {
+                return JsApi.fail("Invalid rating")
+            }
+            val rating = CardAnswer.Rating.forNumber(ratingNumber - 1)
             viewModel.answerCard(rating)
             JsApi.success()
         }
         Endpoint.StudyScreen.IS_SHOWING_ANSWER -> JsApi.success(viewModel.showingAnswer.value)
         Endpoint.StudyScreen.GET_NEXT_TIME -> {
-            val ratingNumber = data!!.getInt("data") - 1
-            val rating = CardAnswer.Rating.forNumber(ratingNumber)
+            val ratingNumber = data?.getIntOrNull("rating") ?: return JsApi.fail("Missing rating")
+            if (ratingNumber !in 1..4) {
+                return JsApi.fail("Invalid rating")
+            }
+            val rating = CardAnswer.Rating.forNumber(ratingNumber - 1)
+
             val queueState = viewModel.queueState.await() ?: return JsApi.fail("There is no card at top of the queue")
+
             val nextTimes = AnswerButtonsNextTime.from(queueState)
             val nextTime =
                 when (rating) {
@@ -113,12 +122,12 @@ private suspend fun handleStudyScreenRequest(
             JsApi.success(nextTime)
         }
         Endpoint.StudyScreen.OPEN_CARD_INFO -> {
-            val cardId = data?.getLong("data")
+            val cardId = data?.getLong("cardId")
             viewModel.emitCardInfoDestination(cardId)
             JsApi.success()
         }
         Endpoint.StudyScreen.OPEN_NOTE_EDITOR -> {
-            val cardId = data?.getLong("data")
+            val cardId = data?.getLong("cardId")
             viewModel.emitEditNoteDestination(cardId)
             JsApi.success()
         }
@@ -126,6 +135,11 @@ private suspend fun handleStudyScreenRequest(
             viewModel.undo()
             JsApi.success()
         }
+        Endpoint.StudyScreen.DELETE_NOTE -> {
+            viewModel.deleteNote()
+            JsApi.success()
+        }
+        // UI requests
         Endpoint.StudyScreen.SEARCH,
         Endpoint.StudyScreen.SHOW_SNACKBAR,
         Endpoint.StudyScreen.SET_BACKGROUND_COLOR,
