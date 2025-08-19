@@ -13,9 +13,8 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.ichi2.anki.ui.windows.reviewer.jsapi.endpoints
+package com.ichi2.anki.ui.windows.reviewer.jsapi
 
-import com.ichi2.anki.common.utils.ext.stringIterable
 import com.ichi2.utils.FileOperation.Companion.getFileResource
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsInAnyOrder
@@ -37,22 +36,19 @@ class EndpointsTest {
                 .toTypedArray()
 
         val endpointEnums =
-            mapOf(
-                AndroidEndpoint.BASE to AndroidEndpoint.entries,
-                CardEndpoint.BASE to CardEndpoint.entries,
-                DeckEndpoint.BASE to DeckEndpoint.entries,
-                NoteEndpoint.BASE to NoteEndpoint.entries,
-                StudyScreenEndpoint.BASE to StudyScreenEndpoint.entries,
-                TtsEndpoint.BASE to TtsEndpoint.entries,
-            )
+            Endpoint::class.sealedSubclasses.associate { kClass ->
+                val entries = kClass.java.enumConstants!!
+                entries.first().base to entries
+            }
         assertThat(endpointEnums.keys, containsInAnyOrder(*topLevelKeys))
 
         endpointEnums.forEach { (base, entries) ->
             Timber.i("Verifying endpoints for: $base")
             val jsonEndpoints =
                 endpointsJson
-                    .getJSONArray(base)
-                    .stringIterable()
+                    .getJSONObject(base)
+                    .keys()
+                    .asSequence()
                     .toList()
                     .toTypedArray()
             val enumEndpoints = entries.map { it.value }

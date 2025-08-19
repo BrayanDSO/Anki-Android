@@ -304,7 +304,7 @@ class ReviewerViewModel :
         updateCurrentCard()
     }
 
-    private suspend fun undo() {
+    suspend fun undo() {
         Timber.v("ReviewerViewModel::undo")
         val changes =
             undoableOp {

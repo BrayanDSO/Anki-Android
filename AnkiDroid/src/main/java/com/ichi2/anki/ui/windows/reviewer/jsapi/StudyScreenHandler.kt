@@ -25,14 +25,13 @@ import com.ichi2.anki.snackbar.showSnackbar
 import com.ichi2.anki.ui.windows.reviewer.AnswerButtonsNextTime
 import com.ichi2.anki.ui.windows.reviewer.ReviewerFragment
 import com.ichi2.anki.ui.windows.reviewer.ReviewerViewModel
-import com.ichi2.anki.ui.windows.reviewer.jsapi.endpoints.StudyScreenEndpoint
 import com.ichi2.anki.utils.ext.collectIn
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
 
 data class UiRequest(
-    val endpoint: StudyScreenEndpoint,
+    val endpoint: Endpoint.StudyScreen,
     val data: JSONObject?,
     val result: CompletableDeferred<ByteArray>,
 )
@@ -42,25 +41,26 @@ suspend fun ReviewerViewModel.handleJsApiRequest(
     bytes: ByteArray,
 ): ByteArray {
     val path = uri.substring(AnkiServer.ANKIDROID_JS_PREFIX.length)
-    val (base, endpoint) = path.split('/', limit = 2)
+    val (base, endpointStr) = path.split('/', limit = 2)
     val request = JsApi.parseRequest(bytes)
+    val endpoint = Endpoint.from(base, endpointStr) ?: return JsApi.fail("Invalid endpoint")
 
-    return when (base) {
-        StudyScreenEndpoint.BASE -> handleStudyScreenRequest(this, endpoint, request.data)
-        else -> JsApi.handleRequest(base, endpoint, bytes)
+    return when (endpoint) {
+        is Endpoint.StudyScreen -> handleStudyScreenRequest(this, endpoint, request.data)
+        else -> JsApi.handleRequest(endpoint, bytes)
     }
 }
 
 private fun ReviewerFragment.handleJsRequest(request: UiRequest): ByteArray {
     return when (request.endpoint) {
-        StudyScreenEndpoint.SHOW_SNACKBAR -> {
+        Endpoint.StudyScreen.SHOW_SNACKBAR -> {
             val data = request.data ?: return JsApi.fail("Missing request data")
             val text = data.optString("text") ?: return JsApi.fail("Missing text")
             val duration = data.getIntOrNull("duration") ?: return JsApi.fail("Missing duration")
             showSnackbar(text, duration)
             JsApi.success()
         }
-        StudyScreenEndpoint.SET_BACKGROUND_COLOR -> {
+        Endpoint.StudyScreen.SET_BACKGROUND_COLOR -> {
             val hex = request.data?.getString("data") ?: return JsApi.fail("Missing hex")
             val color = hex.toColorInt()
             view?.setBackgroundColor(color)
@@ -79,27 +79,26 @@ fun ReviewerFragment.setupJsApi() {
 
 private suspend fun handleStudyScreenRequest(
     viewModel: ReviewerViewModel,
-    endpointString: String,
+    endpoint: Endpoint.StudyScreen,
     data: JSONObject?,
 ): ByteArray {
-    val endpoint = StudyScreenEndpoint.from(endpointString) ?: return JsApi.fail("Invalid endpoint")
     return when (endpoint) {
-        StudyScreenEndpoint.GET_NEW_COUNT -> JsApi.success(viewModel.countsFlow.value.first.new)
-        StudyScreenEndpoint.GET_LRN_COUNT -> JsApi.success(viewModel.countsFlow.value.first.lrn)
-        StudyScreenEndpoint.GET_REV_COUNT -> JsApi.success(viewModel.countsFlow.value.first.rev)
-        StudyScreenEndpoint.SHOW_ANSWER -> {
+        Endpoint.StudyScreen.GET_NEW_COUNT -> JsApi.success(viewModel.countsFlow.value.first.new)
+        Endpoint.StudyScreen.GET_LEARNING_COUNT -> JsApi.success(viewModel.countsFlow.value.first.lrn)
+        Endpoint.StudyScreen.GET_REVIEWING_COUNT -> JsApi.success(viewModel.countsFlow.value.first.rev)
+        Endpoint.StudyScreen.SHOW_ANSWER -> {
             if (viewModel.showingAnswer.value) return JsApi.success()
             viewModel.onShowAnswer()
             JsApi.success()
         }
-        StudyScreenEndpoint.ANSWER -> {
+        Endpoint.StudyScreen.ANSWER -> {
             val ratingNumber = data!!.getInt("data") - 1
             val rating = CardAnswer.Rating.forNumber(ratingNumber)
             viewModel.answerCard(rating)
             JsApi.success()
         }
-        StudyScreenEndpoint.IS_SHOWING_ANSWER -> JsApi.success(viewModel.showingAnswer.value)
-        StudyScreenEndpoint.GET_NEXT_TIME -> {
+        Endpoint.StudyScreen.IS_SHOWING_ANSWER -> JsApi.success(viewModel.showingAnswer.value)
+        Endpoint.StudyScreen.GET_NEXT_TIME -> {
             val ratingNumber = data!!.getInt("data") - 1
             val rating = CardAnswer.Rating.forNumber(ratingNumber)
             val queueState = viewModel.queueState.await() ?: return JsApi.fail("There is no card at top of the queue")
@@ -114,19 +113,23 @@ private suspend fun handleStudyScreenRequest(
                 }
             JsApi.success(nextTime)
         }
-        StudyScreenEndpoint.CARD_INFO -> {
+        Endpoint.StudyScreen.CARD_INFO -> {
             val cardId = data?.getLong("data")
             viewModel.emitCardInfoDestination(cardId)
             JsApi.success()
         }
-        StudyScreenEndpoint.EDIT_NOTE -> {
+        Endpoint.StudyScreen.EDIT_NOTE -> {
             val cardId = data?.getLong("data")
             viewModel.emitEditNoteDestination(cardId)
             JsApi.success()
         }
-        StudyScreenEndpoint.SEARCH,
-        StudyScreenEndpoint.SHOW_SNACKBAR,
-        StudyScreenEndpoint.SET_BACKGROUND_COLOR,
+        Endpoint.StudyScreen.UNDO -> {
+            viewModel.undo()
+            JsApi.success()
+        }
+        Endpoint.StudyScreen.SEARCH,
+        Endpoint.StudyScreen.SHOW_SNACKBAR,
+        Endpoint.StudyScreen.SET_BACKGROUND_COLOR,
         -> {
             val result = CompletableDeferred<ByteArray>()
             val request = UiRequest(endpoint, data, result)

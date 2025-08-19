@@ -26,16 +26,12 @@ import com.ichi2.anki.libanki.Note
 import com.ichi2.anki.observability.undoableOp
 import com.ichi2.anki.servicelayer.MARKED_TAG
 import com.ichi2.anki.servicelayer.NoteService
-import com.ichi2.anki.ui.windows.reviewer.jsapi.endpoints.AndroidEndpoint
-import com.ichi2.anki.ui.windows.reviewer.jsapi.endpoints.CardEndpoint
-import com.ichi2.anki.ui.windows.reviewer.jsapi.endpoints.DeckEndpoint
-import com.ichi2.anki.ui.windows.reviewer.jsapi.endpoints.NoteEndpoint
+import com.ichi2.anki.ui.windows.reviewer.jsapi.Endpoint
 import com.ichi2.anki.utils.ext.flag
 import com.ichi2.anki.utils.ext.setUserFlagForCards
 import com.ichi2.themes.Themes
 import com.ichi2.utils.NetworkUtils
 import org.json.JSONObject
-import timber.log.Timber
 
 object JsApi {
     private const val CURRENT_VERSION = "0.0.4"
@@ -64,39 +60,22 @@ object JsApi {
     }
 
     suspend fun handleRequest(
-        base: String,
-        endpoint: String,
+        endpoint: Endpoint,
         bytes: ByteArray,
     ): ByteArray {
         val request = parseRequest(bytes)
-
-        return when (base) {
-            CardEndpoint.BASE -> {
-                val cardEndpoint = CardEndpoint.from(endpoint) ?: return fail("Invalid Card endpoint")
-                handleCardMethods(request.data, cardEndpoint)
-            }
-            NoteEndpoint.BASE -> {
-                val noteEndpoint = NoteEndpoint.from(endpoint) ?: return fail("Invalid Note endpoint")
-                handleNoteMethods(request.data, noteEndpoint)
-            }
-            DeckEndpoint.BASE -> {
-                val deckEndpoint = DeckEndpoint.from(endpoint) ?: return fail("Invalid Deck endpoint")
-                handleDeckMethods(request.data, deckEndpoint)
-            }
-            AndroidEndpoint.BASE -> {
-                val androidEndpoint = AndroidEndpoint.from(endpoint) ?: return fail("Invalid Android endpoint")
-                handleAndroidEndpoints(androidEndpoint)
-            }
-            else -> {
-                Timber.w("Unhandled base: %s", base)
-                fail("Unhandled base")
-            }
+        return when (endpoint) {
+            is Endpoint.Android -> handleAndroidEndpoints(endpoint)
+            is Endpoint.Card -> handleCardMethods(request.data, endpoint)
+            is Endpoint.Deck -> handleDeckMethods(request.data, endpoint)
+            is Endpoint.Note -> handleNoteMethods(request.data, endpoint)
+            else -> fail("Unhandled endpoint")
         }
     }
 
     private suspend fun handleCardMethods(
         data: JSONObject?,
-        endpoint: CardEndpoint,
+        endpoint: Endpoint.Card,
     ): ByteArray {
         val cardId = data?.getLongOrNull("id")
         val card =
@@ -106,40 +85,40 @@ object JsApi {
                 getTopCard() ?: return fail("There is no card at top of the queue")
             }
         return when (endpoint) {
-            CardEndpoint.GET_ID -> success(card.id)
-            CardEndpoint.GET_NID -> success(card.nid)
-            CardEndpoint.GET_FLAG -> success(card.flag.code)
-            CardEndpoint.GET_REPS -> success(card.reps)
-            CardEndpoint.GET_INTERVAL -> success(card.ivl)
-            CardEndpoint.GET_FACTOR -> success(card.factor)
-            CardEndpoint.GET_MOD -> success(card.mod)
-            CardEndpoint.GET_TYPE -> success(card.type.code)
-            CardEndpoint.GET_DID -> success(card.did)
-            CardEndpoint.GET_LEFT -> success(card.left)
-            CardEndpoint.GET_ODID -> success(card.oDid)
-            CardEndpoint.GET_ODUE -> success(card.oDue)
-            CardEndpoint.GET_QUEUE -> success(card.queue.code)
-            CardEndpoint.GET_LAPSES -> success(card.lapses)
-            CardEndpoint.GET_DUE -> success(card.due)
-            CardEndpoint.BURY -> {
+            Endpoint.Card.GET_ID -> success(card.id)
+            Endpoint.Card.GET_NID -> success(card.nid)
+            Endpoint.Card.GET_FLAG -> success(card.flag.code)
+            Endpoint.Card.GET_REPS -> success(card.reps)
+            Endpoint.Card.GET_INTERVAL -> success(card.ivl)
+            Endpoint.Card.GET_FACTOR -> success(card.factor)
+            Endpoint.Card.GET_MOD -> success(card.mod)
+            Endpoint.Card.GET_TYPE -> success(card.type.code)
+            Endpoint.Card.GET_DID -> success(card.did)
+            Endpoint.Card.GET_LEFT -> success(card.left)
+            Endpoint.Card.GET_O_DID -> success(card.oDid)
+            Endpoint.Card.GET_O_DUE -> success(card.oDue)
+            Endpoint.Card.GET_QUEUE -> success(card.queue.code)
+            Endpoint.Card.GET_LAPSES -> success(card.lapses)
+            Endpoint.Card.GET_DUE -> success(card.due)
+            Endpoint.Card.BURY -> {
                 val count = undoableOp { sched.buryCards(cids = listOf(card.id)) }.count
                 success(count)
             }
-            CardEndpoint.IS_MARKED -> {
+            Endpoint.Card.IS_MARKED -> {
                 val isMarked = withCol { card.note(this).hasTag(this, MARKED_TAG) }
                 success(isMarked)
             }
-            CardEndpoint.SUSPEND -> {
+            Endpoint.Card.SUSPEND -> {
                 val count = undoableOp { sched.suspendCards(ids = listOf(card.id)) }.count
                 success(count)
             }
-            CardEndpoint.RESET_PROGRESS -> {
+            Endpoint.Card.RESET_PROGRESS -> {
                 undoableOp {
                     sched.forgetCards(listOf(card.id), restorePosition = false, resetCounts = false)
                 }
                 success()
             }
-            CardEndpoint.TOGGLE_FLAG -> {
+            Endpoint.Card.TOGGLE_FLAG -> {
                 val requestBody = data?.getJSONObject("data") ?: return fail("Missing data")
                 val requestFlag = requestBody.getInt("flag")
                 val currentFlag = card.flag
@@ -152,7 +131,7 @@ object JsApi {
 
     private suspend fun handleNoteMethods(
         data: JSONObject?,
-        endpoint: NoteEndpoint,
+        endpoint: Endpoint.Note,
     ): ByteArray {
         val noteId = data?.getLongOrNull("id")
         val note =
@@ -163,20 +142,20 @@ object JsApi {
                 withCol { topCard.note(this) }
             }
         return when (endpoint) {
-            NoteEndpoint.GET_ID -> success(note.id)
-            NoteEndpoint.BURY -> {
+            Endpoint.Note.GET_ID -> success(note.id)
+            Endpoint.Note.BURY -> {
                 val count = undoableOp { sched.buryNotes(listOf(note.id)) }.count
                 success(count)
             }
-            NoteEndpoint.SUSPEND -> {
+            Endpoint.Note.SUSPEND -> {
                 val count = undoableOp { sched.suspendNotes(listOf(note.id)) }.count
                 success(count)
             }
-            NoteEndpoint.GET_TAGS -> {
+            Endpoint.Note.GET_TAGS -> {
                 val tags = withCol { note.stringTags(this) }
                 success(tags)
             }
-            NoteEndpoint.SET_TAGS -> {
+            Endpoint.Note.SET_TAGS -> {
                 val tags = data?.getString("data") ?: return fail("Missing tags")
                 undoableOp {
                     note.setTagsFromStr(this, tags)
@@ -184,7 +163,7 @@ object JsApi {
                 }
                 success()
             }
-            NoteEndpoint.TOGGLE_MARK -> {
+            Endpoint.Note.TOGGLE_MARK -> {
                 NoteService.toggleMark(note)
                 success()
             }
@@ -193,21 +172,21 @@ object JsApi {
 
     private suspend fun handleDeckMethods(
         data: JSONObject?,
-        endpoint: DeckEndpoint,
+        endpoint: Endpoint.Deck,
     ): ByteArray {
         val deckId = data?.getLongOrNull("id") ?: getTopCard()?.did ?: return fail("There is no card at top of the queue")
         val deck = withCol { decks.get(deckId) } ?: return fail("Found no deck with the id '$deckId'")
         return when (endpoint) {
-            DeckEndpoint.GET_ID -> success(deck.id)
-            DeckEndpoint.GET_NAME -> success(deck.name)
-            DeckEndpoint.IS_FILTERED -> success(deck.isFiltered)
+            Endpoint.Deck.GET_ID -> success(deck.id)
+            Endpoint.Deck.GET_NAME -> success(deck.name)
+            Endpoint.Deck.IS_FILTERED -> success(deck.isFiltered)
         }
     }
 
-    private fun handleAndroidEndpoints(endpoint: AndroidEndpoint): ByteArray =
+    private fun handleAndroidEndpoints(endpoint: Endpoint.Android): ByteArray =
         when (endpoint) {
-            AndroidEndpoint.IS_SYSTEM_IN_DARK_MODE -> success(Themes.systemIsInNightMode(AnkiDroidApp.instance))
-            AndroidEndpoint.IS_NETWORK_METERED -> success(NetworkUtils.isActiveNetworkMetered())
+            Endpoint.Android.IS_SYSTEM_IN_DARK_MODE -> success(Themes.systemIsInNightMode(AnkiDroidApp.instance))
+            Endpoint.Android.IS_NETWORK_METERED -> success(NetworkUtils.isActiveNetworkMetered())
         }
 
     private suspend fun getTopCard() = withCol { sched }.currentQueueState()?.topCard

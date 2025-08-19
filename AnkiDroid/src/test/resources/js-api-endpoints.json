@@ -23,8 +23,7 @@
     "bury": "number",
     "suspend": "number",
     "reset-progress": "void",
-    "toggle-flag": "void",
-    "answer": "void"
+    "toggle-flag": "void"
   },
   "deck": {
     "get-id": "number",
@@ -38,6 +37,21 @@
     "get-tags": "string",
     "set-tags": "void",
     "toggle-mark": "void"
+  },
+  "study-screen": {
+    "show-snackbar": "void",
+    "get-new-count": "number",
+    "get-learning-count": "number",
+    "get-reviewing-count": "number",
+    "show-answer": "void",
+    "is-showing-answer": "boolean",
+    "get-next-time": "string",
+    "card-info": "void",
+    "edit-note": "void",
+    "search": "void",
+    "set-background-color": "void",
+    "answer": "void",
+    "undo": "string"
   },
   "tts": {
     "speak": "void",
