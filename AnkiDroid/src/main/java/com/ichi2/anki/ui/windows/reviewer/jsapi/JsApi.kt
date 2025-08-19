@@ -16,9 +16,13 @@
  */
 package com.ichi2.anki.ui.windows.reviewer.jsapi
 
+import android.speech.tts.TextToSpeech
 import com.ichi2.anki.AnkiDroidApp
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.Flag
+import com.ichi2.anki.JavaScriptTTS
+import com.ichi2.anki.common.utils.ext.getDoubleOrNull
+import com.ichi2.anki.common.utils.ext.getIntOrNull
 import com.ichi2.anki.common.utils.ext.getLongOrNull
 import com.ichi2.anki.common.utils.ext.getStringOrNull
 import com.ichi2.anki.libanki.Card
@@ -32,12 +36,14 @@ import com.ichi2.anki.utils.ext.setUserFlagForCards
 import com.ichi2.themes.Themes
 import com.ichi2.utils.NetworkUtils
 import org.json.JSONObject
+import timber.log.Timber
 
 object JsApi {
     private const val CURRENT_VERSION = "0.0.4"
     private const val SUCCESS_KEY = "success"
     private const val VALUE_KEY = "value"
     private const val ERROR_KEY = "error"
+    private val tts by lazy { JavaScriptTTS() }
 
     fun parseRequest(byteArray: ByteArray): JsApiRequest {
         val requestBody = JSONObject(byteArray.decodeToString())
@@ -66,16 +72,17 @@ object JsApi {
         val request = parseRequest(bytes)
         return when (endpoint) {
             is Endpoint.Android -> handleAndroidEndpoints(endpoint)
-            is Endpoint.Card -> handleCardMethods(request.data, endpoint)
-            is Endpoint.Deck -> handleDeckMethods(request.data, endpoint)
-            is Endpoint.Note -> handleNoteMethods(request.data, endpoint)
+            is Endpoint.Card -> handleCardMethods(endpoint, request.data)
+            is Endpoint.Deck -> handleDeckMethods(endpoint, request.data)
+            is Endpoint.Note -> handleNoteMethods(endpoint, request.data)
+            is Endpoint.Tts -> handleTtsEndpoints(endpoint, request.data)
             else -> fail("Unhandled endpoint")
         }
     }
 
     private suspend fun handleCardMethods(
-        data: JSONObject?,
         endpoint: Endpoint.Card,
+        data: JSONObject?,
     ): ByteArray {
         val cardId = data?.getLongOrNull("id")
         val card =
@@ -121,8 +128,9 @@ object JsApi {
             Endpoint.Card.TOGGLE_FLAG -> {
                 val requestBody = data?.getJSONObject("data") ?: return fail("Missing data")
                 val requestFlag = requestBody.getInt("flag")
-                val currentFlag = card.flag
-                val newFlag = if (requestFlag == currentFlag.code) Flag.NONE else Flag.fromCode(requestFlag)
+                if (requestFlag < 0 || requestFlag > 7) return fail("Invalid flag code")
+
+                val newFlag = if (requestFlag == card.userFlag()) Flag.NONE else Flag.fromCode(requestFlag)
                 undoableOp { setUserFlagForCards(listOf(card.id), newFlag) }
                 success()
             }
@@ -130,8 +138,8 @@ object JsApi {
     }
 
     private suspend fun handleNoteMethods(
-        data: JSONObject?,
         endpoint: Endpoint.Note,
+        data: JSONObject?,
     ): ByteArray {
         val noteId = data?.getLongOrNull("id")
         val note =
@@ -171,8 +179,8 @@ object JsApi {
     }
 
     private suspend fun handleDeckMethods(
-        data: JSONObject?,
         endpoint: Endpoint.Deck,
+        data: JSONObject?,
     ): ByteArray {
         val deckId = data?.getLongOrNull("id") ?: getTopCard()?.did ?: return fail("There is no card at top of the queue")
         val deck = withCol { decks.get(deckId) } ?: return fail("Found no deck with the id '$deckId'")
@@ -188,6 +196,39 @@ object JsApi {
             Endpoint.Android.IS_SYSTEM_IN_DARK_MODE -> success(Themes.systemIsInNightMode(AnkiDroidApp.instance))
             Endpoint.Android.IS_NETWORK_METERED -> success(NetworkUtils.isActiveNetworkMetered())
         }
+
+    private fun handleTtsEndpoints(
+        endpoint: Endpoint.Tts,
+        data: JSONObject?,
+    ): ByteArray {
+        return when (endpoint) {
+            Endpoint.Tts.SPEAK -> {
+                val text = data?.optString("text") ?: return fail("Missing text")
+                val queueMode = data.getIntOrNull("queueMode") ?: return fail("Missing queueMode")
+                if (queueMode != TextToSpeech.QUEUE_FLUSH && queueMode != TextToSpeech.QUEUE_ADD) return fail("Invalid queueMode")
+                val result = tts.speak(text, queueMode)
+                success(result)
+            }
+            Endpoint.Tts.SET_LANGUAGE -> {
+                val locale = data?.optString("locale") ?: return fail("Missing locale")
+                success(tts.setLanguage(locale))
+            }
+            Endpoint.Tts.SET_PITCH -> {
+                val pitch = data?.getDoubleOrNull("pitch") ?: return fail("Missing pitch")
+                success(tts.setPitch(pitch.toFloat()))
+            }
+            Endpoint.Tts.SET_SPEECH_RATE -> {
+                val speechRate = data?.getDoubleOrNull("speechRate") ?: return fail("Missing speechRate")
+                success(tts.setSpeechRate(speechRate.toFloat()))
+            }
+            Endpoint.Tts.IS_SPEAKING -> {
+                success(tts.isSpeaking)
+            }
+            Endpoint.Tts.STOP -> {
+                success(tts.stop())
+            }
+        }
+    }
 
     private suspend fun getTopCard() = withCol { sched }.currentQueueState()?.topCard
 
@@ -210,12 +251,15 @@ object JsApi {
             }.toString()
             .toByteArray()
 
-    fun fail(error: String): ByteArray =
-        JSONObject()
+    fun fail(error: String): ByteArray {
+        Timber.i("JsApi fail: %s", error)
+        return JSONObject()
             .apply {
                 put(SUCCESS_KEY, false)
                 put(ERROR_KEY, error)
             }.toString()
             .toByteArray()
+    }
+
     // endregion
 }

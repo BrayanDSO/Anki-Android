@@ -147,3 +147,18 @@ fun JSONObject.getIntOrNull(key: String): Int? {
         null
     }
 }
+
+/**
+ * @return `null` if:
+ * * The key does not exist
+ * * The value is [null][JSONObject.NULL]
+ */
+fun JSONObject.getDoubleOrNull(key: String): Double? {
+    if (!has(key)) return null
+    if (isNull(key)) return null
+    return try {
+        getDouble(key)
+    } catch (_: Exception) {
+        null
+    }
+}
