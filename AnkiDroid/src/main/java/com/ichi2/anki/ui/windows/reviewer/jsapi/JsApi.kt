@@ -76,7 +76,7 @@ object JsApi {
             is Endpoint.Deck -> handleDeckMethods(endpoint, request.data)
             is Endpoint.Note -> handleNoteMethods(endpoint, request.data)
             is Endpoint.Tts -> handleTtsEndpoints(endpoint, request.data)
-            else -> fail("Unhandled endpoint")
+            is Endpoint.StudyScreen -> fail("This screen doesn't support StudyScreen methods")
         }
     }
 
