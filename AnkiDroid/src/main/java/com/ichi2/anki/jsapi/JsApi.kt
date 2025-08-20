@@ -92,12 +92,13 @@ object JsApi {
     suspend fun handleEndpointRequest(
         endpoint: Endpoint,
         data: JSONObject?,
+        topCard: Card,
     ): ByteArray =
         when (endpoint) {
             is Endpoint.Android -> handleAndroidEndpoints(endpoint)
-            is Endpoint.Card -> handleCardMethods(endpoint, data)
-            is Endpoint.Deck -> handleDeckMethods(endpoint, data)
-            is Endpoint.Note -> handleNoteMethods(endpoint, data)
+            is Endpoint.Card -> handleCardMethods(endpoint, data, topCard)
+            is Endpoint.Deck -> handleDeckMethods(endpoint, data, topCard)
+            is Endpoint.Note -> handleNoteMethods(endpoint, data, topCard)
             is Endpoint.Tts -> handleTtsEndpoints(endpoint, data)
             is Endpoint.StudyScreen -> fail("Screen doesn't support StudyScreen methods")
         }
@@ -105,13 +106,14 @@ object JsApi {
     private suspend fun handleCardMethods(
         endpoint: Endpoint.Card,
         data: JSONObject?,
+        topCard: Card,
     ): ByteArray {
         val cardId = data?.getLongOrNull("id")
         val card =
             if (cardId != null) {
                 withCol { Card(this, cardId) }
             } else {
-                getTopCard() ?: return fail("There is no card at top of the queue") // TODO parar de usar: previewers não funcionam com ele
+                topCard
             }
         return when (endpoint) {
             Endpoint.Card.GET_ID -> success(card.id)
@@ -162,13 +164,13 @@ object JsApi {
     private suspend fun handleNoteMethods(
         endpoint: Endpoint.Note,
         data: JSONObject?,
+        topCard: Card,
     ): ByteArray {
         val noteId = data?.getLongOrNull("id")
         val note =
             if (noteId != null) {
                 withCol { Note(this, noteId) }
             } else {
-                val topCard = getTopCard() ?: return fail("There is no card at top of the queue")
                 withCol { topCard.note(this) }
             }
         return when (endpoint) {
@@ -204,8 +206,9 @@ object JsApi {
     private suspend fun handleDeckMethods(
         endpoint: Endpoint.Deck,
         data: JSONObject?,
+        topCard: Card,
     ): ByteArray {
-        val deckId = data?.getLongOrNull("id") ?: getTopCard()?.did ?: return fail("There is no card at top of the queue")
+        val deckId = data?.getLongOrNull("id") ?: topCard.did
         val deck = withCol { decks.get(deckId) } ?: return fail("Found no deck with the id '$deckId'")
         return when (endpoint) {
             Endpoint.Deck.GET_ID -> success(deck.id)
@@ -259,8 +262,6 @@ object JsApi {
             }
         }
     }
-
-    private suspend fun getTopCard() = withCol { sched }.currentQueueState()?.topCard
 
     fun success() = successResult(null)
 

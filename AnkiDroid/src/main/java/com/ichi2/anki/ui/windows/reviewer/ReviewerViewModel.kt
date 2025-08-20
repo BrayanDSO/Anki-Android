@@ -396,7 +396,7 @@ class ReviewerViewModel :
         if (endpoint is Endpoint.StudyScreen) {
             handleStudyScreenEndpoint(endpoint, data)
         } else {
-            JsApi.handleEndpointRequest(endpoint, data)
+            JsApi.handleEndpointRequest(endpoint, data, currentCard.await())
         }
 
     override suspend fun showQuestion() {

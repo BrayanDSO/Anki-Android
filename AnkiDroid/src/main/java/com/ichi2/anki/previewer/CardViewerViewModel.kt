@@ -233,5 +233,5 @@ abstract class CardViewerViewModel :
     protected open suspend fun handleJsEndpoint(
         endpoint: Endpoint,
         data: JSONObject?,
-    ) = JsApi.handleEndpointRequest(endpoint, data)
+    ) = JsApi.handleEndpointRequest(endpoint, data, currentCard.await())
 }
