@@ -65,7 +65,23 @@ object JsApi {
         return JsApiContract(version, developer)
     }
 
-    suspend fun handleRequest(
+    private fun getEndpoint(uri: String): Endpoint? =
+        uri
+            .removePrefix(REQUEST_PREFIX)
+            .split('/', limit = 2)
+            .takeIf {
+                it.size == 2
+            }?.let { (base, value) -> Endpoint.from(base, value) }
+
+    suspend fun handleUriRequest(
+        uri: String,
+        bytes: ByteArray,
+    ): ByteArray {
+        val endpoint = getEndpoint(uri) ?: return fail("Invalid endpoint")
+        return handleEndpointRequest(endpoint, bytes)
+    }
+
+    suspend fun handleEndpointRequest(
         endpoint: Endpoint,
         bytes: ByteArray,
     ): ByteArray {
