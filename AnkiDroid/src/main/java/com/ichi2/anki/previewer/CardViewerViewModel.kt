@@ -199,28 +199,35 @@ abstract class CardViewerViewModel :
     override suspend fun handlePostRequest(
         uri: String,
         bytes: ByteArray,
-    ): ByteArray {
-        return if (uri.startsWith(AnkiServer.ANKI_PREFIX)) {
+    ): ByteArray =
+        if (uri.startsWith(AnkiServer.ANKI_PREFIX)) {
             when (uri.substring(AnkiServer.ANKI_PREFIX.length)) {
                 "i18nResources" -> withCol { i18nResourcesRaw(bytes) }
                 else -> throw IllegalArgumentException("Unhandled Anki request: $uri")
             }
         } else if (uri.startsWith(JsApi.REQUEST_PREFIX)) {
-            val request =
-                try {
-                    JsApi.parseRequest(bytes)
-                } catch (exception: InvalidContractException) {
-                    val error =
-                        mediaErrorHandler.processJsApiContractException(exception) { message ->
-                            viewModelScope.launch { onError.emit(message) }
-                        }
-                    return JsApi.fail(error)
-                }
-            val endpoint = getEndpoint(uri) ?: return JsApi.fail("Invalid endpoint")
-            handleJsEndpoint(endpoint, request.data)
+            handleJsRequest(uri, bytes)
         } else {
             throw IllegalArgumentException("Unhandled POST request: $uri")
         }
+
+    private suspend fun handleJsRequest(
+        uri: String,
+        bytes: ByteArray,
+    ): ByteArray {
+        val requestData =
+            try {
+                JsApi.parseRequest(bytes)
+            } catch (exception: InvalidContractException) {
+                val error =
+                    mediaErrorHandler.processJsApiContractException(exception) { message ->
+                        viewModelScope.launch { onError.emit(message) }
+                    }
+                return JsApi.fail(error)
+            }
+
+        val endpoint = getEndpoint(uri) ?: return JsApi.fail("Invalid endpoint")
+        return handleJsEndpoint(endpoint, requestData)
     }
 
     protected open suspend fun handleJsEndpoint(

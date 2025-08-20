@@ -112,8 +112,9 @@ class MediaErrorHandler {
     ): String {
         val message = exception.message ?: "Invalid contract"
         if (hasShownInvalidContractMessage) return message
-        messageHandler.invoke(message)
         hasShownInvalidContractMessage = true
+
+        messageHandler.invoke(message)
         return message
     }
 }

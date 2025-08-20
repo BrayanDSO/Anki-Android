@@ -17,6 +17,8 @@
 package com.ichi2.anki.jsapi
 
 import android.speech.tts.TextToSpeech
+import com.github.zafarkhaja.semver.ParseException
+import com.github.zafarkhaja.semver.Version
 import com.ichi2.anki.AnkiDroidApp
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.Flag
@@ -38,7 +40,7 @@ import org.json.JSONObject
 import timber.log.Timber
 
 object JsApi {
-    private const val CURRENT_VERSION = "0.1.0"
+    private const val CURRENT_VERSION = "1.0.0"
     private const val SUCCESS_KEY = "success"
     private const val VALUE_KEY = "value"
     private const val ERROR_KEY = "error"
@@ -46,24 +48,37 @@ object JsApi {
 
     private val tts by lazy { JavaScriptTTS() }
 
-    fun parseRequest(byteArray: ByteArray): JsApiRequest {
+    fun parseRequest(byteArray: ByteArray): JSONObject? {
         val requestBody = JSONObject(byteArray.decodeToString())
-        val contract = parseContract(requestBody)
-        val data = requestBody.optJSONObject("data")
-        return JsApiRequest(contract, data)
+        validateContract(requestBody)
+        return requestBody.optJSONObject("data")
     }
 
-    private fun parseContract(requestBody: JSONObject): JsApiContract {
-        val version = requestBody.getStringOrNull("version")
-        if (version != CURRENT_VERSION) {
-            throw InvalidContractException("Invalid version")
+    /**
+     * @throws InvalidContractException if the contra
+     */
+    private fun validateContract(json: JSONObject) {
+        // Developer contact
+        val developer = json.getStringOrNull("developer")
+        if (developer.isNullOrBlank()) {
+            throw InvalidContractException()
         }
+        // Version
+        val versionString = json.getStringOrNull("version") ?: throw InvalidContractException.VersionError()
 
-        val developer =
-            requestBody.getStringOrNull("developer")
-                ?: throw InvalidContractException("Invalid contract")
+        val currentVersion = Version.parse(CURRENT_VERSION)
+        val requestVersion =
+            try {
+                Version.parse(versionString)
+            } catch (_: ParseException) {
+                throw InvalidContractException.VersionError()
+            }
 
-        return JsApiContract(version, developer)
+        when {
+            requestVersion.isSameMajorVersionAs(currentVersion) -> return
+            requestVersion.isLowerThan(currentVersion) -> throw InvalidContractException.OutdatedVersion()
+            else -> throw InvalidContractException.VersionError()
+        }
     }
 
     fun getEndpoint(uri: String): Endpoint? {
@@ -96,7 +111,7 @@ object JsApi {
             if (cardId != null) {
                 withCol { Card(this, cardId) }
             } else {
-                getTopCard() ?: return fail("There is no card at top of the queue")
+                getTopCard() ?: return fail("There is no card at top of the queue") // TODO parar de usar: previewers não funcionam com ele
             }
         return when (endpoint) {
             Endpoint.Card.GET_ID -> success(card.id)
@@ -276,6 +291,8 @@ object JsApi {
     }
 }
 
-class InvalidContractException(
-    message: String,
-) : IllegalArgumentException(message)
+open class InvalidContractException : IllegalArgumentException() {
+    class VersionError : InvalidContractException()
+
+    class OutdatedVersion : InvalidContractException()
+}
