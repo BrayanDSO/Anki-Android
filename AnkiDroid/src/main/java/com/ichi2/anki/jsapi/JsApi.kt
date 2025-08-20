@@ -66,13 +66,13 @@ object JsApi {
         return JsApiContract(version, developer)
     }
 
-    fun getEndpoint(uri: String): Endpoint? =
-        uri
-            .removePrefix(REQUEST_PREFIX)
-            .split('/', limit = 2)
-            .takeIf {
-                it.size == 2
-            }?.let { (base, value) -> Endpoint.from(base, value) }
+    fun getEndpoint(uri: String): Endpoint? {
+        val path = uri.removePrefix(REQUEST_PREFIX)
+        val parts = path.split('/', limit = 2).takeIf { it.size == 2 }
+        return parts?.let { (base, value) ->
+            Endpoint.from(base, value)
+        }
+    }
 
     suspend fun handleEndpointRequest(
         endpoint: Endpoint,
