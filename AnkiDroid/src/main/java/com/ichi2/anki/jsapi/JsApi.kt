@@ -55,12 +55,12 @@ object JsApi {
     private fun parseContract(requestBody: JSONObject): JsApiContract {
         val version = requestBody.getStringOrNull("version")
         if (version != CURRENT_VERSION) {
-            throw InvalidContractException.VersionError(version)
+            throw InvalidContractException("Invalid version")
         }
 
         val developer =
             requestBody.getStringOrNull("developer")
-                ?: throw InvalidContractException.ContactError(null)
+                ?: throw InvalidContractException("Invalid contract")
 
         return JsApiContract(version, developer)
     }
@@ -261,3 +261,7 @@ object JsApi {
             .toByteArray()
     }
 }
+
+class InvalidContractException(
+    message: String,
+) : IllegalArgumentException(message)
