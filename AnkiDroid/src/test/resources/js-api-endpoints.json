@@ -56,11 +56,11 @@
     "delete-note": "void"
   },
   "tts": {
-    "speak": "number",
+    "speak": "void",
     "set-language": "number",
-    "set-pitch": "number",
-    "set-speech-rate": "number",
+    "set-pitch": "void",
+    "set-speech-rate": "void",
     "is-speaking": "boolean",
-    "stop": "number"
+    "stop": "void"
   }
 }

@@ -202,13 +202,20 @@ object JsApi {
         endpoint: Endpoint.Tts,
         data: JSONObject?,
     ): ByteArray {
+        /** Helps with TTS methods that return SUCCESS or ERROR */
+        fun ttsErrorOrSuccess(
+            @JavaScriptTTS.ErrorOrSuccess result: Int,
+        ) = when (result) {
+            TextToSpeech.SUCCESS -> success()
+            TextToSpeech.ERROR -> fail("TTS engine error")
+            else -> fail("Unknown TTS error")
+        }
         return when (endpoint) {
             Endpoint.Tts.SPEAK -> {
                 val text = data?.optString("text") ?: return fail("Missing text")
                 val queueMode = data.getIntOrNull("queueMode") ?: return fail("Missing queueMode")
                 if (queueMode != TextToSpeech.QUEUE_FLUSH && queueMode != TextToSpeech.QUEUE_ADD) return fail("Invalid queueMode")
-                val result = tts.speak(text, queueMode)
-                success(result)
+                ttsErrorOrSuccess(tts.speak(text, queueMode))
             }
             Endpoint.Tts.SET_LANGUAGE -> {
                 val locale = data?.optString("locale") ?: return fail("Missing locale")
@@ -216,17 +223,17 @@ object JsApi {
             }
             Endpoint.Tts.SET_PITCH -> {
                 val pitch = data?.getDoubleOrNull("pitch") ?: return fail("Missing pitch")
-                success(tts.setPitch(pitch.toFloat()))
+                ttsErrorOrSuccess(tts.setPitch(pitch.toFloat()))
             }
             Endpoint.Tts.SET_SPEECH_RATE -> {
                 val speechRate = data?.getDoubleOrNull("speechRate") ?: return fail("Missing speechRate")
-                success(tts.setSpeechRate(speechRate.toFloat()))
+                ttsErrorOrSuccess(tts.setSpeechRate(speechRate.toFloat()))
             }
             Endpoint.Tts.IS_SPEAKING -> {
                 success(tts.isSpeaking)
             }
             Endpoint.Tts.STOP -> {
-                success(tts.stop())
+                ttsErrorOrSuccess(tts.stop())
             }
         }
     }
