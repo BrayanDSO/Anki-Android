@@ -17,6 +17,7 @@ package com.ichi2.anki.cardviewer
 
 import android.webkit.URLUtil
 import android.webkit.WebResourceRequest
+import com.ichi2.anki.jsapi.InvalidContractException
 import com.ichi2.anki.libanki.TtsPlayer
 import com.ichi2.anki.pages.AnkiServer.Companion.LOCALHOST
 import timber.log.Timber
@@ -33,6 +34,7 @@ class MediaErrorHandler {
     private var hasExecuted = false
 
     private var automaticTtsFailureCount = 0
+    private var hasShownInvalidContractMessage = false
 
     fun processFailure(
         request: WebResourceRequest,
@@ -102,5 +104,16 @@ class MediaErrorHandler {
         // Maybe specifically check for APP_TTS_INIT_TIMEOUT
 
         errorHandler.invoke(error)
+    }
+
+    fun processJsApiContractException(
+        exception: InvalidContractException,
+        messageHandler: (String) -> Unit,
+    ): String {
+        val message = exception.message ?: "Invalid contract"
+        if (hasShownInvalidContractMessage) return message
+        messageHandler.invoke(message)
+        hasShownInvalidContractMessage = true
+        return message
     }
 }

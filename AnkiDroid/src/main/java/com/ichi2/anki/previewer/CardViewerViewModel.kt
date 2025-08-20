@@ -210,7 +210,11 @@ abstract class CardViewerViewModel :
                 try {
                     JsApi.parseRequest(bytes)
                 } catch (exception: InvalidContractException) {
-                    return JsApi.fail(exception.message ?: "")
+                    val error =
+                        mediaErrorHandler.processJsApiContractException(exception) { message ->
+                            viewModelScope.launch { onError.emit(message) }
+                        }
+                    return JsApi.fail(error)
                 }
             val endpoint = getEndpoint(uri) ?: return JsApi.fail("Invalid endpoint")
             handleJsEndpoint(endpoint, request.data)
