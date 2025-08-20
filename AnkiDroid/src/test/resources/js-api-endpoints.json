@@ -50,7 +50,6 @@
     "open-note-editor": "void",
     "search": "void",
     "set-background-color": "void",
-    "set-status-bar-color": "void",
     "answer": "void",
     "undo": "void",
     "delete-note": "void"

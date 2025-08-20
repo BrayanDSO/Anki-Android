@@ -13,9 +13,8 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.ichi2.anki.ui.windows.reviewer.jsapi
+package com.ichi2.anki.jsapi
 
-import com.ichi2.anki.jsapi.Endpoint
 import com.ichi2.utils.FileOperation.Companion.getFileResource
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsInAnyOrder

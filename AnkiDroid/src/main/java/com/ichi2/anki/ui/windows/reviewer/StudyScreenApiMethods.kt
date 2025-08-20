@@ -25,7 +25,6 @@ import com.ichi2.anki.jsapi.JsApi
 import com.ichi2.anki.jsapi.UiRequest
 import com.ichi2.anki.snackbar.showSnackbar
 import com.ichi2.anki.utils.ext.collectIn
-import com.ichi2.anki.utils.ext.window
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
@@ -95,7 +94,6 @@ suspend fun ReviewerViewModel.handleStudyScreenEndpoint(
         Endpoint.StudyScreen.SEARCH,
         Endpoint.StudyScreen.SHOW_SNACKBAR,
         Endpoint.StudyScreen.SET_BACKGROUND_COLOR,
-        Endpoint.StudyScreen.SET_STATUS_BAR_COLOR,
         -> {
             val result = CompletableDeferred<ByteArray>()
             val request = UiRequest(endpoint, data, result)
@@ -134,21 +132,6 @@ private fun ReviewerFragment.handleJsUiRequest(request: UiRequest): ByteArray {
                     return JsApi.fail("Invalid hex code")
                 }
             view?.setBackgroundColor(color)
-            JsApi.success()
-        }
-        Endpoint.StudyScreen.SET_STATUS_BAR_COLOR -> {
-            val colorHex = request.data?.optString("colorHex") ?: return JsApi.fail("Missing hex code")
-            val color =
-                try {
-                    colorHex.toColorInt()
-                } catch (_: IllegalArgumentException) {
-                    return JsApi.fail("Invalid hex code")
-                }
-            @Suppress("DEPRECATION") // the status bar is supposed to blend in with the
-            // view background, which is what the study screen does by default. For setting just the
-            // status bar color, this is by far the most practical way. If Window.setStatusBarColor
-            // stops working in a future version of Android, this API method should be deprecated.
-            window.statusBarColor = color
             JsApi.success()
         }
         else -> JsApi.fail("Unhandled API method")

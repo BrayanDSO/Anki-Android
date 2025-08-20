@@ -97,7 +97,6 @@ sealed interface Endpoint {
         OPEN_NOTE_EDITOR("open-note-editor"),
         SEARCH("search"),
         SET_BACKGROUND_COLOR("set-background-color"),
-        SET_STATUS_BAR_COLOR("set-status-bar-color"),
         UNDO("undo"),
         DELETE_NOTE("delete-note"),
         ;
