@@ -38,6 +38,7 @@ import org.json.JSONObject
 import timber.log.Timber
 
 object JsApi {
+    const val REQUEST_PREFIX = "/jsapi/"
     private const val CURRENT_VERSION = "0.0.4"
     private const val SUCCESS_KEY = "success"
     private const val VALUE_KEY = "value"

@@ -27,6 +27,7 @@ import com.ichi2.anki.Flag
 import com.ichi2.anki.Reviewer
 import com.ichi2.anki.asyncIO
 import com.ichi2.anki.common.time.TimeManager
+import com.ichi2.anki.jsapi.JsApi
 import com.ichi2.anki.jsapi.UiRequest
 import com.ichi2.anki.launchCatchingIO
 import com.ichi2.anki.libanki.Card
@@ -382,7 +383,7 @@ class ReviewerViewModel :
                 "setSchedulingStates" -> setSchedulingStates(bytes)
                 else -> super.handlePostRequest(uri, bytes)
             }
-        } else if (uri.startsWith(AnkiServer.ANKIDROID_JS_PREFIX)) {
+        } else if (uri.startsWith(JsApi.REQUEST_PREFIX)) {
             handleJsApiRequest(uri, bytes)
         } else {
             super.handlePostRequest(uri, bytes)

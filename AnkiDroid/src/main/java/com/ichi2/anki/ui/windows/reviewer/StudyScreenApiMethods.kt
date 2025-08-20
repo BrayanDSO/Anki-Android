@@ -23,7 +23,6 @@ import com.ichi2.anki.common.utils.ext.getIntOrNull
 import com.ichi2.anki.jsapi.Endpoint
 import com.ichi2.anki.jsapi.JsApi
 import com.ichi2.anki.jsapi.UiRequest
-import com.ichi2.anki.pages.AnkiServer
 import com.ichi2.anki.snackbar.showSnackbar
 import com.ichi2.anki.utils.ext.collectIn
 import com.ichi2.anki.utils.ext.window
@@ -35,7 +34,7 @@ suspend fun ReviewerViewModel.handleJsApiRequest(
     uri: String,
     bytes: ByteArray,
 ): ByteArray {
-    val path = uri.substring(AnkiServer.ANKIDROID_JS_PREFIX.length)
+    val path = uri.substring(JsApi.REQUEST_PREFIX.length)
     val (base, endpointStr) = path.split('/', limit = 2)
     val request = JsApi.parseRequest(bytes)
     val endpoint = Endpoint.from(base, endpointStr) ?: return JsApi.fail("Invalid endpoint")
