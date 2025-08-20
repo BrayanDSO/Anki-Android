@@ -38,11 +38,12 @@ import org.json.JSONObject
 import timber.log.Timber
 
 object JsApi {
-    const val REQUEST_PREFIX = "/jsapi/"
-    private const val CURRENT_VERSION = "0.0.4"
+    private const val CURRENT_VERSION = "0.1.0"
     private const val SUCCESS_KEY = "success"
     private const val VALUE_KEY = "value"
     private const val ERROR_KEY = "error"
+    const val REQUEST_PREFIX = "/jsapi/"
+
     private val tts by lazy { JavaScriptTTS() }
 
     fun parseRequest(byteArray: ByteArray): JsApiRequest {
@@ -65,7 +66,7 @@ object JsApi {
         return JsApiContract(version, developer)
     }
 
-    private fun getEndpoint(uri: String): Endpoint? =
+    fun getEndpoint(uri: String): Endpoint? =
         uri
             .removePrefix(REQUEST_PREFIX)
             .split('/', limit = 2)
@@ -73,28 +74,18 @@ object JsApi {
                 it.size == 2
             }?.let { (base, value) -> Endpoint.from(base, value) }
 
-    suspend fun handleUriRequest(
-        uri: String,
-        bytes: ByteArray,
-    ): ByteArray {
-        val endpoint = getEndpoint(uri) ?: return fail("Invalid endpoint")
-        return handleEndpointRequest(endpoint, bytes)
-    }
-
     suspend fun handleEndpointRequest(
         endpoint: Endpoint,
-        bytes: ByteArray,
-    ): ByteArray {
-        val request = parseRequest(bytes)
-        return when (endpoint) {
+        data: JSONObject?,
+    ): ByteArray =
+        when (endpoint) {
             is Endpoint.Android -> handleAndroidEndpoints(endpoint)
-            is Endpoint.Card -> handleCardMethods(endpoint, request.data)
-            is Endpoint.Deck -> handleDeckMethods(endpoint, request.data)
-            is Endpoint.Note -> handleNoteMethods(endpoint, request.data)
-            is Endpoint.Tts -> handleTtsEndpoints(endpoint, request.data)
-            is Endpoint.StudyScreen -> fail("This screen doesn't support StudyScreen methods")
+            is Endpoint.Card -> handleCardMethods(endpoint, data)
+            is Endpoint.Deck -> handleDeckMethods(endpoint, data)
+            is Endpoint.Note -> handleNoteMethods(endpoint, data)
+            is Endpoint.Tts -> handleTtsEndpoints(endpoint, data)
+            is Endpoint.StudyScreen -> fail("Screen doesn't support StudyScreen methods")
         }
-    }
 
     private suspend fun handleCardMethods(
         endpoint: Endpoint.Card,

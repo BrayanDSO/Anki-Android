@@ -27,6 +27,10 @@ import com.ichi2.anki.cardviewer.CardMediaPlayer
 import com.ichi2.anki.cardviewer.MediaErrorBehavior
 import com.ichi2.anki.cardviewer.MediaErrorHandler
 import com.ichi2.anki.cardviewer.MediaErrorListener
+import com.ichi2.anki.jsapi.Endpoint
+import com.ichi2.anki.jsapi.InvalidContractException
+import com.ichi2.anki.jsapi.JsApi
+import com.ichi2.anki.jsapi.JsApi.getEndpoint
 import com.ichi2.anki.launchCatchingIO
 import com.ichi2.anki.libanki.Card
 import com.ichi2.anki.libanki.TtsPlayer
@@ -39,6 +43,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import org.json.JSONObject
 import timber.log.Timber
 
 abstract class CardViewerViewModel :
@@ -194,13 +199,28 @@ abstract class CardViewerViewModel :
     override suspend fun handlePostRequest(
         uri: String,
         bytes: ByteArray,
-    ): ByteArray =
-        if (uri.startsWith(AnkiServer.ANKI_PREFIX)) {
+    ): ByteArray {
+        return if (uri.startsWith(AnkiServer.ANKI_PREFIX)) {
             when (uri.substring(AnkiServer.ANKI_PREFIX.length)) {
                 "i18nResources" -> withCol { i18nResourcesRaw(bytes) }
                 else -> throw IllegalArgumentException("Unhandled Anki request: $uri")
             }
+        } else if (uri.startsWith(JsApi.REQUEST_PREFIX)) {
+            val request =
+                try {
+                    JsApi.parseRequest(bytes)
+                } catch (exception: InvalidContractException) {
+                    return JsApi.fail(exception.message ?: "")
+                }
+            val endpoint = getEndpoint(uri) ?: return JsApi.fail("Invalid endpoint")
+            handleJsEndpoint(endpoint, request.data)
         } else {
             throw IllegalArgumentException("Unhandled POST request: $uri")
         }
+    }
+
+    protected open suspend fun handleJsEndpoint(
+        endpoint: Endpoint,
+        data: JSONObject?,
+    ) = JsApi.handleEndpointRequest(endpoint, data)
 }

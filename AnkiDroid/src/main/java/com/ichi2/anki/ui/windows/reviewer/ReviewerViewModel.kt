@@ -27,6 +27,7 @@ import com.ichi2.anki.Flag
 import com.ichi2.anki.Reviewer
 import com.ichi2.anki.asyncIO
 import com.ichi2.anki.common.time.TimeManager
+import com.ichi2.anki.jsapi.Endpoint
 import com.ichi2.anki.jsapi.JsApi
 import com.ichi2.anki.jsapi.UiRequest
 import com.ichi2.anki.launchCatchingIO
@@ -70,6 +71,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.intellij.lang.annotations.Language
+import org.json.JSONObject
 import timber.log.Timber
 
 class ReviewerViewModel :
@@ -383,10 +385,18 @@ class ReviewerViewModel :
                 "setSchedulingStates" -> setSchedulingStates(bytes)
                 else -> super.handlePostRequest(uri, bytes)
             }
-        } else if (uri.startsWith(JsApi.REQUEST_PREFIX)) {
-            handleJsApiRequest(uri, bytes)
         } else {
             super.handlePostRequest(uri, bytes)
+        }
+
+    override suspend fun handleJsEndpoint(
+        endpoint: Endpoint,
+        data: JSONObject?,
+    ): ByteArray =
+        if (endpoint is Endpoint.StudyScreen) {
+            handleStudyScreenEndpoint(endpoint, data)
+        } else {
+            JsApi.handleEndpointRequest(endpoint, data)
         }
 
     override suspend fun showQuestion() {
