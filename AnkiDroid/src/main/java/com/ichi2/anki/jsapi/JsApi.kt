@@ -99,6 +99,7 @@ object JsApi {
             is Endpoint.Card -> handleCardMethods(endpoint, data, topCard)
             is Endpoint.Deck -> handleDeckMethods(endpoint, data, topCard)
             is Endpoint.Note -> handleNoteMethods(endpoint, data, topCard)
+            is Endpoint.NoteType -> handleNoteTypeMethods(endpoint, data, topCard)
             is Endpoint.Tts -> handleTtsEndpoints(endpoint, data)
             is Endpoint.StudyScreen -> fail("Screen doesn't support StudyScreen methods")
         }
@@ -131,6 +132,14 @@ object JsApi {
             Endpoint.Card.GET_QUEUE -> success(card.queue.code)
             Endpoint.Card.GET_LAPSES -> success(card.lapses)
             Endpoint.Card.GET_DUE -> success(card.due)
+            Endpoint.Card.GET_QUESTION -> {
+                val question = withCol { card.question(this) }
+                success(question)
+            }
+            Endpoint.Card.GET_ANSWER -> {
+                val answer = withCol { card.answer(this) }
+                success(answer)
+            }
             Endpoint.Card.BURY -> {
                 val count = undoableOp { sched.buryCards(cids = listOf(card.id)) }.count
                 success(count)
@@ -175,6 +184,7 @@ object JsApi {
             }
         return when (endpoint) {
             Endpoint.Note.GET_ID -> success(note.id)
+            Endpoint.Note.GET_NOTETYPE_ID -> success(note.noteTypeId)
             Endpoint.Note.BURY -> {
                 val count = undoableOp { sched.buryNotes(listOf(note.id)) }.count
                 success(count)
@@ -200,6 +210,25 @@ object JsApi {
                 NoteService.toggleMark(note)
                 success()
             }
+        }
+    }
+
+    private suspend fun handleNoteTypeMethods(
+        endpoint: Endpoint.NoteType,
+        data: JSONObject?,
+        topCard: Card,
+    ): ByteArray {
+        val noteTypeId = data?.getLongOrNull("id")
+        val noteType =
+            if (noteTypeId != null) {
+                withCol { notetypes }.get(noteTypeId) ?: return fail("Found no note type with the id '$noteTypeId'")
+            } else {
+                withCol { topCard.noteType(this) }
+            }
+        return when (endpoint) {
+            Endpoint.NoteType.IS_IMAGE_OCCLUSION -> success(noteType.isImageOcclusion)
+            Endpoint.NoteType.IS_CLOZE -> success(noteType.isCloze)
+            Endpoint.NoteType.GET_FIELD_NAMES -> success(noteType.fieldsNames)
         }
     }
 
@@ -272,6 +301,8 @@ object JsApi {
     fun success(number: Int) = successResult(number)
 
     fun success(number: Long) = successResult(number)
+
+    fun success(strings: List<String>) = successResult(strings)
 
     private fun successResult(value: Any?): ByteArray =
         JSONObject()

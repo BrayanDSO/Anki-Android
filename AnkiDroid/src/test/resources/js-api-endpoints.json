@@ -18,6 +18,8 @@
     "get-o-due": "number",
     "get-queue": "number",
     "get-lapses": "number",
+    "get-question": "string",
+    "get-answer": "string",
     "get-due": "number",
     "is-marked": "boolean",
     "bury": "number",
@@ -30,8 +32,14 @@
     "get-name": "string",
     "is-filtered": "boolean"
   },
+  "note-type": {
+    "is-image-occlusion": "boolean",
+    "is-cloze": "boolean",
+    "get-field-names": "string[]"
+  },
   "note": {
     "get-id": "number",
+    "get-note-type-id": "number",
     "bury": "number",
     "suspend": "number",
     "get-tags": "string",

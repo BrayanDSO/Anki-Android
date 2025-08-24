@@ -47,6 +47,8 @@ sealed interface Endpoint {
         GET_QUEUE("get-queue"),
         GET_LAPSES("get-lapses"),
         GET_DUE("get-due"),
+        GET_QUESTION("get-question"),
+        GET_ANSWER("get-answer"),
         IS_MARKED("is-marked"),
         BURY("bury"),
         SUSPEND("suspend"),
@@ -72,6 +74,7 @@ sealed interface Endpoint {
         override val value: String,
     ) : Endpoint {
         GET_ID("get-id"),
+        GET_NOTETYPE_ID("get-note-type-id"),
         BURY("bury"),
         SUSPEND("suspend"),
         GET_TAGS("get-tags"),
@@ -80,6 +83,17 @@ sealed interface Endpoint {
         ;
 
         override val base = "note"
+    }
+
+    enum class NoteType(
+        override val value: String,
+    ) : Endpoint {
+        IS_IMAGE_OCCLUSION("is-image-occlusion"),
+        IS_CLOZE("is-cloze"),
+        GET_FIELD_NAMES("get-field-names"),
+        ;
+
+        override val base = "note-type"
     }
 
     enum class StudyScreen(
