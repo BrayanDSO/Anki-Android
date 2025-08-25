@@ -24,8 +24,18 @@
     "is-marked": "boolean",
     "bury": "number",
     "suspend": "number",
+    "unbury": "void",
+    "unsuspend": "void",
     "reset-progress": "void",
     "toggle-flag": "void"
+  },
+  "collection": {
+    "undo": "string",
+    "redo": "string",
+    "is-undo-available": "boolean",
+    "is-redo-available": "boolean",
+    "find-cards": "number[]",
+    "find-notes": "number[]"
   },
   "deck": {
     "get-id": "number",
@@ -56,10 +66,9 @@
     "get-next-time": "string",
     "open-card-info": "void",
     "open-note-editor": "void",
-    "search": "void",
+    "search-in-browser": "void",
     "set-background-color": "void",
     "answer": "void",
-    "undo": "void",
     "delete-note": "void"
   },
   "tts": {

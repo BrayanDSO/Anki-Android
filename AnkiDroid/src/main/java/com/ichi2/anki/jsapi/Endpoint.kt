@@ -52,11 +52,27 @@ sealed interface Endpoint {
         IS_MARKED("is-marked"),
         BURY("bury"),
         SUSPEND("suspend"),
+        UNBURY("unbury"),
+        UNSUSPEND("unsuspend"),
         RESET_PROGRESS("reset-progress"),
         TOGGLE_FLAG("toggle-flag"),
         ;
 
         override val base = "card"
+    }
+
+    enum class Collection(
+        override val value: String,
+    ) : Endpoint {
+        UNDO("undo"),
+        REDO("redo"),
+        IS_UNDO_AVAILABLE("is-undo-available"),
+        IS_REDO_AVAILABLE("is-redo-available"),
+        FIND_CARDS("find-cards"),
+        FIND_NOTES("find-notes"),
+        ;
+
+        override val base = "collection"
     }
 
     enum class Deck(
@@ -109,9 +125,8 @@ sealed interface Endpoint {
         GET_NEXT_TIME("get-next-time"),
         OPEN_CARD_INFO("open-card-info"),
         OPEN_NOTE_EDITOR("open-note-editor"),
-        SEARCH("search"),
+        SEARCH_IN_BROWSER("search-in-browser"),
         SET_BACKGROUND_COLOR("set-background-color"),
-        UNDO("undo"),
         DELETE_NOTE("delete-note"),
         ;
 

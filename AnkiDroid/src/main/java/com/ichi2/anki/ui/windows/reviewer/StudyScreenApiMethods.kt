@@ -82,16 +82,12 @@ suspend fun ReviewerViewModel.handleStudyScreenEndpoint(
             emitEditNoteDestination(cardId)
             JsApi.success()
         }
-        Endpoint.StudyScreen.UNDO -> {
-            undo()
-            JsApi.success()
-        }
         Endpoint.StudyScreen.DELETE_NOTE -> {
             deleteNote()
             JsApi.success()
         }
         // UI requests
-        Endpoint.StudyScreen.SEARCH,
+        Endpoint.StudyScreen.SEARCH_IN_BROWSER,
         Endpoint.StudyScreen.SHOW_SNACKBAR,
         Endpoint.StudyScreen.SET_BACKGROUND_COLOR,
         -> {

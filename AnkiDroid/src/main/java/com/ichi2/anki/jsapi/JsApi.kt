@@ -29,6 +29,8 @@ import com.ichi2.anki.common.utils.ext.getLongOrNull
 import com.ichi2.anki.common.utils.ext.getStringOrNull
 import com.ichi2.anki.libanki.Card
 import com.ichi2.anki.libanki.Note
+import com.ichi2.anki.libanki.redoAvailable
+import com.ichi2.anki.libanki.undoAvailable
 import com.ichi2.anki.observability.undoableOp
 import com.ichi2.anki.servicelayer.MARKED_TAG
 import com.ichi2.anki.servicelayer.NoteService
@@ -97,6 +99,7 @@ object JsApi {
         when (endpoint) {
             is Endpoint.Android -> handleAndroidEndpoints(endpoint)
             is Endpoint.Card -> handleCardMethods(endpoint, data, topCard)
+            is Endpoint.Collection -> handleCollectionMethods(endpoint, data)
             is Endpoint.Deck -> handleDeckMethods(endpoint, data, topCard)
             is Endpoint.Note -> handleNoteMethods(endpoint, data, topCard)
             is Endpoint.NoteType -> handleNoteTypeMethods(endpoint, data, topCard)
@@ -152,6 +155,14 @@ object JsApi {
                 val count = undoableOp { sched.suspendCards(ids = listOf(card.id)) }.count
                 success(count)
             }
+            Endpoint.Card.UNBURY -> {
+                undoableOp { sched.unburyCards(listOf(card.id)) }
+                success()
+            }
+            Endpoint.Card.UNSUSPEND -> {
+                undoableOp { sched.unsuspendCards(listOf(card.id)) }
+                success()
+            }
             Endpoint.Card.RESET_PROGRESS -> {
                 undoableOp {
                     sched.forgetCards(listOf(card.id), restorePosition = false, resetCounts = false)
@@ -166,6 +177,40 @@ object JsApi {
                 val newFlag = if (requestFlag == card.userFlag()) Flag.NONE else Flag.fromCode(requestFlag)
                 undoableOp { setUserFlagForCards(listOf(card.id), newFlag) }
                 success()
+            }
+        }
+    }
+
+    private suspend fun handleCollectionMethods(
+        endpoint: Endpoint.Collection,
+        data: JSONObject?,
+    ): ByteArray {
+        return when (endpoint) {
+            Endpoint.Collection.UNDO -> {
+                val changes = undoableOp { undo() }
+                success(changes.operation)
+            }
+            Endpoint.Collection.REDO -> {
+                val changes = undoableOp { redo() }
+                success(changes.operation)
+            }
+            Endpoint.Collection.IS_UNDO_AVAILABLE -> {
+                val isUndoAvailable = withCol { undoAvailable() }
+                success(isUndoAvailable)
+            }
+            Endpoint.Collection.IS_REDO_AVAILABLE -> {
+                val isRedoAvailable = withCol { redoAvailable() }
+                success(isRedoAvailable)
+            }
+            Endpoint.Collection.FIND_CARDS -> {
+                val search = data?.getStringOrNull("search") ?: return fail("No search query found")
+                val ids = withCol { findCards(search) }
+                success(ids)
+            }
+            Endpoint.Collection.FIND_NOTES -> {
+                val search = data?.getStringOrNull("search") ?: return fail("No search query found")
+                val ids = withCol { findNotes(search) }
+                success(ids)
             }
         }
     }
@@ -302,7 +347,7 @@ object JsApi {
 
     fun success(number: Long) = successResult(number)
 
-    fun success(strings: List<String>) = successResult(strings)
+    fun success(list: List<*>) = successResult(list)
 
     private fun successResult(value: Any?): ByteArray =
         JSONObject()
