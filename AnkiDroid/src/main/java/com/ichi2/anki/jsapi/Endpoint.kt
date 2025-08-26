@@ -90,7 +90,8 @@ sealed interface Endpoint {
         override val value: String,
     ) : Endpoint {
         GET_ID("get-id"),
-        GET_NOTETYPE_ID("get-note-type-id"),
+        GET_NOTE_TYPE_ID("get-note-type-id"),
+        GET_CARD_IDS("get-card-ids"),
         BURY("bury"),
         SUSPEND("suspend"),
         GET_TAGS("get-tags"),

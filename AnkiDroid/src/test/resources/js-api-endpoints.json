@@ -50,6 +50,7 @@
   "note": {
     "get-id": "number",
     "get-note-type-id": "number",
+    "get-card-ids": "number[]",
     "bury": "number",
     "suspend": "number",
     "get-tags": "string",

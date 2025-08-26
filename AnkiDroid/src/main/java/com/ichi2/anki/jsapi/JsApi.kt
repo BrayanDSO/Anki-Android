@@ -229,7 +229,8 @@ object JsApi {
             }
         return when (endpoint) {
             Endpoint.Note.GET_ID -> success(note.id)
-            Endpoint.Note.GET_NOTETYPE_ID -> success(note.noteTypeId)
+            Endpoint.Note.GET_NOTE_TYPE_ID -> success(note.noteTypeId)
+            Endpoint.Note.GET_CARD_IDS -> success(withCol { note.cardIds(this) })
             Endpoint.Note.BURY -> {
                 val count = undoableOp { sched.buryNotes(listOf(note.id)) }.count
                 success(count)
