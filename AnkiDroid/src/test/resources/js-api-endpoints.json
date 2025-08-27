@@ -48,7 +48,7 @@
     },
     "get-left": {
       "params": {},
-      "return": "string"
+      "return": "number"
     },
     "get-o-did": {
       "params": {},

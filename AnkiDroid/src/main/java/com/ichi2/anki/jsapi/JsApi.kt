@@ -248,8 +248,7 @@ object JsApi {
                 success(tags)
             }
             Endpoint.Note.SET_TAGS -> {
-                val noteRequestData = data?.optJSONObject("data") ?: return fail("Missing request data")
-                val tags = noteRequestData.optString("tags") ?: return fail("Missing tags")
+                val tags = data?.optString("tags") ?: return fail("Missing tags")
                 undoableOp {
                     note.setTagsFromStr(this, tags)
                     updateNote(note)

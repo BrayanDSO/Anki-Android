@@ -18,17 +18,20 @@ package com.ichi2.anki.jsapi
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ichi2.testutils.JvmTest
 import com.ichi2.utils.FileOperation.Companion.getFileResource
+import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
 import kotlin.collections.iterator
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
 class JsApiTest : JvmTest() {
     @Test
-    fun `Endpoints mega test`() =
+    fun `Return types match the API`() =
         runTest {
             val file = File(getFileResource("js-api-endpoints.json"))
             val endpointsJson = JSONObject(file.readText())
@@ -73,11 +76,32 @@ class JsApiTest : JvmTest() {
                     configureData(data, params)
                     val endpoint = Endpoint.from(serviceBase, endpointString)
                     assertNotNull(endpoint)
-                    // those tests have dependencies
+
                     if (endpoint is Endpoint.StudyScreen) continue
 
-                    JsApi.handleEndpointRequest(endpoint, data, topCard)
+                    val result = JsApi.handleEndpointRequest(endpoint, data, topCard)
+                    val resultJson = JSONObject(String(result, Charsets.UTF_8))
+                    assertTrue(resultJson.getBoolean("success"))
+
+                    val resultValue = resultJson.opt("value")
+                    val expectedReturnType = getJsType(resultValue)
+                    assertEquals(expectedReturnType, returnType, "Unexpected return type in $serviceBase/$endpointString")
                 }
             }
         }
+
+    private fun getJsType(value: Any?): String {
+        if (value == null) return "void"
+        return when (value::class) {
+            String::class -> "string"
+            Int::class, Long::class, Double::class -> "number"
+            Boolean::class -> "boolean"
+            JSONArray::class -> {
+                val element = (value as JSONArray).get(0)
+                val type = getJsType(element)
+                "$type[]"
+            }
+            else -> throw IllegalArgumentException("Unhandled ${value::class}")
+        }
+    }
 }
