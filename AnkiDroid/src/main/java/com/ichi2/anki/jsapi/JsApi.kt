@@ -38,6 +38,7 @@ import com.ichi2.anki.utils.ext.flag
 import com.ichi2.anki.utils.ext.setUserFlagForCards
 import com.ichi2.themes.Themes
 import com.ichi2.utils.NetworkUtils
+import org.json.JSONArray
 import org.json.JSONObject
 import timber.log.Timber
 
@@ -272,6 +273,7 @@ object JsApi {
                 withCol { topCard.noteType(this) }
             }
         return when (endpoint) {
+            Endpoint.NoteType.GET_NAME -> success(noteType.name)
             Endpoint.NoteType.IS_IMAGE_OCCLUSION -> success(noteType.isImageOcclusion)
             Endpoint.NoteType.IS_CLOZE -> success(noteType.isCloze)
             Endpoint.NoteType.GET_FIELD_NAMES -> success(noteType.fieldsNames)
@@ -348,15 +350,17 @@ object JsApi {
 
     fun success(number: Long) = successResult(number)
 
-    fun success(list: List<*>) = successResult(list)
+    fun success(collection: Collection<*>) = successResult(JSONArray(collection))
 
-    private fun successResult(value: Any?): ByteArray =
-        JSONObject()
-            .apply {
-                put(SUCCESS_KEY, true)
-                put(VALUE_KEY, value)
-            }.toString()
-            .toByteArray()
+    private fun successResult(value: Any?): ByteArray {
+        val jsonObject =
+            JSONObject()
+                .apply {
+                    put(SUCCESS_KEY, true)
+                    put(VALUE_KEY, value)
+                }
+        return jsonObject.toString().toByteArray()
+    }
 
     fun fail(error: String): ByteArray {
         Timber.i("JsApi fail: %s", error)

@@ -43,6 +43,7 @@
     "is-filtered": "boolean"
   },
   "note-type": {
+    "get-name": "string",
     "is-image-occlusion": "boolean",
     "is-cloze": "boolean",
     "get-field-names": "string[]"
