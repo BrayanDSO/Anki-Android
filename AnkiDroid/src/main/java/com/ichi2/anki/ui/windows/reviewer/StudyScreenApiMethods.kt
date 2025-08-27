@@ -87,7 +87,6 @@ suspend fun ReviewerViewModel.handleStudyScreenEndpoint(
             JsApi.success()
         }
         // UI requests
-        Endpoint.StudyScreen.SEARCH_IN_BROWSER,
         Endpoint.StudyScreen.SHOW_SNACKBAR,
         Endpoint.StudyScreen.SET_BACKGROUND_COLOR,
         -> {

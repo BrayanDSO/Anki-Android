@@ -171,8 +171,7 @@ object JsApi {
                 success()
             }
             Endpoint.Card.TOGGLE_FLAG -> {
-                val requestBody = data?.getJSONObject("data") ?: return fail("Missing data")
-                val requestFlag = requestBody.getInt("flag")
+                val requestFlag = data?.getIntOrNull("flag") ?: return fail("Missing flag")
                 if (requestFlag < 0 || requestFlag > 7) return fail("Invalid flag code")
 
                 val newFlag = if (requestFlag == card.userFlag()) Flag.NONE else Flag.fromCode(requestFlag)

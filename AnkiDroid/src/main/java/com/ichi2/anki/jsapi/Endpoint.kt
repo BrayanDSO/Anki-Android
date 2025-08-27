@@ -127,7 +127,6 @@ sealed interface Endpoint {
         GET_NEXT_TIME("get-next-time"),
         OPEN_CARD_INFO("open-card-info"),
         OPEN_NOTE_EDITOR("open-note-editor"),
-        SEARCH_IN_BROWSER("search-in-browser"),
         SET_BACKGROUND_COLOR("set-background-color"),
         DELETE_NOTE("delete-note"),
         ;

@@ -1,84 +1,308 @@
 {
   "android": {
-    "is-system-in-dark-mode": "boolean",
-    "is-network-metered": "boolean"
+    "is-system-in-dark-mode": {
+      "params": {},
+      "return": "boolean"
+    },
+    "is-network-metered": {
+      "params": {},
+      "return": "boolean"
+    }
   },
   "card": {
-    "get-id": "number",
-    "get-flag": "number",
-    "get-reps": "number",
-    "get-interval": "number",
-    "get-factor": "number",
-    "get-mod": "number",
-    "get-nid": "number",
-    "get-type": "number",
-    "get-did": "number",
-    "get-left": "string",
-    "get-o-did": "number",
-    "get-o-due": "number",
-    "get-queue": "number",
-    "get-lapses": "number",
-    "get-question": "string",
-    "get-answer": "string",
-    "get-due": "number",
-    "is-marked": "boolean",
-    "bury": "number",
-    "suspend": "number",
-    "unbury": "void",
-    "unsuspend": "void",
-    "reset-progress": "void",
-    "toggle-flag": "void"
+    "get-id": {
+      "params": {},
+      "return": "number"
+    },
+    "get-flag": {
+      "params": {},
+      "return": "number"
+    },
+    "get-reps": {
+      "params": {},
+      "return": "number"
+    },
+    "get-interval": {
+      "params": {},
+      "return": "number"
+    },
+    "get-factor": {
+      "params": {},
+      "return": "number"
+    },
+    "get-mod": {
+      "params": {},
+      "return": "number"
+    },
+    "get-nid": {
+      "params": {},
+      "return": "number"
+    },
+    "get-type": {
+      "params": {},
+      "return": "number"
+    },
+    "get-did": {
+      "params": {},
+      "return": "number"
+    },
+    "get-left": {
+      "params": {},
+      "return": "string"
+    },
+    "get-o-did": {
+      "params": {},
+      "return": "number"
+    },
+    "get-o-due": {
+      "params": {},
+      "return": "number"
+    },
+    "get-queue": {
+      "params": {},
+      "return": "number"
+    },
+    "get-lapses": {
+      "params": {},
+      "return": "number"
+    },
+    "get-question": {
+      "params": {},
+      "return": "string"
+    },
+    "get-answer": {
+      "params": {},
+      "return": "string"
+    },
+    "get-due": {
+      "params": {},
+      "return": "number"
+    },
+    "is-marked": {
+      "params": {},
+      "return": "boolean"
+    },
+    "bury": {
+      "params": {},
+      "return": "number"
+    },
+    "suspend": {
+      "params": {},
+      "return": "number"
+    },
+    "unbury": {
+      "params": {},
+      "return": "void"
+    },
+    "unsuspend": {
+      "params": {},
+      "return": "void"
+    },
+    "reset-progress": {
+      "params": {},
+      "return": "void"
+    },
+    "toggle-flag": {
+      "params": {
+        "flag": "number"
+      },
+      "return": "void"
+    }
   },
   "collection": {
-    "undo": "string",
-    "redo": "string",
-    "is-undo-available": "boolean",
-    "is-redo-available": "boolean",
-    "find-cards": "number[]",
-    "find-notes": "number[]"
+    "undo": {
+      "params": {},
+      "return": "string"
+    },
+    "redo": {
+      "params": {},
+      "return": "string"
+    },
+    "is-undo-available": {
+      "params": {},
+      "return": "boolean"
+    },
+    "is-redo-available": {
+      "params": {},
+      "return": "boolean"
+    },
+    "find-cards": {
+      "params": {
+        "search": "string"
+      },
+      "return": "number[]"
+    },
+    "find-notes": {
+      "params": {
+        "search": "string"
+      },
+      "return": "number[]"
+    }
   },
   "deck": {
-    "get-id": "number",
-    "get-name": "string",
-    "is-filtered": "boolean"
+    "get-id": {
+      "params": {},
+      "return": "number"
+    },
+    "get-name": {
+      "params": {},
+      "return": "string"
+    },
+    "is-filtered": {
+      "params": {},
+      "return": "boolean"
+    }
   },
   "note-type": {
-    "get-name": "string",
-    "is-image-occlusion": "boolean",
-    "is-cloze": "boolean",
-    "get-field-names": "string[]"
+    "get-name": {
+      "params": {},
+      "return": "string"
+    },
+    "is-image-occlusion": {
+      "params": {},
+      "return": "boolean"
+    },
+    "is-cloze": {
+      "params": {},
+      "return": "boolean"
+    },
+    "get-field-names": {
+      "params": {},
+      "return": "string[]"
+    }
   },
   "note": {
-    "get-id": "number",
-    "get-note-type-id": "number",
-    "get-card-ids": "number[]",
-    "bury": "number",
-    "suspend": "number",
-    "get-tags": "string",
-    "set-tags": "void",
-    "toggle-mark": "void"
+    "get-id": {
+      "params": {},
+      "return": "number"
+    },
+    "get-note-type-id": {
+      "params": {},
+      "return": "number"
+    },
+    "get-card-ids": {
+      "params": {},
+      "return": "number[]"
+    },
+    "bury": {
+      "params": {},
+      "return": "number"
+    },
+    "suspend": {
+      "params": {},
+      "return": "number"
+    },
+    "get-tags": {
+      "params": {},
+      "return": "string"
+    },
+    "set-tags": {
+      "params": {
+        "tags": "string"
+      },
+      "return": "void"
+    },
+    "toggle-mark": {
+      "params": {},
+      "return": "void"
+    }
   },
   "study-screen": {
-    "show-snackbar": "void",
-    "get-new-count": "number",
-    "get-learning-count": "number",
-    "get-to-review-count": "number",
-    "show-answer": "void",
-    "is-showing-answer": "boolean",
-    "get-next-time": "string",
-    "open-card-info": "void",
-    "open-note-editor": "void",
-    "search-in-browser": "void",
-    "set-background-color": "void",
-    "answer": "void",
-    "delete-note": "void"
+    "show-snackbar": {
+      "params": {
+        "text": "string",
+        "duration": "number"
+      },
+      "return": "void"
+    },
+    "get-new-count": {
+      "params": {},
+      "return": "number"
+    },
+    "get-learning-count": {
+      "params": {},
+      "return": "number"
+    },
+    "get-to-review-count": {
+      "params": {},
+      "return": "number"
+    },
+    "show-answer": {
+      "params": {},
+      "return": "void"
+    },
+    "is-showing-answer": {
+      "params": {},
+      "return": "boolean"
+    },
+    "get-next-time": {
+      "params": {
+        "rating": "number"
+      },
+      "return": "string"
+    },
+    "open-card-info": {
+      "params": {
+        "cardId": "number"
+      },
+      "return": "void"
+    },
+    "open-note-editor": {
+      "params": {
+        "cardId": "number"
+      },
+      "return": "void"
+    },
+    "set-background-color": {
+      "params": {
+        "colorHex": "string"
+      },
+      "return": "void"
+    },
+    "answer": {
+      "params": {
+        "rating": "number"
+      },
+      "return": "void"
+    },
+    "delete-note": {
+      "params": {},
+      "return": "void"
+    }
   },
   "tts": {
-    "speak": "void",
-    "set-language": "number",
-    "set-pitch": "void",
-    "set-speech-rate": "void",
-    "is-speaking": "boolean",
-    "stop": "void"
+    "speak": {
+      "params": {
+        "text": "string",
+        "queueMode": "number"
+      },
+      "return": "void"
+    },
+    "set-language": {
+      "params": {
+        "locale": "string"
+      },
+      "return": "number"
+    },
+    "set-pitch": {
+      "params": {
+        "pitch": "number"
+      },
+      "return": "void"
+    },
+    "set-speech-rate": {
+      "params": {
+        "speechRate": "number"
+      },
+      "return": "void"
+    },
+    "is-speaking": {
+      "params": {},
+      "return": "boolean"
+    },
+    "stop": {
+      "params": {},
+      "return": "void"
+    }
   }
 }
