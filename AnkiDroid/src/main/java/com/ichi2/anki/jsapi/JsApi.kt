@@ -188,10 +188,14 @@ object JsApi {
     ): ByteArray {
         return when (endpoint) {
             Endpoint.Collection.UNDO -> {
+                val isUndoAvailable = withCol { undoAvailable() }
+                if (!isUndoAvailable) return fail("Undo is not available")
                 val changes = undoableOp { undo() }
                 success(changes.operation)
             }
             Endpoint.Collection.REDO -> {
+                val isRedoAvailable = withCol { redoAvailable() }
+                if (!isRedoAvailable) return fail("Redo is not available")
                 val changes = undoableOp { redo() }
                 success(changes.operation)
             }
