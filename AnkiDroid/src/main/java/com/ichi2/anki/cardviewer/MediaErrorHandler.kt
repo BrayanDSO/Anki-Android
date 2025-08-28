@@ -17,7 +17,6 @@ package com.ichi2.anki.cardviewer
 
 import android.webkit.URLUtil
 import android.webkit.WebResourceRequest
-import com.ichi2.anki.jsapi.InvalidContractException
 import com.ichi2.anki.libanki.TtsPlayer
 import com.ichi2.anki.pages.AnkiServer.Companion.LOCALHOST
 import timber.log.Timber
@@ -106,15 +105,9 @@ class MediaErrorHandler {
         errorHandler.invoke(error)
     }
 
-    fun processJsApiContractException(
-        exception: InvalidContractException,
-        messageHandler: (String) -> Unit,
-    ): String {
-        val message = exception.message ?: "Invalid contract"
-        if (hasShownInvalidContractMessage) return message
+    fun shouldShowJsApiExceptionMessage(): Boolean {
+        if (hasShownInvalidContractMessage) return false
         hasShownInvalidContractMessage = true
-
-        messageHandler.invoke(message)
-        return message
+        return true
     }
 }

@@ -53,6 +53,7 @@ abstract class CardViewerViewModel :
     override val onError = MutableSharedFlow<String>()
     val onMediaError = MutableSharedFlow<String>()
     val onTtsError = MutableSharedFlow<TtsPlayer.TtsError>()
+    val onJsApiError = MutableSharedFlow<InvalidContractException>()
     val mediaErrorHandler = MediaErrorHandler()
 
     val eval = MutableSharedFlow<String>()
@@ -219,11 +220,10 @@ abstract class CardViewerViewModel :
             try {
                 JsApi.parseRequest(bytes)
             } catch (exception: InvalidContractException) {
-                val error =
-                    mediaErrorHandler.processJsApiContractException(exception) { message ->
-                        viewModelScope.launch { onError.emit(message) }
-                    }
-                return JsApi.fail(error)
+                if (mediaErrorHandler.shouldShowJsApiExceptionMessage()) {
+                    onJsApiError.emit(exception)
+                }
+                return JsApi.fail("Invalid contract")
             }
 
         val endpoint = getEndpoint(uri) ?: return JsApi.fail("Invalid endpoint")

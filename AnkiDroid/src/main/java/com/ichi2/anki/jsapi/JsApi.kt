@@ -58,29 +58,36 @@ object JsApi {
     }
 
     /**
-     * @throws InvalidContractException if the contra
+     * @throws InvalidContractException if
+     * * developer contact is empty
+     * * request version is invalid
+     * * request version is higher than the API version
+     * * request major version is lower than the API version
      */
     private fun validateContract(json: JSONObject) {
         // Developer contact
         val developer = json.getStringOrNull("developer")
         if (developer.isNullOrBlank()) {
-            throw InvalidContractException()
+            throw InvalidContractException.ContactError()
         }
         // Version
-        val versionString = json.getStringOrNull("version") ?: throw InvalidContractException.VersionError()
+        val versionString = json.getStringOrNull("version") ?: throw InvalidContractException.VersionError("", developer)
 
         val currentVersion = Version.parse(CURRENT_VERSION)
         val requestVersion =
             try {
                 Version.parse(versionString)
             } catch (_: ParseException) {
-                throw InvalidContractException.VersionError()
+                throw InvalidContractException.VersionError(versionString, developer)
             }
 
         when {
+            requestVersion.isHigherThan(currentVersion) -> throw InvalidContractException.VersionError(versionString, developer)
             requestVersion.isSameMajorVersionAs(currentVersion) -> return
-            requestVersion.isLowerThan(currentVersion) -> throw InvalidContractException.OutdatedVersion()
-            else -> throw InvalidContractException.VersionError()
+            requestVersion.isLowerThan(
+                currentVersion,
+            ) -> throw InvalidContractException.OutdatedVersion(CURRENT_VERSION, versionString, developer)
+            else -> throw InvalidContractException.VersionError(versionString, developer)
         }
     }
 
@@ -373,10 +380,4 @@ object JsApi {
             }.toString()
             .toByteArray()
     }
-}
-
-open class InvalidContractException : IllegalArgumentException() {
-    class VersionError : InvalidContractException()
-
-    class OutdatedVersion : InvalidContractException()
 }

@@ -132,6 +132,15 @@ abstract class CardViewerFragment(
         viewModel.onTtsError
             .onEach { showSnackbar(it.localizedErrorMessage(requireContext())) }
             .launchIn(lifecycleScope)
+
+        viewModel.onJsApiError.flowWithLifecycle(lifecycle).collectIn(lifecycleScope) { error ->
+            val errorMessage = error.localizedErrorMessage(resources)
+            AlertDialog
+                .Builder(requireContext())
+                .setTitle(R.string.vague_error)
+                .setMessage(errorMessage)
+                .show()
+        }
     }
 
     protected open fun onCreateWebViewClient(savedInstanceState: Bundle?): WebViewClient = CardViewerWebViewClient(savedInstanceState)
