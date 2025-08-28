@@ -31,6 +31,7 @@ import com.ichi2.anki.jsapi.Endpoint
 import com.ichi2.anki.jsapi.InvalidContractException
 import com.ichi2.anki.jsapi.JsApi
 import com.ichi2.anki.jsapi.JsApi.getEndpoint
+import com.ichi2.anki.jsapi.UiRequest
 import com.ichi2.anki.launchCatchingIO
 import com.ichi2.anki.libanki.Card
 import com.ichi2.anki.libanki.TtsPlayer
@@ -38,10 +39,12 @@ import com.ichi2.anki.multimedia.getAvTag
 import com.ichi2.anki.multimedia.replaceAvRefsWithPlayButtons
 import com.ichi2.anki.pages.AnkiServer
 import com.ichi2.anki.pages.PostRequestHandler
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
 import org.json.JSONObject
 import timber.log.Timber
@@ -57,6 +60,7 @@ abstract class CardViewerViewModel :
     val mediaErrorHandler = MediaErrorHandler()
 
     val eval = MutableSharedFlow<String>()
+    val apiRequestFlow = MutableSharedFlow<UiRequest>()
 
     open val showingAnswer = MutableStateFlow(false)
 
@@ -233,5 +237,17 @@ abstract class CardViewerViewModel :
     protected open suspend fun handleJsEndpoint(
         endpoint: Endpoint,
         data: JSONObject?,
-    ) = JsApi.handleEndpointRequest(endpoint, data, currentCard.await())
+    ): ByteArray =
+        if (endpoint is Endpoint.Android) {
+            val result = CompletableDeferred<ByteArray>()
+            val request = UiRequest(endpoint, data, result)
+            apiRequestFlow.emit(request)
+            // there may be no listeners for the flow, so fail the result after some time
+            // e.g. the fragment uses flowWithLifecycle and is at a different lifecycleState
+            withTimeoutOrNull(2000L) {
+                result.await()
+            } ?: JsApi.fail("Method was not handled")
+        } else {
+            JsApi.handleEndpointRequest(endpoint, data, currentCard.await())
+        }
 }

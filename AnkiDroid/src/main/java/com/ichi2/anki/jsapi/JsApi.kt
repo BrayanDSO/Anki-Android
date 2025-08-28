@@ -19,7 +19,6 @@ package com.ichi2.anki.jsapi
 import android.speech.tts.TextToSpeech
 import com.github.zafarkhaja.semver.ParseException
 import com.github.zafarkhaja.semver.Version
-import com.ichi2.anki.AnkiDroidApp
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.Flag
 import com.ichi2.anki.JavaScriptTTS
@@ -36,8 +35,6 @@ import com.ichi2.anki.servicelayer.MARKED_TAG
 import com.ichi2.anki.servicelayer.NoteService
 import com.ichi2.anki.utils.ext.flag
 import com.ichi2.anki.utils.ext.setUserFlagForCards
-import com.ichi2.themes.Themes
-import com.ichi2.utils.NetworkUtils
 import org.json.JSONArray
 import org.json.JSONObject
 import timber.log.Timber
@@ -105,14 +102,13 @@ object JsApi {
         topCard: Card,
     ): ByteArray =
         when (endpoint) {
-            is Endpoint.Android -> handleAndroidEndpoints(endpoint)
             is Endpoint.Card -> handleCardMethods(endpoint, data, topCard)
             is Endpoint.Collection -> handleCollectionMethods(endpoint, data)
             is Endpoint.Deck -> handleDeckMethods(endpoint, data, topCard)
             is Endpoint.Note -> handleNoteMethods(endpoint, data, topCard)
             is Endpoint.NoteType -> handleNoteTypeMethods(endpoint, data, topCard)
             is Endpoint.Tts -> handleTtsEndpoints(endpoint, data)
-            is Endpoint.StudyScreen -> fail("Screen doesn't support StudyScreen methods")
+            is Endpoint.Android, is Endpoint.StudyScreen -> fail("Method not supported")
         }
 
     private suspend fun handleCardMethods(
@@ -302,12 +298,6 @@ object JsApi {
             Endpoint.Deck.IS_FILTERED -> success(deck.isFiltered)
         }
     }
-
-    private fun handleAndroidEndpoints(endpoint: Endpoint.Android): ByteArray =
-        when (endpoint) {
-            Endpoint.Android.IS_SYSTEM_IN_DARK_MODE -> success(Themes.systemIsInNightMode(AnkiDroidApp.instance))
-            Endpoint.Android.IS_NETWORK_METERED -> success(NetworkUtils.isActiveNetworkMetered())
-        }
 
     private fun handleTtsEndpoints(
         endpoint: Endpoint.Tts,

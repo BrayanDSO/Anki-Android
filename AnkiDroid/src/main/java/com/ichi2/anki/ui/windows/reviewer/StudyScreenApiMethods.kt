@@ -15,16 +15,11 @@
  */
 package com.ichi2.anki.ui.windows.reviewer
 
-import androidx.core.graphics.toColorInt
-import androidx.lifecycle.flowWithLifecycle
-import androidx.lifecycle.lifecycleScope
 import anki.scheduler.CardAnswer
 import com.ichi2.anki.common.utils.ext.getIntOrNull
 import com.ichi2.anki.jsapi.Endpoint
 import com.ichi2.anki.jsapi.JsApi
 import com.ichi2.anki.jsapi.UiRequest
-import com.ichi2.anki.snackbar.showSnackbar
-import com.ichi2.anki.utils.ext.collectIn
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
@@ -87,7 +82,6 @@ suspend fun ReviewerViewModel.handleStudyScreenEndpoint(
             JsApi.success()
         }
         // UI requests
-        Endpoint.StudyScreen.SHOW_SNACKBAR,
         Endpoint.StudyScreen.SET_BACKGROUND_COLOR,
         -> {
             val result = CompletableDeferred<ByteArray>()
@@ -99,36 +93,5 @@ suspend fun ReviewerViewModel.handleStudyScreenEndpoint(
                 result.await()
             } ?: JsApi.fail("Method was not handled")
         }
-    }
-}
-
-fun ReviewerFragment.setupJsApi() {
-    viewModel.apiRequestFlow.flowWithLifecycle(lifecycle).collectIn(lifecycleScope) { request ->
-        val result = handleJsUiRequest(request)
-        request.result.complete(result)
-    }
-}
-
-private fun ReviewerFragment.handleJsUiRequest(request: UiRequest): ByteArray {
-    return when (request.endpoint) {
-        Endpoint.StudyScreen.SHOW_SNACKBAR -> {
-            val data = request.data ?: return JsApi.fail("Missing request data")
-            val text = data.optString("text") ?: return JsApi.fail("Missing text")
-            val duration = data.getIntOrNull("duration") ?: return JsApi.fail("Missing duration")
-            showSnackbar(text, duration)
-            JsApi.success()
-        }
-        Endpoint.StudyScreen.SET_BACKGROUND_COLOR -> {
-            val colorHex = request.data?.optString("colorHex") ?: return JsApi.fail("Missing hex code")
-            val color =
-                try {
-                    colorHex.toColorInt()
-                } catch (_: IllegalArgumentException) {
-                    return JsApi.fail("Invalid hex code")
-                }
-            view?.setBackgroundColor(color)
-            JsApi.success()
-        }
-        else -> JsApi.fail("Unhandled API method")
     }
 }

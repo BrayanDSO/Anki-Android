@@ -1,5 +1,12 @@
 {
   "android": {
+    "show-snackbar": {
+      "params": {
+        "text": "string",
+        "duration": "number"
+      },
+      "return": "void"
+    },
     "is-system-in-dark-mode": {
       "params": {},
       "return": "boolean"
@@ -208,13 +215,6 @@
     }
   },
   "study-screen": {
-    "show-snackbar": {
-      "params": {
-        "text": "string",
-        "duration": "number"
-      },
-      "return": "void"
-    },
     "get-new-count": {
       "params": {},
       "return": "number"

@@ -22,6 +22,7 @@ sealed interface Endpoint {
     enum class Android(
         override val value: String,
     ) : Endpoint {
+        SHOW_SNACKBAR("show-snackbar"),
         IS_SYSTEM_IN_DARK_MODE("is-system-in-dark-mode"),
         IS_NETWORK_METERED("is-network-metered"),
         ;
@@ -117,7 +118,6 @@ sealed interface Endpoint {
     enum class StudyScreen(
         override val value: String,
     ) : Endpoint {
-        SHOW_SNACKBAR("show-snackbar"),
         GET_NEW_COUNT("get-new-count"),
         GET_LEARNING_COUNT("get-learning-count"),
         GET_TO_REVIEW_COUNT("get-to-review-count"),

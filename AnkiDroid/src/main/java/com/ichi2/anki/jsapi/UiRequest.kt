@@ -19,7 +19,7 @@ import kotlinx.coroutines.CompletableDeferred
 import org.json.JSONObject
 
 data class UiRequest(
-    val endpoint: Endpoint.StudyScreen,
+    val endpoint: Endpoint,
     val data: JSONObject?,
     val result: CompletableDeferred<ByteArray>,
 )

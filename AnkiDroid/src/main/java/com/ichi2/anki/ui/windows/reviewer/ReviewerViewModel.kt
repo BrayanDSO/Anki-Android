@@ -28,8 +28,6 @@ import com.ichi2.anki.Reviewer
 import com.ichi2.anki.asyncIO
 import com.ichi2.anki.common.time.TimeManager
 import com.ichi2.anki.jsapi.Endpoint
-import com.ichi2.anki.jsapi.JsApi
-import com.ichi2.anki.jsapi.UiRequest
 import com.ichi2.anki.launchCatchingIO
 import com.ichi2.anki.libanki.Card
 import com.ichi2.anki.libanki.CardId
@@ -105,7 +103,6 @@ class ReviewerViewModel :
     val answerTimerStatusFlow = MutableStateFlow<AnswerTimerStatus?>(null)
     val answerFeedbackFlow = MutableSharedFlow<Rating>()
     val timeBoxReachedFlow = MutableSharedFlow<Collection.TimeboxReached>()
-    val apiRequestFlow = MutableSharedFlow<UiRequest>()
 
     override val server: AnkiServer = AnkiServer(this, StudyScreenRepository.getServerPort()).also { it.start() }
     private val stateMutationKey = TimeManager.time.intTimeMS().toString()
@@ -396,7 +393,7 @@ class ReviewerViewModel :
         if (endpoint is Endpoint.StudyScreen) {
             handleStudyScreenEndpoint(endpoint, data)
         } else {
-            JsApi.handleEndpointRequest(endpoint, data, currentCard.await())
+            super.handleJsEndpoint(endpoint, data)
         }
 
     override suspend fun showQuestion() {

@@ -49,7 +49,6 @@ class JsApiTest : JvmTest() {
                             "flag" -> 1
                             "search" -> "deck:current"
                             "text" -> "foo"
-                            "duration" -> 1
                             "rating" -> 1
                             "cardId" -> topCard.id
                             "colorHex" -> "#FF00FF"
@@ -58,7 +57,7 @@ class JsApiTest : JvmTest() {
                             "pitch" -> 1F
                             "speechRate" -> 1F
                             "tags" -> "foo bar"
-                            else -> throw IllegalArgumentException(param)
+                            else -> throw IllegalArgumentException("Unhandled param: $param")
                         }
                     data.put(param, paramValue)
                 }
@@ -69,15 +68,15 @@ class JsApiTest : JvmTest() {
                 val serviceObject = endpointsJson.getJSONObject(serviceBase)
 
                 for (endpointString in serviceObject.keys()) {
+                    val endpoint = Endpoint.from(serviceBase, endpointString)
+                    if (endpoint is Endpoint.StudyScreen || endpoint is Endpoint.Android) continue
+
                     val methodObject = serviceObject.getJSONObject(endpointString)
                     val params = methodObject.getJSONObject("params")
                     val returnType = methodObject.getString("return")
                     val data = JSONObject()
                     configureData(data, params)
-                    val endpoint = Endpoint.from(serviceBase, endpointString)
                     assertNotNull(endpoint)
-
-                    if (endpoint is Endpoint.StudyScreen) continue
 
                     val result = JsApi.handleEndpointRequest(endpoint, data, topCard)
                     val resultJson = JSONObject(String(result, Charsets.UTF_8))
