@@ -278,6 +278,7 @@ object JsApi {
                 withCol { topCard.noteType(this) }
             }
         return when (endpoint) {
+            Endpoint.NoteType.GET_ID -> success(noteType.id)
             Endpoint.NoteType.GET_NAME -> success(noteType.name)
             Endpoint.NoteType.IS_IMAGE_OCCLUSION -> success(noteType.isImageOcclusion)
             Endpoint.NoteType.IS_CLOZE -> success(noteType.isCloze)

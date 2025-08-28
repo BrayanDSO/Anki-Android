@@ -106,6 +106,7 @@ sealed interface Endpoint {
     enum class NoteType(
         override val value: String,
     ) : Endpoint {
+        GET_ID("get-id"),
         GET_NAME("get-name"),
         IS_IMAGE_OCCLUSION("is-image-occlusion"),
         IS_CLOZE("is-cloze"),

@@ -161,6 +161,10 @@
     }
   },
   "note-type": {
+    "get-id": {
+      "params": {},
+      "return": "number"
+    },
     "get-name": {
       "params": {},
       "return": "string"
