@@ -22,14 +22,26 @@ import org.json.JSONObject
 import org.junit.Test
 import timber.log.Timber
 import java.io.File
+import kotlin.test.assertEquals
 
 class EndpointsTest {
+    private val endpointsJson =
+        run {
+            val file = File(getFileResource("js-api-endpoints.json"))
+            JSONObject(file.readText())
+        }
+
+    @Test
+    fun `CURRENT_VERSION matches API version`() {
+        val apiVersion = endpointsJson.getString("version")
+        assertEquals(apiVersion, JsApi.CURRENT_VERSION)
+    }
+
     @Test
     fun `endpoints JSON file matches Kotlin enums`() {
-        val file = File(getFileResource("js-api-endpoints.json"))
-        val endpointsJson = JSONObject(file.readText())
+        val endpoints = endpointsJson.getJSONObject("endpoints")
         val topLevelKeys =
-            endpointsJson
+            endpoints
                 .keys()
                 .asSequence()
                 .toList()
@@ -45,7 +57,7 @@ class EndpointsTest {
         endpointEnums.forEach { (base, entries) ->
             Timber.i("Verifying endpoints for: $base")
             val jsonEndpoints =
-                endpointsJson
+                endpoints
                     .getJSONObject(base)
                     .keys()
                     .asSequence()

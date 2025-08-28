@@ -17,6 +17,7 @@
 package com.ichi2.anki.jsapi
 
 import android.speech.tts.TextToSpeech
+import androidx.annotation.VisibleForTesting
 import com.github.zafarkhaja.semver.ParseException
 import com.github.zafarkhaja.semver.Version
 import com.ichi2.anki.CollectionManager.withCol
@@ -40,7 +41,8 @@ import org.json.JSONObject
 import timber.log.Timber
 
 object JsApi {
-    private const val CURRENT_VERSION = "1.0.0"
+    @VisibleForTesting
+    const val CURRENT_VERSION = "1.0.0"
     private const val SUCCESS_KEY = "success"
     private const val VALUE_KEY = "value"
     private const val ERROR_KEY = "error"
