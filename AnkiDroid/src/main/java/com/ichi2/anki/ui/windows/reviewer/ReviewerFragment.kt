@@ -578,9 +578,20 @@ class ReviewerFragment :
                 updateLayoutParams<MarginLayoutParams> {
                     leftMargin = 0
                     rightMargin = 0
+                    bottomMargin = 0
                 }
                 cardElevation = 0F
                 shapeAppearanceModel = ShapeAppearanceModel() // Remove corners
+            }
+            // Invert the margins direction, so the WebView fills the screen bottom if both
+            // the type answer container and the answer buttons are hidden
+            typeAnswerContainer.updateLayoutParams<MarginLayoutParams> {
+                topMargin = 8F.dp.toPx(requireContext())
+                bottomMargin = 0
+            }
+            answerArea.updateLayoutParams<MarginLayoutParams> {
+                topMargin = 8F.dp.toPx(requireContext())
+                bottomMargin = 0
             }
         }
     }
