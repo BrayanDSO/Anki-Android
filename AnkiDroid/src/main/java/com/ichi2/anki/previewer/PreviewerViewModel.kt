@@ -16,7 +16,6 @@
 package com.ichi2.anki.previewer
 
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.viewModelScope
 import anki.collection.OpChanges
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.Flag
@@ -33,7 +32,6 @@ import com.ichi2.anki.pages.AnkiServer
 import com.ichi2.anki.reviewer.CardSide
 import com.ichi2.anki.servicelayer.MARKED_TAG
 import com.ichi2.anki.servicelayer.NoteService
-import com.ichi2.anki.utils.ext.collectIn
 import com.ichi2.anki.utils.ext.flag
 import com.ichi2.anki.utils.ext.require
 import com.ichi2.anki.utils.ext.setUserFlagForCards
@@ -48,7 +46,11 @@ class PreviewerViewModel(
     savedStateHandle: SavedStateHandle,
 ) : CardViewerViewModel(savedStateHandle),
     ChangeManager.Subscriber {
-    val currentIndex = MutableStateFlow<Int>(savedStateHandle.require(PreviewerFragment.CURRENT_INDEX_ARG))
+    val currentIndex =
+        savedStateHandle.getMutableStateFlow(
+            KEY_CURRENT_INDEX,
+            initialValue = savedStateHandle.require<Int>(PreviewerFragment.CURRENT_INDEX_ARG),
+        )
     val backSideOnly = MutableStateFlow(false)
     val isMarked = MutableStateFlow(false)
     val flag: MutableStateFlow<Flag> = MutableStateFlow(Flag.NONE)
@@ -73,9 +75,6 @@ class PreviewerViewModel(
 
     init {
         ChangeManager.subscribe(this)
-        currentIndex.collectIn(viewModelScope) {
-            savedStateHandle[PreviewerFragment.CURRENT_INDEX_ARG] = it
-        }
     }
 
     /* *********************************************************************************************
@@ -260,5 +259,9 @@ class PreviewerViewModel(
                 }
             }
         }
+    }
+
+    companion object {
+        private const val KEY_CURRENT_INDEX = "currentIndex"
     }
 }
