@@ -16,6 +16,7 @@
 package com.ichi2.anki.previewer
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
 import anki.collection.OpChanges
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.Flag
@@ -32,12 +33,12 @@ import com.ichi2.anki.pages.AnkiServer
 import com.ichi2.anki.reviewer.CardSide
 import com.ichi2.anki.servicelayer.MARKED_TAG
 import com.ichi2.anki.servicelayer.NoteService
+import com.ichi2.anki.utils.ext.collectLatestIn
 import com.ichi2.anki.utils.ext.flag
 import com.ichi2.anki.utils.ext.require
 import com.ichi2.anki.utils.ext.setUserFlagForCards
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import timber.log.Timber
@@ -65,8 +66,6 @@ class PreviewerViewModel(
             index != selectedCardIds.lastIndex || !showingAnswer
         }
 
-    private val showAnswerOnReload get() = showingAnswer.value || backSideOnly.value
-
     override var currentCard: Deferred<Card> =
         asyncIO {
             withCol { getCard(selectedCardIds[savedStateHandle.require(PreviewerFragment.CURRENT_INDEX_ARG)]) }
@@ -75,6 +74,9 @@ class PreviewerViewModel(
 
     init {
         ChangeManager.subscribe(this)
+        currentIndex.collectLatestIn(viewModelScope) {
+            loadCard()
+        }
     }
 
     /* *********************************************************************************************
@@ -85,22 +87,17 @@ class PreviewerViewModel(
     @NeedsTest("16302 - a sound-only card on the back/flipped with 'don't keep activities'")
     @NeedsTest("16302 - on config changes, sound continues to play")
     override fun onPageFinished(isAfterRecreation: Boolean) {
-        if (isAfterRecreation) {
-            launchCatchingIO {
-                showCard(showAnswerOnReload)
+        launchCatchingIO {
+            if (isAfterRecreation) {
+                showCard()
                 // isAfterRecreation can either mean:
                 // * after config change (ViewModel exists)
                 // * after recreation (ViewModel did not exist)
                 // if the ViewModel existed, we want to continue playing audio
                 // if not, we want to setup the sound player
                 cardMediaPlayer.ensureAvTagsLoaded(currentCard.await())
-            }
-            return
-        }
-        launchCatchingIO {
-            currentIndex.collectLatest {
-                showCard(showAnswer = backSideOnly.value)
-                loadAndPlaySounds()
+            } else {
+                loadCard()
             }
         }
     }
@@ -156,6 +153,7 @@ class PreviewerViewModel(
                 showAnswer()
                 cardMediaPlayer.autoplayAllForSide(CardSide.ANSWER)
             } else {
+                showingAnswer.value = false
                 currentIndex.update { it + 1 }
             }
         }
@@ -168,6 +166,7 @@ class PreviewerViewModel(
     fun onPreviousButtonClick() {
         launchCatchingIO {
             if (currentIndex.value > 0) {
+                showingAnswer.value = false
                 currentIndex.update { it - 1 }
             } else if (showingAnswer.value && !backSideOnly.value) {
                 showQuestion()
@@ -188,6 +187,7 @@ class PreviewerViewModel(
 
     fun onSliderChange(value: Int) {
         launchCatchingIO {
+            showingAnswer.value = false
             currentIndex.emit(value - 1)
         }
     }
@@ -196,12 +196,12 @@ class PreviewerViewModel(
      *************************************** Internal methods ***************************************
      ********************************************************************************************* */
 
-    private suspend fun showCard(showAnswer: Boolean) {
+    private suspend fun showCard() {
         currentCard =
             asyncIO {
                 withCol { getCard(selectedCardIds[currentIndex.value]) }
             }
-        if (showAnswer) showAnswer() else showQuestion()
+        if (showingAnswer.value || backSideOnly.value) showAnswer() else showQuestion()
         updateFlagIcon()
         updateMarkIcon()
     }
@@ -214,6 +214,11 @@ class PreviewerViewModel(
         val card = currentCard.await()
         val isMarkedValue = withCol { card.note(this@withCol).hasTag(this@withCol, MARKED_TAG) }
         isMarked.emit(isMarkedValue)
+    }
+
+    private suspend fun loadCard() {
+        showCard()
+        loadAndPlaySounds()
     }
 
     private suspend fun loadAndPlaySounds() {
