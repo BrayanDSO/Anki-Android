@@ -51,7 +51,7 @@ class PreviewerViewModel(
             KEY_CURRENT_INDEX,
             initialValue = savedStateHandle.require<Int>(PreviewerFragment.CURRENT_INDEX_ARG),
         )
-    val backSideOnly = MutableStateFlow(false)
+    val backSideOnly = savedStateHandle.getMutableStateFlow(KEY_BACKSIDE_ONLY, false)
     val isMarked = MutableStateFlow(false)
     val flag: MutableStateFlow<Flag> = MutableStateFlow(Flag.NONE)
     private val selectedCardIds: List<Long> = savedStateHandle.require<IdsFile>(PreviewerFragment.CARD_IDS_FILE_ARG).getIds()
@@ -263,5 +263,6 @@ class PreviewerViewModel(
 
     companion object {
         private const val KEY_CURRENT_INDEX = "currentIndex"
+        private const val KEY_BACKSIDE_ONLY = "backsideOnly"
     }
 }
