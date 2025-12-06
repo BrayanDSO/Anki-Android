@@ -145,6 +145,7 @@ enum class ViewerAction(
             SHOW_ALL_HINTS -> listOf(keycode(KeyEvent.KEYCODE_G))
             RECORD_VOICE -> listOf(keycode(KeyEvent.KEYCODE_V, shift()))
             REPLAY_VOICE -> listOf(keycode(KeyEvent.KEYCODE_V))
+            RESCHEDULE_NOTE -> listOf(keycode(KeyEvent.KEYCODE_D, ModifierKeys(shift = true, ctrl = true, alt = false)))
             BROWSE -> listOf(keycode(KeyEvent.KEYCODE_B))
             STATISTICS -> listOf(keycode(KeyEvent.KEYCODE_T))
             PLAY_MEDIA -> listOf(keycode(KeyEvent.KEYCODE_R))
@@ -219,7 +220,6 @@ enum class ViewerAction(
             CARD_INFO,
             TAG,
             EXIT,
-            RESCHEDULE_NOTE,
             TOGGLE_WHITEBOARD,
             PAGE_UP,
             PAGE_DOWN,
