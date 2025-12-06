@@ -70,6 +70,7 @@ import com.ichi2.anki.previewer.TypeAnswer
 import com.ichi2.anki.previewer.stdHtml
 import com.ichi2.anki.reviewer.BindingMap
 import com.ichi2.anki.reviewer.ReviewerBinding
+import com.ichi2.anki.scheduling.ForgetCardsDialog
 import com.ichi2.anki.scheduling.SetDueDateDialog
 import com.ichi2.anki.settings.Prefs
 import com.ichi2.anki.settings.enums.FrameStyle
@@ -196,6 +197,8 @@ class ReviewerFragment :
                 viewModel.onStateMutationCallback()
             }
         }
+
+        ForgetCardsDialog()
 
         viewModel.showingAnswer.collectIn(lifecycleScope) {
             resetZoom()

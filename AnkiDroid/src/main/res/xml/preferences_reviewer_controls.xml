@@ -93,6 +93,11 @@
             android:icon="@drawable/ic_reschedule"
             />
         <com.ichi2.preferences.ReviewerControlPreference
+            android:key="@string/reset_card_command_key"
+            tools:title="Reset card"
+            android:icon="@drawable/ic_backup_restore"
+        />
+        <com.ichi2.preferences.ReviewerControlPreference
             android:key="@string/card_info_command_key"
             android:title="@string/card_info_title"
             android:icon="@drawable/ic_dialog_info"

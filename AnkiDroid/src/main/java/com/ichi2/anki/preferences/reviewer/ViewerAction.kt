@@ -73,6 +73,7 @@ enum class ViewerAction(
     ADD_NOTE(R.id.action_add_note, R.drawable.ic_add, R.string.menu_add_note, DISABLED),
     TAG(R.id.action_edit_tags, R.drawable.ic_tag, R.string.menu_edit_tags, DISABLED),
     RESCHEDULE_NOTE(R.id.action_set_due_date, R.drawable.ic_reschedule, titleRes = R.string.empty_string, DISABLED),
+    RESET_CARD(R.id.action_reset_card, R.drawable.ic_backup_restore, titleRes = R.string.empty_string, DISABLED),
     TOGGLE_AUTO_ADVANCE(R.id.action_toggle_auto_advance, R.drawable.ic_fast_forward, R.string.toggle_auto_advance, DISABLED),
     RECORD_VOICE(R.id.action_record_voice, R.drawable.ic_action_mic, R.string.record_voice, DISABLED),
     PLAY_MEDIA(R.id.action_replay_media, R.drawable.ic_play_circle_white, R.string.replay_media, DISABLED),
@@ -147,6 +148,7 @@ enum class ViewerAction(
             BROWSE -> listOf(keycode(KeyEvent.KEYCODE_B))
             STATISTICS -> listOf(keycode(KeyEvent.KEYCODE_T))
             PLAY_MEDIA -> listOf(keycode(KeyEvent.KEYCODE_R))
+            RESET_CARD -> listOf(keycode(KeyEvent.KEYCODE_N, ModifierKeys(shift = false, ctrl = true, alt = true)))
             PREVIOUS_CARD_INFO -> listOf(keycode(KeyEvent.KEYCODE_I, ModifierKeys(shift = false, ctrl = true, alt = true)))
             TOGGLE_FLAG_RED ->
                 listOf(
@@ -254,6 +256,7 @@ enum class ViewerAction(
             BROWSE -> TR.qtMiscBrowse()
             STATISTICS -> TR.statisticsTitle()
             RESCHEDULE_NOTE -> TR.actionsSetDueDate().toSentenceCase(context, R.string.sentence_set_due_date)
+            RESET_CARD -> TR.actionsForgetCard().toSentenceCase(context, R.string.sentence_reset_card)
             PREVIOUS_CARD_INFO -> TR.actionsPreviousCardInfo().toSentenceCase(context, R.string.sentence_actions_previous_card_info)
             else -> context.getString(titleRes)
         }

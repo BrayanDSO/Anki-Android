@@ -97,6 +97,8 @@ class ControlsSettingsFragment :
             it.title = preferenceTitle
             it.dialogTitle = preferenceTitle
         }
+        findPreference<ControlPreference>(R.string.reset_card_command_key)?.title =
+            TR.actionsForgetCard().toSentenceCase(R.string.sentence_reset_card)
         findPreference<ControlPreference>(getString(R.string.toggle_whiteboard_command_key))?.let {
             it.title = getString(R.string.gesture_toggle_whiteboard).toSentenceCase(R.string.sentence_gesture_toggle_whiteboard)
         }

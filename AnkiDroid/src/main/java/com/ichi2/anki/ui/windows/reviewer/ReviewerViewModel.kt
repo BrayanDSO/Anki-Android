@@ -619,6 +619,11 @@ class ReviewerViewModel(
         setDueDateFlow.emit(cardId)
     }
 
+    private suspend fun launchResetCard() {
+        val cardId = currentCard.await().id
+        setDueDateFlow.emit(cardId)
+    }
+
     private suspend fun setupAnswerTimer(card: Card) {
         val shouldShowTimer = withCol { card.shouldShowTimer(this@withCol) }
         if (!shouldShowTimer) {
@@ -649,6 +654,7 @@ class ReviewerViewModel(
                 ViewerAction.REDO -> redo()
                 ViewerAction.UNDO -> undo()
                 ViewerAction.RESCHEDULE_NOTE -> launchSetDueDate()
+                ViewerAction.RESET_CARD -> launchResetCard()
                 ViewerAction.TOGGLE_AUTO_ADVANCE -> toggleAutoAdvance()
                 ViewerAction.BURY_NOTE -> buryNote()
                 ViewerAction.BURY_CARD -> buryCard()
