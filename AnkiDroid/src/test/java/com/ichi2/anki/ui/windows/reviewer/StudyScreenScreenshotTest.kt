@@ -69,7 +69,7 @@ class StudyScreenScreenshotTest(
 
             val devices =
                 listOf(
-                    Qualifier("Phone", 411, 914, "420dpi"),
+                    Qualifier("Phone", 411, 914, "420dpi", nightMode = true),
                     Qualifier("Tablet", 1280, 800, "xhdpi"),
                 )
             // val devices = listOf(Qualifier("Phone", 411, 914, "420dpi"))
