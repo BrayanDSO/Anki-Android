@@ -48,7 +48,7 @@ class StudyScreenScreenshotTest(
                 ReviewerFragment.getIntent(targetContext),
             ).use { scenario ->
                 scenario.onActivity {
-                    captureScreenRoboImage(filePath = "build/outputs/roborazzi/${this.javaClass.simpleName}/$config.png")
+                    captureScreenRoboImage(filePath = "build/outputs/roborazzi/StudyScreen_$config.png")
                 }
             }
     }
