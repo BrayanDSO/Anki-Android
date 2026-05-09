@@ -10,7 +10,7 @@
         <!--===================================-->
         <!--/region Android standard properties-->
         <!--===================================-->
-        
+
         <item name="android:textColor">@color/text_color_light</item>
         <item name="android:textColorSecondary">@color/text_color_secondary_light</item>
         <item name="android:statusBarColor">@color/theme_plain_primary</item>
@@ -19,18 +19,31 @@
 
         <!--/endregion-->
 
+        <!--=========================================-->
+        <!--/region Material and AppCompat properties-->
+        <!--=========================================-->
+
+        <!-- Color Palette -->
         <item name="colorPrimary">@color/theme_plain_primary</item>
         <item name="colorPrimaryDark">@color/theme_plain_primary_dark</item>
+        <item name="colorSurface">@color/white</item>
         <item name="colorAccent">@color/theme_plain_accent</item>
-        <item name="colorSurfaceContainer">#0F9E9E9E</item>
         <item name="colorSecondaryContainer">#DDDDDD</item>
         <item name="colorSurfaceContainerHigh">#F4F4F4</item>
+        <item name="colorSurfaceContainer">#0F9E9E9E</item>
+
+        <!-- Preferences -->
         <item name="preferenceCategoryTitleTextColor">?attr/colorAccent</item>
+
+        <!-- Window & System -->
+        <item name="actionModeBackground">@color/theme_plain_primary</item>
+
+        <!--/endregion-->
+
         <!-- Widget colors -->
         <item name="widgetColorActivated">?attr/colorAccent</item>
         <!-- Action bar styles -->
         <item name="actionBarPopupTextColor">@color/theme_plain_primary_text</item>
-        <item name="actionModeBackground">@color/theme_plain_primary</item>
         <!-- Tab layout -->
         <item name="tabLayoutBackgroundColor">@color/theme_plain_primary</item>
         <item name="tabActiveIconColor">@color/white</item>
@@ -81,9 +94,6 @@
 
         <!-- Introduction -->
         <item name="introductionLogoTransparent">#99FFFFFF</item>
-
-        <!-- Browser Options Dialog-->
-        <item name="colorSurface">@color/white</item>
 
         <!-- ProgressDialog-->
         <item name="dialogBackground">@color/white</item>
