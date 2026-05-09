@@ -7,15 +7,24 @@
     <color name="theme_plain_primary_text">#212121</color>
 
     <style name="Base.Theme.Light.Plain">
-        <!-- Android colors -->
+        <!--===================================-->
+        <!--/region Android standard properties-->
+        <!--===================================-->
+        
+        <item name="android:textColor">@color/text_color_light</item>
+        <item name="android:textColorSecondary">@color/text_color_secondary_light</item>
+        <item name="android:statusBarColor">@color/theme_plain_primary</item>
+        <item name="android:navigationBarColor">@color/semi_transparent_black</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+
+        <!--/endregion-->
+
         <item name="colorPrimary">@color/theme_plain_primary</item>
         <item name="colorPrimaryDark">@color/theme_plain_primary_dark</item>
         <item name="colorAccent">@color/theme_plain_accent</item>
         <item name="colorSurfaceContainer">#0F9E9E9E</item>
         <item name="colorSecondaryContainer">#DDDDDD</item>
         <item name="colorSurfaceContainerHigh">#F4F4F4</item>
-        <item name="android:textColor">@color/text_color_light</item>
-        <item name="android:textColorSecondary">@color/text_color_secondary_light</item>
         <item name="preferenceCategoryTitleTextColor">?attr/colorAccent</item>
         <!-- Widget colors -->
         <item name="widgetColorActivated">?attr/colorAccent</item>
@@ -66,12 +75,6 @@
         <!--Custom Tabs colors-->
         <item name="customTabNavBarColor">@color/material_grey_500</item>
         <item name="overflowAndPopupMenuIconColor">?attr/colorPrimary</item>
-        <!-- StatusBar -->
-        <item name="android:statusBarColor">@color/theme_plain_primary</item>
-        <!-- Navbar -->
-        <item name="android:navigationBarColor">@color/semi_transparent_black</item>
-        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
-
         <item name="currentDeckBackground">@drawable/item_background_selected</item>
 
         <item name="snackbarButtonTextColor">#96bdce</item>
