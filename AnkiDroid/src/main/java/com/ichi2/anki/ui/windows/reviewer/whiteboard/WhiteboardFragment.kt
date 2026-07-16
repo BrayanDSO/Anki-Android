@@ -5,6 +5,7 @@ package com.ichi2.anki.ui.windows.reviewer.whiteboard
 
 import android.annotation.SuppressLint
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
 import android.os.Bundle
@@ -283,7 +284,7 @@ class WhiteboardFragment :
      */
     private fun showAddColorDialog() {
         requireContext()
-            .showColorPickerDialog(viewModel.brushColor.value) { color ->
+            .showColorPickerDialog(Color.WHITE) { color ->
                 Timber.i("Added brush with color ${color.toRGBAHex()}")
                 viewModel.addBrush(color)
             }
