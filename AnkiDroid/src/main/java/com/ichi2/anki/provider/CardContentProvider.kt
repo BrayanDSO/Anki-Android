@@ -377,6 +377,7 @@ class CardContentProvider : ContentProvider() {
                         .getQueuedCards(
                             fetchLimit = limit,
                             intradayLearningOnly = false,
+                            skipSchedulingStates = false,
                         ).cardsList
                         .map { Card(it.card) }
 
