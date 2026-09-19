@@ -35,12 +35,12 @@ class BrushAdapter(
     private val onBrushClick: (View, Int) -> Unit,
     private val onBrushLongClick: (Int) -> Unit,
 ) : RecyclerView.Adapter<BrushAdapter.BrushViewHolder>() {
-    private var brushes: List<BrushInfo> = emptyList()
+    private var brushes: List<WhiteboardTool.Brush> = emptyList()
     private var activeIndex: Int = -1
     private var isEraserActive: Boolean = false
 
     fun updateData(
-        newBrushes: List<BrushInfo>,
+        newBrushes: List<WhiteboardTool.Brush>,
         newActiveIndex: Int,
         eraserActive: Boolean,
     ) {
@@ -87,7 +87,7 @@ class BrushAdapter(
         private val button: MaterialButton = itemView as MaterialButton
 
         fun bind(
-            brush: BrushInfo,
+            brush: WhiteboardTool.Brush,
             isSelected: Boolean,
         ) = button.apply {
             isCheckable = true
