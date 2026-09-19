@@ -116,6 +116,8 @@ class WhiteboardViewModel(
     val toolbarAlignment = MutableStateFlow(ToolbarAlignment.BOTTOM)
     val isToolbarShown = MutableStateFlow(true)
 
+    private var isStylusOverriding = false
+
     /**
      * Whether the whiteboard is hosted in a "drawing" flow (e.g. multimedia drawing
      * capture) rather than the reviewer. In drawing mode the host owns the back
@@ -494,6 +496,23 @@ class WhiteboardViewModel(
         } else {
             activeBrushIndex.value = newIndex
             repository.saveLastActiveBrushIndex(newIndex, isDarkMode)
+        }
+    }
+
+    /**
+     * Enables or disables the eraser based on whether the stylus button is pressed.
+     */
+    fun setStylusButtonPressed(isPressed: Boolean) {
+        if (isPressed) {
+            if (activeTool.value is WhiteboardTool.Brush) {
+                isStylusOverriding = true
+                activeTool.value = eraser
+            }
+        } else {
+            if (isStylusOverriding) {
+                isStylusOverriding = false
+                setActiveBrush(activeBrushIndex.value)
+            }
         }
     }
 

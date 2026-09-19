@@ -90,6 +90,14 @@ class WhiteboardFragment :
         binding.whiteboardView.onEraseGestureStart = viewModel::startPathEraseGesture
         binding.whiteboardView.onEraseGestureMove = viewModel::erasePathsToPoint
         binding.whiteboardView.onEraseGestureEnd = viewModel::endPathEraseGesture
+        binding.whiteboardView.onStylusButtonStateChanged = { isPressed ->
+            viewModel.setStylusButtonPressed(isPressed)
+            binding.whiteboardView.activeTool = viewModel.activeTool.value
+            binding.whiteboardToolbar.updateSelection(
+                viewModel.activeBrushIndex.value,
+                viewModel.activeTool.value is WhiteboardTool.Eraser,
+            )
+        }
     }
 
     private fun setupDoubleBackPress() {
