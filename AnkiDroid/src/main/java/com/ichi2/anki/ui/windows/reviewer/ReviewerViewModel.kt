@@ -65,6 +65,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.serialization.json.Json
 import org.intellij.lang.annotations.Language
 import timber.log.Timber
 import kotlin.time.Duration.Companion.seconds
@@ -107,6 +108,7 @@ class ReviewerViewModel(
     val voiceRecorderEnabledFlow = MutableStateFlow(repository.isRecordVoiceEnabled)
     val whiteboardEnabledFlow = MutableStateFlow(repository.isWhiteboardEnabled)
     val replayVoiceFlow = MutableSharedFlow<Unit>()
+    val gestureFlow = MutableSharedFlow<RawGesture>()
     val timeBoxReachedFlow = MutableSharedFlow<Collection.TimeboxReached>()
     val pageUpFlow = MutableSharedFlow<Unit>()
     val pageDownFlow = MutableSharedFlow<Unit>()
@@ -452,6 +454,14 @@ class ReviewerViewModel(
             }
             "statesMutated" -> {
                 onStateMutationCallback()
+                return byteArrayOf()
+            }
+            "multiFingerTap" -> {
+                gestureFlow.emit(Json.decodeFromString<RawGesture.MultiTouch>(bytes.decodeToString()))
+                return byteArrayOf()
+            }
+            "tapOrSwipe" -> {
+                gestureFlow.emit(Json.decodeFromString<RawGesture.TapOrSwipe>(bytes.decodeToString()))
                 return byteArrayOf()
             }
         }
