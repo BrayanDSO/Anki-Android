@@ -21,6 +21,11 @@ To disable JaCoCo instrumentation for debug builds across checkouts and worktree
 Unit tests attach the JaCoCo agent only when the build runs a coverage report, such as
 `./gradlew jacocoUnitTestReport`.
 
+## Unit test forks
+
+Each test fork is a JVM with a 2 GiB heap. To change how many run at once, pass
+`-PtestMaxParallelForks=<n>` or add `testMaxParallelForks=<n>` to `~/.gradle/gradle.properties`.
+
 ## Backend test libraries
 
 `rsdroid-testing` keeps native libraries in the test JVM's temporary directory for reuse
