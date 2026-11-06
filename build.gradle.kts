@@ -256,45 +256,87 @@ var androidTestVariantName by extra(
     if (testReleaseBuild) "Release" else "Debug"
 )
 
-private fun sysctl(key: String): Long =
+/** Reads a numeric `sysctl` value, or null if this machine does not define [key]. */
+private fun sysctlOrNull(key: String): Long? =
     providers.exec {
         commandLine("sysctl", "-n", key)
-    }.standardOutput.asText.get().trim().toLong()
+        isIgnoreExitValue = true
+    }.standardOutput.asText.get().trim().toLongOrNull()
+
+private fun sysctl(key: String): Long = sysctlOrNull(key) ?: error("sysctl did not report '$key'")
 
 /**
  * The Gradle daemon's `-Xmx` max heap, in bytes.
  *
- * Reads from the launch flags as `getRuntime().maxMemory()` is GC-dependent.
- *
- * @throws IllegalStateException if `-Xmx` is missing or invalid.
+ * Reads from the launch flags as `getRuntime().maxMemory()` is GC-dependent, but falls back to it
+ * when the daemon was started without a readable `-Xmx`.
  */
 private fun gradleDaemonHeapBytes(): Long {
     val xmx = ManagementFactory.getRuntimeMXBean().inputArguments
         .lastOrNull { it.startsWith("-Xmx") } // last -Xmx wins, as in the JVM
-        ?: error("Gradle daemon has no -Xmx flag")
-    val match = Regex("-Xmx(\\d+)([MG])", RegexOption.IGNORE_CASE).matchEntire(xmx)
-        ?: error("Cannot parse Gradle daemon heap from '$xmx'; expected -Xmx<n>M or -Xmx<n>G")
+    val match = xmx?.let { Regex("-Xmx(\\d+)([KMGT]?)", RegexOption.IGNORE_CASE).matchEntire(it) }
+        ?: return Runtime.getRuntime().maxMemory()
     val size = match.groupValues[1].toLong()
     val byteMultiplier = when (match.groupValues[2].uppercase()) {
+        "T" -> 1024L * 1024 * 1024 * 1024
         "G" -> 1024L * 1024 * 1024
-        else -> 1024L * 1024 // M
+        "M" -> 1024L * 1024
+        "K" -> 1024L
+        else -> 1L
     }
     return size * byteMultiplier
 }
 
+/**
+ * How many test forks fit in RAM.
+ *
+ * Reserves the daemon's own heap (the OS shares its slack) and splits the rest into forks.
+ */
+private fun memoryBoundForkProcesses(): Long {
+    val forkHeapBytes = unitTestForkMaxHeapGb * 1024L * 1024 * 1024
+    val availableBytes = sysctl("hw.memsize") - gradleDaemonHeapBytes()
+    return max(1L, availableBytes / forkHeapBytes)
+}
+
+/**
+ * Fork count sized by CPU cores and memory on macOS, for `testMaxParallelForks=auto`.
+ *
+ * Apple Silicon efficiency cores are much slower, and a fork per core contends for CPU and memory.
+ */
+private fun autoMacOsTestForks(): Int {
+    val performanceCores = sysctlOrNull("hw.perflevel0.physicalcpu")
+    val efficiencyCores = sysctlOrNull("hw.perflevel1.physicalcpu")
+    val cpuBoundForkProcesses =
+        if (performanceCores != null && efficiencyCores != null) {
+            performanceCores + efficiencyCores / 3
+        } else {
+            sysctl("hw.physicalcpu")
+        }
+    return minOf(cpuBoundForkProcesses, memoryBoundForkProcesses()).toInt()
+}
+
+/**
+ * `testMaxParallelForks`, from `-P` or `~/.gradle/gradle.properties`, overrides the default:
+ * a positive integer, or `auto` to size forks by cores and memory on macOS.
+ */
+private val requestedTestForks = providers.gradleProperty("testMaxParallelForks").orNull?.let { value ->
+    when {
+        value == "auto" && isMacOs -> autoMacOsTestForks()
+        value == "auto" -> null
+        else -> value.toIntOrNull()?.takeIf { it > 0 }
+            ?: throw GradleException("testMaxParallelForks must be a positive integer or 'auto', got '$value'")
+    }
+}
+
 val gradleTestMaxParallelForks by extra(
-    if (isMacOs) {
+    requestedTestForks ?: if (isMacOs) {
         // macOS reports hardware cores.
         // This is accurate for CI, Intel (halved due to SMT) and Apple Silicon
         val physicalCpus = sysctl("hw.physicalcpu")
 
         if (ciBuild) {
             // #21168: The `macos-14` CI runner has only 7GB RAM and OOMs (exit 134) so bound by RAM.
-            // Reserve the daemon's own heap (the OS shares its slack); split the rest into forks.
-            val forkHeapBytes = unitTestForkMaxHeapGb * 1024L * 1024 * 1024
-            val availableBytes = sysctl("hw.memsize") - gradleDaemonHeapBytes()
-            val memoryBoundForkProcesses = max(1L, availableBytes / forkHeapBytes)
-            minOf(physicalCpus, memoryBoundForkProcesses).toInt()
+            minOf(physicalCpus, memoryBoundForkProcesses()).toInt()
         } else {
             physicalCpus.toInt()
         }
