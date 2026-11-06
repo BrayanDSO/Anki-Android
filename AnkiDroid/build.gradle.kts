@@ -332,6 +332,10 @@ android {
             all { test ->
                 // Profile coverage checks must rerun when the generated profiles change.
                 test.inputs.dir("src/main/generated/baselineProfiles")
+                // LintReleaseFileTest reads this file directly, so cached results must not outlive it.
+                test.inputs
+                    .file(rootProject.file("lint-release.xml"))
+                    .withPathSensitivity(org.gradle.api.tasks.PathSensitivity.NONE)
                 test.useJUnitPlatform {
                     // ./gradlew testFullDebugUnitTest -Pscreenshot
                     if (project.hasProperty("screenshot")) {

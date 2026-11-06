@@ -4,6 +4,7 @@ import com.android.build.api.extension.impl.AndroidComponentsExtensionImpl
 import com.ichi2.anki.gradle.BackendTempLibraryService
 import com.ichi2.anki.gradle.GitHubActionsTestListener
 import com.ichi2.anki.gradle.TestSummaryService
+import com.ichi2.anki.gradle.alwaysRunDuringFlakeScans
 import com.ichi2.anki.gradle.configureRobolectricJvm
 import com.ichi2.anki.gradle.enableJacocoAgentOnlyForReports
 import com.ichi2.anki.gradle.registerJacocoLibraryVariants
@@ -85,8 +86,10 @@ subprojects {
     pluginManager.withPlugin("jacoco") { enableJacocoAgentOnlyForReports() }
 
     tasks.withType<Test>().configureEach {
+        val gitHubEventName = providers.environmentVariable("GITHUB_EVENT_NAME").orNull
         // Stop on the first test failure in the merge queue; keep all results for other runs.
-        failFast = providers.environmentVariable("GITHUB_EVENT_NAME").orNull == "merge_group"
+        failFast = gitHubEventName == "merge_group"
+        alwaysRunDuringFlakeScans(gitHubEventName)
 
         // Keep backend behavior deterministic in Android and JVM tests alike.
         environment("ANKI_TEST_MODE", "1")

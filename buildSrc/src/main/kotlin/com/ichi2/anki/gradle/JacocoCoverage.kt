@@ -18,7 +18,6 @@ import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.get
-import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.the
 import org.gradle.kotlin.dsl.withType
@@ -192,9 +191,6 @@ private fun Project.includeTestExecutionData(
         val coverageFiles = coverageProject.files(testTask).asFileTree.matching { include(pattern) }
         executionData.from(coverageFiles)
         dependsOn(testTask)
-        if (pattern == "**/*.exec") {
-            runUnitTestsWithoutCaching(this, coverageProject, taskName)
-        }
     }
 }
 
@@ -232,19 +228,5 @@ fun Project.runtimeProjectDependencies(configurationName: String): List<Project>
         .mapNotNull { it.id as? ProjectComponentIdentifier }
         .filter { it.build.buildPath == ":" && it.projectPath != path }
         .map { project(it.projectPath) }
-
-fun runUnitTestsWithoutCaching(
-    report: JacocoReport,
-    project: Project,
-    taskName: String,
-) {
-    val test = project.tasks.named<Test>(taskName).get()
-    report.dependsOn(test)
-    // Preserve the existing coverage policy: always rerun these tests, bypassing
-    // up-to-date checks and the build cache. Configuration caching is unaffected.
-    // TODO: Revisit whether coverage reports need fresh test executions.
-    test.outputs.upToDateWhen { false }
-    test.outputs.cacheIf { false }
-}
 
 private val Project.androidTestVariantName: String get() = extra["androidTestVariantName"] as String
