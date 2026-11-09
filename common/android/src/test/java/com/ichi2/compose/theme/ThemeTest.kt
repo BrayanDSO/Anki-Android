@@ -55,14 +55,14 @@ class ThemeTest {
     @Test
     fun `light theme bridges colorPrimary to scheme primary`() {
         val scheme = themed(R.style.Theme_Light).toMaterial3ColorScheme()
-        val expected = ContextCompat.getColor(appContext, R.color.material_light_blue_500)
+        val expected = ContextCompat.getColor(appContext, R.color.scheme_light_primary)
         assertEquals(expected, scheme.primary.toArgb())
     }
 
     @Test
     fun `dark theme bridges colorPrimary to scheme primary`() {
         val scheme = themed(R.style.Theme_Dark).toMaterial3ColorScheme()
-        val expected = ContextCompat.getColor(appContext, R.color.material_blue_400)
+        val expected = ContextCompat.getColor(appContext, R.color.scheme_dark_primary)
         assertEquals(expected, scheme.primary.toArgb())
     }
 
@@ -107,9 +107,9 @@ class ThemeTest {
     @Test
     fun `dark theme bridges the inverse colors used by snackbars`() {
         val scheme = themed(R.style.Theme_Dark).toMaterial3ColorScheme()
-        assertEquals(0xFFCFCFCF.toInt(), scheme.inverseSurface.toArgb())
-        assertEquals(ContextCompat.getColor(appContext, R.color.material_theme_grey), scheme.inverseOnSurface.toArgb())
-        assertEquals(ContextCompat.getColor(appContext, R.color.material_light_blue_900), scheme.inversePrimary.toArgb())
+        assertEquals(ContextCompat.getColor(appContext, R.color.scheme_dark_inverse_surface), scheme.inverseSurface.toArgb())
+        assertEquals(ContextCompat.getColor(appContext, R.color.scheme_dark_inverse_on_surface), scheme.inverseOnSurface.toArgb())
+        assertEquals(ContextCompat.getColor(appContext, R.color.scheme_dark_inverse_primary), scheme.inversePrimary.toArgb())
     }
 
     @Test
