@@ -56,8 +56,6 @@
         <item name="colorOutlineVariant">@color/scheme_plain_outline_variant</item>
         <item name="android:textColorHighlight">@color/text_highlight_color</item>
         <!-- Android colors -->
-        <item name="android:textColor">@color/text_color_light</item>
-        <item name="android:textColorSecondary">@color/text_color_secondary_light</item>
         <item name="preferenceCategoryTitleTextColor">?attr/colorSecondary</item>
         <!-- Action bar styles -->
         <item name="actionBarPopupTextColor">@color/theme_plain_primary_text</item>
