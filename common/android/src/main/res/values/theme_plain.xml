@@ -7,19 +7,55 @@
     <color name="theme_plain_primary_text">#212121</color>
 
     <style name="Base.Theme.Light.Plain">
+        <!-- Material 3 color roles: theme_scheme_colors.xml -->
+        <item name="colorPrimary">@color/scheme_plain_primary</item>
+        <item name="colorOnPrimary">@color/scheme_plain_on_primary</item>
+        <item name="colorPrimaryContainer">@color/scheme_plain_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/scheme_plain_on_primary_container</item>
+        <item name="colorPrimaryInverse">@color/scheme_plain_inverse_primary</item>
+        <item name="colorPrimaryFixed">@color/scheme_plain_primary_fixed</item>
+        <item name="colorPrimaryFixedDim">@color/scheme_plain_primary_fixed_dim</item>
+        <item name="colorOnPrimaryFixed">@color/scheme_plain_on_primary_fixed</item>
+        <item name="colorOnPrimaryFixedVariant">@color/scheme_plain_on_primary_fixed_variant</item>
+        <item name="colorSecondary">@color/scheme_plain_secondary</item>
+        <item name="colorOnSecondary">@color/scheme_plain_on_secondary</item>
+        <item name="colorSecondaryContainer">@color/scheme_plain_secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/scheme_plain_on_secondary_container</item>
+        <item name="colorSecondaryFixed">@color/scheme_plain_secondary_fixed</item>
+        <item name="colorSecondaryFixedDim">@color/scheme_plain_secondary_fixed_dim</item>
+        <item name="colorOnSecondaryFixed">@color/scheme_plain_on_secondary_fixed</item>
+        <item name="colorOnSecondaryFixedVariant">@color/scheme_plain_on_secondary_fixed_variant</item>
+        <item name="colorTertiary">@color/scheme_plain_tertiary</item>
+        <item name="colorOnTertiary">@color/scheme_plain_on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/scheme_plain_tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/scheme_plain_on_tertiary_container</item>
+        <item name="colorTertiaryFixed">@color/scheme_plain_tertiary_fixed</item>
+        <item name="colorTertiaryFixedDim">@color/scheme_plain_tertiary_fixed_dim</item>
+        <item name="colorOnTertiaryFixed">@color/scheme_plain_on_tertiary_fixed</item>
+        <item name="colorOnTertiaryFixedVariant">@color/scheme_plain_on_tertiary_fixed_variant</item>
+        <item name="colorError">@color/scheme_plain_error</item>
+        <item name="colorOnError">@color/scheme_plain_on_error</item>
+        <item name="colorErrorContainer">@color/scheme_plain_error_container</item>
+        <item name="colorOnErrorContainer">@color/scheme_plain_on_error_container</item>
+        <item name="android:colorBackground">@color/scheme_plain_background</item>
+        <item name="colorOnBackground">@color/scheme_plain_on_background</item>
+        <item name="colorSurface">@color/scheme_plain_surface</item>
+        <item name="colorOnSurface">@color/scheme_plain_on_surface</item>
+        <item name="colorSurfaceVariant">@color/scheme_plain_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/scheme_plain_on_surface_variant</item>
+        <item name="colorSurfaceInverse">@color/scheme_plain_inverse_surface</item>
+        <item name="colorOnSurfaceInverse">@color/scheme_plain_inverse_on_surface</item>
+        <item name="colorSurfaceDim">@color/scheme_plain_surface_dim</item>
+        <item name="colorSurfaceBright">@color/scheme_plain_surface_bright</item>
+        <item name="colorSurfaceContainerLowest">@color/scheme_plain_surface_container_lowest</item>
+        <item name="colorSurfaceContainerLow">@color/scheme_plain_surface_container_low</item>
+        <item name="colorSurfaceContainer">@color/scheme_plain_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/scheme_plain_surface_container_high</item>
+        <item name="colorSurfaceContainerHighest">@color/scheme_plain_surface_container_highest</item>
+        <item name="colorOutline">@color/scheme_plain_outline</item>
+        <item name="colorOutlineVariant">@color/scheme_plain_outline_variant</item>
+        <item name="android:textColorHighlight">@color/text_highlight_color</item>
         <!-- Android colors -->
-        <item name="colorPrimary">@color/theme_plain_primary</item>
-        <item name="colorSecondary">@color/theme_plain_accent</item>
-        <item name="colorSurfaceContainer">#0F9E9E9E</item>
-        <item name="colorPrimaryContainer">@color/material_grey_300</item>
-        <item name="colorOnPrimaryContainer">@color/material_grey_900</item>
-        <item name="colorSecondaryContainer">#DDDDDD</item>
-        <item name="colorSurfaceVariant">#EEEEEE</item>
-        <item name="colorOnSurfaceVariant">#555555</item>
-        <item name="colorOutlineVariant">#BBBBBB</item>
-        <item name="colorTertiary">#555555</item>
-        <item name="colorOnTertiary">#FFFFFF</item>
-        <item name="colorSurfaceContainerHigh">#F4F4F4</item>
         <item name="android:textColor">@color/text_color_light</item>
         <item name="android:textColorSecondary">@color/text_color_secondary_light</item>
         <item name="preferenceCategoryTitleTextColor">?attr/colorSecondary</item>
@@ -49,7 +85,6 @@
         <!-- Card Browser Colors -->
         <item name="cardBrowserDivider">#CCCCCC</item>
         <!-- Note editor colors -->
-        <item name="android:textColorHighlight">@color/material_grey_300</item>
         <item name="toolbarBackgroundColor">#D6D7D7</item>
         <item name="toolbarIconColor">@color/black</item>
         <item name="buttonShadowColor">#FFAAAAAA</item>
@@ -63,14 +98,10 @@
         <item name="android:navigationBarColor">@color/semi_transparent_black</item>
         <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
 
-
-        <item name="colorPrimaryInverse">#96bdce</item>
-
         <!-- Introduction -->
         <item name="introductionLogoTransparent">#99FFFFFF</item>
 
         <!-- Browser Options Dialog-->
-        <item name="colorSurface">@color/white</item>
 
         <!-- ProgressDialog-->
         <item name="dialogBackground">@color/white</item>
