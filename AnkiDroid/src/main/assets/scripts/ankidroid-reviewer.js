@@ -117,6 +117,12 @@ globalThis.ankidroid.request = function (endpoint, payload = {}) {
     document.addEventListener(
         "touchstart",
         event => {
+            // No other finger is down: a new touch sequence. Discard the state of the previous one,
+            // which may have never ended (e.g. Chromium's image double tap zoom can omit both
+            // touchend and touchcancel for a hold)
+            if (event.touches.length === event.changedTouches.length) {
+                resetTouches();
+            }
             if (event.touches.length > maxTouchCount) {
                 maxTouchCount = event.touches.length;
             }

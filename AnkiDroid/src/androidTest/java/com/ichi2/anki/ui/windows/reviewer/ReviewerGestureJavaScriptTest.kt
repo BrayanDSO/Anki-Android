@@ -2,6 +2,7 @@
 
 package com.ichi2.anki.ui.windows.reviewer
 
+import android.os.SystemClock
 import android.view.ViewGroup
 import android.webkit.WebView
 import androidx.fragment.app.Fragment
@@ -19,6 +20,7 @@ import com.ichi2.anki.testutil.ensureWebViewIsSupported
 import com.ichi2.anki.testutil.evaluate
 import com.ichi2.anki.testutil.grantPermissions
 import com.ichi2.anki.testutil.notificationPermission
+import org.json.JSONObject
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -37,6 +39,67 @@ class ReviewerGestureJavaScriptTest : InstrumentedTest() {
 
     @Test
     fun crossOriginCardBaseDoesNotRedirectGestureRequests() = checkCardBaseDoesNotRedirectGestureRequests(base = "https://example.invalid/")
+
+    @Test
+    fun missingImageHoldEndDoesNotDiscardNextTap() {
+        val requests = LinkedBlockingQueue<String>()
+        withGesturePage(recordingHandler { if (it == "/ankidroid/tapOrSwipe") requests.add(it) }) {
+            sendTap()
+            assertEquals("/ankidroid/tapOrSwipe", requests.poll(5, TimeUnit.SECONDS))
+            // Chromium's image double-tap zoom can omit both touchend and touchcancel for a hold.
+            evaluate(
+                """
+                (() => {
+                    const target = document.getElementById('card');
+                    const touch = new Touch({identifier: 1, target, clientX: 50, clientY: 50});
+                    target.dispatchEvent(new TouchEvent('touchstart', {
+                        bubbles: true, touches: [touch], changedTouches: [touch]
+                    }));
+                })();
+                """.trimIndent(),
+            )
+            SystemClock.sleep(1000)
+            sendTap()
+            assertEquals(
+                "/ankidroid/tapOrSwipe",
+                requests.poll(1, TimeUnit.SECONDS),
+                "A new touch sequence must not inherit the preceding image hold's timeout",
+            )
+        }
+    }
+
+    @Test
+    fun addingAnotherFingerPreservesTheMultiTouchGesture() {
+        val touchCounts = LinkedBlockingQueue<Int>()
+        val handler =
+            object : PostRequestHandler {
+                override suspend fun handlePostRequest(
+                    uri: PostRequestUri,
+                    bytes: ByteArray,
+                ): ByteArray {
+                    if (uri.uri == "/ankidroid/multiFingerTap") touchCounts.add(JSONObject(bytes.decodeToString()).getInt("touchCount"))
+                    return byteArrayOf()
+                }
+            }
+        withGesturePage(handler) {
+            evaluate(
+                """
+                (() => {
+                    const target = document.getElementById('card');
+                    const first = new Touch({identifier: 1, target, clientX: 50, clientY: 50});
+                    const second = new Touch({identifier: 2, target, clientX: 70, clientY: 50});
+                    for (const [type, touches, changedTouches] of [
+                        ['touchstart', [first], [first]],
+                        ['touchstart', [first, second], [second]],
+                        ['touchend', [second], [first]],
+                        ['touchend', [], [second]],
+                    ]) target.dispatchEvent(new TouchEvent(type, {bubbles: true, touches, changedTouches}));
+                })();
+                """.trimIndent(),
+            )
+            assertEquals(2, touchCounts.poll(5, TimeUnit.SECONDS), "Adding a finger must preserve the existing touch sequence")
+        }
+    }
 
     private fun checkCardBaseDoesNotRedirectGestureRequests(base: String) {
         val requests = LinkedBlockingQueue<String>()
