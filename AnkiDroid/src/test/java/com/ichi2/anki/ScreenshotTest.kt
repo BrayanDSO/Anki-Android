@@ -54,7 +54,16 @@ abstract class ScreenshotTest : RobolectricTest() {
 
     var fileNamePrefix = ""
 
-    enum class ThemeConfig { LIGHT, PLAIN, DARK, BLACK, EINK }
+    enum class ThemeConfig {
+        LIGHT,
+        PLAIN,
+        DARK,
+        BLACK,
+        EINK,
+        ;
+
+        val isNight get() = this == DARK || this == BLACK
+    }
 
     enum class DeviceConfig { PHONE, TABLET, FOLDABLE, DESKTOP }
 
@@ -114,15 +123,11 @@ abstract class ScreenshotTest : RobolectricTest() {
 
     // ./gradlew :AnkiDroid:recordRoborazziPlayDebug -Pscreenshot -Ptheme=black,plain
     protected open fun applyThemeConfig() {
-        val isNightMode = theme == ThemeConfig.DARK || theme == ThemeConfig.BLACK
-        if (isNightMode) {
-            RuntimeEnvironment.setQualifiers("+night")
-        }
         if (theme != ThemeConfig.LIGHT) {
             fileNamePrefix += "${theme.name.lowercase()}_"
         }
         val prefs = PrefsRepository(targetContext)
-        prefs.appTheme = if (isNightMode) AppTheme.NIGHT else AppTheme.DAY
+        prefs.appTheme = if (theme.isNight) AppTheme.NIGHT else AppTheme.DAY
         when (theme) {
             ThemeConfig.LIGHT -> prefs.dayTheme = DayTheme.LIGHT
             ThemeConfig.PLAIN -> prefs.dayTheme = DayTheme.PLAIN
@@ -139,13 +144,18 @@ abstract class ScreenshotTest : RobolectricTest() {
     }
 
     /** Pixel-class phone in portrait */
-    protected fun setPhoneQualifiers() = RuntimeEnvironment.setQualifiers(RobolectricDeviceQualifiers.MediumPhone)
+    protected fun setPhoneQualifiers() = setDeviceQualifiers(RobolectricDeviceQualifiers.MediumPhone)
 
-    protected fun setTabletQualifiers() = RuntimeEnvironment.setQualifiers(RobolectricDeviceQualifiers.MediumTablet)
+    protected fun setTabletQualifiers() = setDeviceQualifiers(RobolectricDeviceQualifiers.MediumTablet)
 
-    protected fun setFoldableQualifiers() = RuntimeEnvironment.setQualifiers(RobolectricDeviceQualifiers.Pixel9ProFold)
+    protected fun setFoldableQualifiers() = setDeviceQualifiers(RobolectricDeviceQualifiers.Pixel9ProFold)
 
-    protected fun setDesktopQualifiers() = RuntimeEnvironment.setQualifiers(RobolectricDeviceQualifiers.MediumDesktop)
+    protected fun setDesktopQualifiers() = setDeviceQualifiers(RobolectricDeviceQualifiers.MediumDesktop)
+
+    private fun setDeviceQualifiers(qualifiers: String) {
+        RuntimeEnvironment.setQualifiers(qualifiers)
+        if (theme.isNight) RuntimeEnvironment.setQualifiers("+night")
+    }
 
     /**
      * Captures a screenshot to `build/outputs/roborazzi/<TestClass>/<name>.png`.
