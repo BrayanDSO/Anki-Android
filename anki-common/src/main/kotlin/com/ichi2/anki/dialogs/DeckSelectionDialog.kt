@@ -12,12 +12,12 @@ import android.view.WindowManager
 import android.widget.Filter
 import android.widget.Filterable
 import android.widget.ImageButton
+import androidx.annotation.DrawableRes
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
-import androidx.core.content.res.getDrawableOrThrow
-import androidx.core.content.res.use
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
@@ -227,14 +227,12 @@ class DeckSelectionDialog : AnalyticsDialogFragment() {
         deckIds: LongArray,
     ) : RecyclerView.Adapter<DecksArrayAdapter.ViewHolder>(),
         Filterable {
-        private lateinit var expandImage: Drawable
-        private lateinit var collapseImage: Drawable
+        private val expandImage = chevron(CommonR.drawable.ic_chevron_right)
+        private val collapseImage = chevron(CommonR.drawable.ic_expand_more)
 
-        val attrs =
-            intArrayOf(
-                CommonR.attr.expandRef,
-                CommonR.attr.collapseRef,
-            )
+        private fun chevron(
+            @DrawableRes id: Int,
+        ): Drawable = requireNotNull(AppCompatResources.getDrawable(requireContext(), id)).apply { isAutoMirrored = true }
 
         inner class ViewHolder(
             private val binding: ItemDeckPickerDialogBinding,
@@ -397,13 +395,6 @@ class DeckSelectionDialog : AnalyticsDialogFragment() {
         }
 
         init {
-            requireContext().obtainStyledAttributes(attrs).use { typedArray ->
-                expandImage = typedArray.getDrawableOrThrow(0)
-                expandImage.isAutoMirrored = true
-                collapseImage = typedArray.getDrawableOrThrow(1)
-                collapseImage.isAutoMirrored = true
-            }
-
             launchCatchingTask {
                 decksRoot = withCol { Pair(sched.deckDueTree(), isEmpty) }.first
                 val allDecksSet =

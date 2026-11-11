@@ -10,7 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import androidx.annotation.VisibleForTesting
-import androidx.core.content.res.getDrawableOrThrow
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.withStyledAttributes
 import androidx.core.view.isGone
 import androidx.core.view.isInvisible
@@ -240,8 +240,6 @@ class DeckAdapter(
                 CommonR.attr.reviewCountColor,
                 android.R.attr.textColor,
                 CommonR.attr.dynDeckColor,
-                CommonR.attr.expandRef,
-                CommonR.attr.collapseRef,
             )
         val ta = context.obtainStyledAttributes(attrs)
         zeroCountColor = ta.getColor(0, context.getColor(CommonR.color.black))
@@ -250,9 +248,9 @@ class DeckAdapter(
         reviewCountColor = ta.getColor(3, context.getColor(CommonR.color.black))
         deckNameDefaultColor = ta.getColor(4, context.getColor(CommonR.color.black))
         deckNameDynColor = ta.getColor(5, context.getColor(CommonR.color.material_blue_A700))
-        expandImage = ta.getDrawableOrThrow(6)
+        expandImage = requireNotNull(AppCompatResources.getDrawable(context, CommonR.drawable.ic_chevron_right))
         expandImage.isAutoMirrored = true
-        collapseImage = ta.getDrawableOrThrow(7)
+        collapseImage = requireNotNull(AppCompatResources.getDrawable(context, CommonR.drawable.ic_expand_more))
         collapseImage.isAutoMirrored = true
         ta.recycle()
         context.withStyledAttributes(attrs = intArrayOf(android.R.attr.selectableItemBackground)) {
