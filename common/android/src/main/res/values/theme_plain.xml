@@ -6,7 +6,7 @@
     <color name="theme_plain_accent">#607D8B</color>
     <color name="theme_plain_primary_text">#212121</color>
 
-    <style name="Base.Theme.Light.Plain">
+    <style name="Base.Theme.Light.Plain" parent="Theme.AnkiDroid">
         <!-- Android colors -->
         <item name="colorPrimary">@color/theme_plain_primary</item>
         <item name="colorSecondary">@color/theme_plain_accent</item>
