@@ -236,6 +236,7 @@ import kotlinx.coroutines.launch
 import net.ankiweb.rsdroid.Translations
 import timber.log.Timber
 import java.io.File
+import com.google.android.material.R as MaterialR
 import com.ichi2.anki.common.android.R as CommonR
 
 /**
@@ -1462,6 +1463,7 @@ open class DeckPicker :
                 BadgeDrawableBuilder(this)
                     .withText('!')
                     .withColorAttr(CommonR.attr.badgeErrorColor)
+                    .withTextColorAttr(MaterialR.attr.colorOnError)
                     .replaceBadge(provider)
             }
         }

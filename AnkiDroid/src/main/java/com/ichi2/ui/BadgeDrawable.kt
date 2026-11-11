@@ -8,6 +8,7 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.DrawableWrapper
+import androidx.annotation.ColorInt
 
 /**
  * Creates a new wrapper around the specified drawable.
@@ -22,6 +23,12 @@ class BadgeDrawable(
     private var text: String? = null
     private var textX = 0f
     private var textY = 0f
+
+    fun setTextColor(
+        @ColorInt color: Int,
+    ) {
+        paint.color = color
+    }
 
     fun setBadgeDrawable(view: Drawable) {
         badge = view
