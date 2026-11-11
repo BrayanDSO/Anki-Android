@@ -6,7 +6,7 @@
     <color name="theme_black_primary_text">#fff</color> <!-- Alternative: #808080 -->
     <color name="theme_black_row_current">#1a1a1a</color>
 
-    <style name="Base.Theme.Dark.Black" parent="Theme.AnkiDroid">
+    <style name="Base.Theme.AnkiDroid.Black" parent="Theme.AnkiDroid">
         <!-- Android colors -->
         <item name="colorPrimary">@color/material_blue_400</item>
         <item name="colorSecondary">@color/material_blue_500</item>
@@ -127,5 +127,5 @@
         <item name="elevationOverlayEnabled">false</item>
     </style>
 
-    <style name="Theme_Dark.Black" parent="Base.Theme.Dark.Black"/>
+    <style name="Theme.AnkiDroid.Black" parent="Base.Theme.AnkiDroid.Black"/>
 </resources>
