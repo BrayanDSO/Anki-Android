@@ -11,6 +11,7 @@ import app.cash.turbine.test
 import com.ichi2.anki.RobolectricTest
 import com.ichi2.anki.common.preferences.sharedPrefs
 import com.ichi2.anki.common.utils.ext.cardStateCustomizer
+import com.ichi2.anki.preferences.reviewer.ViewerAction
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -43,6 +44,23 @@ class ReviewerViewModelTest : RobolectricTest() {
     fun clearViewModels() {
         viewModelStore.clear()
     }
+
+    @Test
+    fun `burying the card refreshes it once`() =
+        runTest {
+            addBasicNote("one", "1")
+            addBasicNote("two", "2")
+            val viewModel = ReviewerViewModel(SavedStateHandle()).also { viewModelStore.put("reviewer", it) }
+            viewModel.onPageFinished(false)
+            advanceUntilIdle()
+
+            viewModel.onCardUpdatedFlow.test {
+                viewModel.executeAction(ViewerAction.BURY_CARD)
+                advanceUntilIdle()
+                awaitItem()
+                expectNoEvents()
+            }
+        }
 
     @Test
     fun `HTML answer marks nosuggest fields and requests a Done key`() =
