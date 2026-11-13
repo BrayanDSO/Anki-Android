@@ -11,6 +11,7 @@ import com.ichi2.anki.libanki.AvTag
 import com.ichi2.anki.libanki.SoundOrVideoTag
 import com.ichi2.anki.libanki.TemplateManager
 import com.ichi2.anki.libanki.TtsPlayer
+import com.ichi2.anki.reviewer.CardSide
 import com.ichi2.testutils.JvmTest
 import com.ichi2.testutils.TestException
 import io.mockk.coEvery
@@ -22,6 +23,7 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.verify
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.awaitCancellation
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Test
 
@@ -151,6 +153,24 @@ class CardMediaPlayerTest : JvmTest() {
             }
 
             ensureOnMediaGroupCompletedCalled()
+        }
+
+    @Test
+    fun `stopping playback does not call completed listener`() =
+        runSoundPlayerTest(
+            questions = listOf(SoundOrVideoTag("aa.mp3")),
+        ) {
+            val started = CompletableDeferred<Unit>()
+            coEvery { tagPlayer.play(any(), any()) } coAnswers {
+                started.complete(Unit)
+                awaitCancellation()
+            }
+
+            playAllForSide(CardSide.QUESTION)
+            started.await()
+            stop()
+
+            verify(exactly = 0) { onMediaGroupCompleted.invoke() }
         }
 
     @Test

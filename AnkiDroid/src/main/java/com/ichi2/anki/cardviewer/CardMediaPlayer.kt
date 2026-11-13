@@ -64,7 +64,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * @see AvTag
  *
  * [setOnMediaGroupCompletedListener] can be used to call
- * something when [playAllForSide] or [replayAll] completes
+ * something when [playAllForSide] or [replayAll] completes. It is not called if playback is stopped
  */
 @NeedsTest("Integration test: A video is autoplayed if it's the first media on a card")
 @NeedsTest("A sound is played after a video finishes")
@@ -242,18 +242,15 @@ class CardMediaPlayer : Closeable {
                 CardSide.BOTH -> questionAvTags + answerAvTags
             }
 
-        try {
-            for ((index, avTag) in avTagList.withIndex()) {
-                Timber.d("playing AV Tag %d/%d", index + 1, avTagList.size)
-                if (!play(avTag, isAutomaticPlayback)) {
-                    Timber.d("stopping AV Tag playback early")
-                    return
-                }
+        for ((index, avTag) in avTagList.withIndex()) {
+            Timber.d("playing AV Tag %d/%d", index + 1, avTagList.size)
+            if (!play(avTag, isAutomaticPlayback)) {
+                Timber.d("stopping AV Tag playback early")
+                break
             }
-        } finally {
-            // call the completion listener, even if a CancellationException was thrown
-            onMediaGroupCompleted?.invoke()
         }
+        // skipped if cancelled: the media did not complete, and the card side may have changed
+        onMediaGroupCompleted?.invoke()
     }
 
     /**

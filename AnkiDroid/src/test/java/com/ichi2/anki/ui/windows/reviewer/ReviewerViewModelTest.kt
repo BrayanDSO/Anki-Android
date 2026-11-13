@@ -9,11 +9,19 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import anki.scheduler.CardAnswer.Rating
 import app.cash.turbine.test
 import com.ichi2.anki.RobolectricTest
+import com.ichi2.anki.cardviewer.SoundTagPlayer
 import com.ichi2.anki.common.preferences.sharedPrefs
 import com.ichi2.anki.common.utils.ext.cardStateCustomizer
+import com.ichi2.anki.libanki.DeckConfig.Companion.ANSWER_ACTION
 import com.ichi2.anki.preferences.reviewer.ViewerAction
+import com.ichi2.anki.ui.windows.reviewer.autoadvance.AnswerAction
+import io.mockk.coEvery
+import io.mockk.mockkConstructor
+import io.mockk.unmockkAll
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import org.json.JSONTokener
 import org.jsoup.Jsoup
@@ -22,11 +30,14 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.concurrent.Semaphore
+import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 @RunWith(AndroidJUnit4::class)
 class ReviewerViewModelTest : RobolectricTest() {
@@ -44,6 +55,82 @@ class ReviewerViewModelTest : RobolectricTest() {
     fun clearViewModels() {
         viewModelStore.clear()
     }
+
+    @After
+    fun unmockAudio() {
+        unmockkAll()
+    }
+
+    @Test
+    fun `flipping during the question audio does not start the answer timer`() =
+        runTest {
+            val card = addBasicNote("[sound:question.mp3]", "[sound:answer.mp3]").firstCard()
+            updateDeckConfig(col.decks.selected()) {
+                autoplay = true
+                secondsToShowAnswer = 5.0
+                jsonObject.put(ANSWER_ACTION, AnswerAction.ANSWER_GOOD.code)
+            }
+            assertTrue(col.decks.configDictForDeckId(col.decks.selected()).waitForAudio, "'Wait for audio' is on by default")
+            val startedAudios = mockAudioThatPlaysUntilStopped()
+            val viewModel = ReviewerViewModel(SavedStateHandle()).also { viewModelStore.put("reviewer", it) }
+            viewModel.onPageFinished(false)
+            startedAudios.awaitStart() // question audio
+            viewModel.executeAction(ViewerAction.TOGGLE_AUTO_ADVANCE)
+
+            viewModel.onShowAnswer() // stops the question audio
+            viewModel.awaitPendingActions()
+            startedAudios.awaitStart() // answer audio, which never ends
+            advanceTimeBy(6.seconds)
+
+            assertEquals(0, col.getCard(card.id).reps, "card answered while its answer audio was playing")
+        }
+
+    @Test
+    fun `answering during the answer audio does not start the next question timer`() =
+        runTest {
+            addBasicNote("[sound:question1.mp3]", "[sound:answer1.mp3]")
+            addBasicNote("[sound:question2.mp3]", "[sound:answer2.mp3]")
+            updateDeckConfig(col.decks.selected()) {
+                autoplay = true
+                secondsToShowQuestion = 5.0 // the default action is 'Show answer'
+            }
+            assertTrue(col.decks.configDictForDeckId(col.decks.selected()).waitForAudio, "'Wait for audio' is on by default")
+            val startedAudios = mockAudioThatPlaysUntilStopped()
+            val viewModel = ReviewerViewModel(SavedStateHandle()).also { viewModelStore.put("reviewer", it) }
+            viewModel.onPageFinished(false)
+            startedAudios.awaitStart() // question audio
+            viewModel.executeAction(ViewerAction.TOGGLE_AUTO_ADVANCE)
+            viewModel.onShowAnswer()
+            startedAudios.awaitStart() // answer audio
+
+            viewModel.answerCard(Rating.GOOD) // stops the answer audio
+            viewModel.awaitPendingActions()
+            startedAudios.awaitStart() // next question audio, which never ends
+            advanceTimeBy(6.seconds)
+
+            assertFalse(viewModel.showingAnswer.value, "answer shown while the question audio was playing")
+        }
+
+    /** Mocks `[sound:]` playback so it only ends when stopped. Releases a permit per started playback */
+    private fun mockAudioThatPlaysUntilStopped(): Semaphore {
+        val startedAudios = Semaphore(0)
+        mockkConstructor(SoundTagPlayer::class)
+        coEvery { anyConstructed<SoundTagPlayer>().play(any(), any()) } coAnswers {
+            startedAudios.release()
+            awaitCancellation()
+        }
+        return startedAudios
+    }
+
+    /** Playback runs on the real IO dispatcher, so it is awaited in wall-clock time */
+    private fun Semaphore.awaitStart() = assertTrue(tryAcquire(5, TimeUnit.SECONDS), "audio did not start")
+
+    /** Waits for the previously requested actions to complete: they are executed in order */
+    private suspend fun ReviewerViewModel.awaitPendingActions() =
+        pageUpFlow.test {
+            executeAction(ViewerAction.PAGE_UP)
+            awaitItem()
+        }
 
     @Test
     fun `burying the card refreshes it once`() =
