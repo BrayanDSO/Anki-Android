@@ -198,4 +198,39 @@ class AutoAdvanceTest {
             advanceTimeBy(2.seconds)
             coVerify(exactly = 1) { listener.onAutoAdvanceAction(AnswerAction.ANSWER_GOOD) }
         }
+
+    @Test
+    fun `disabling cancels a question timer that was scheduled twice`() =
+        testScope.runTest {
+            autoAdvance = createAutoAdvance()
+            autoAdvance.isEnabled = true
+            testScheduler.advanceUntilIdle()
+
+            // e.g. 'Wait for audio': the question audio was replayed, so it 'completed' twice
+            autoAdvance.onShowQuestion()
+            advanceTimeBy(2.seconds)
+            autoAdvance.onShowQuestion()
+
+            autoAdvance.isEnabled = false
+            advanceTimeBy(10.seconds)
+
+            coVerify(exactly = 0) { listener.onAutoAdvanceAction(any()) }
+        }
+
+    @Test
+    fun `changing the card cancels an answer timer that was scheduled twice`() =
+        testScope.runTest {
+            autoAdvance = createAutoAdvance()
+            autoAdvance.isEnabled = true
+            testScheduler.advanceUntilIdle()
+
+            autoAdvance.onShowAnswer()
+            autoAdvance.onShowAnswer()
+
+            // the user answered the card before the timer elapsed
+            autoAdvance.onCardChange(card)
+            advanceTimeBy(10.seconds)
+
+            coVerify(exactly = 0) { listener.onAutoAdvanceAction(any()) }
+        }
 }

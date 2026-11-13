@@ -9,6 +9,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration
 
 /**
  * Implementation of the `Auto Advance` deck options
@@ -34,62 +35,56 @@ class AutoAdvance(
     }
 
     var isEnabled = false
-        set(value) {
+        @Synchronized get
+
+        @Synchronized set(value) {
             field = value
             if (!value) {
-                cancelQuestionAndAnswerActionJobs()
+                cancelPendingAction()
             }
         }
-    private var questionActionJob: Job? = null
-    private var answerActionJob: Job? = null
+    private var pendingAction: Job? = null
 
+    @Volatile
     private var settings =
         scope.asyncIO {
             AutoAdvanceSettings.createInstance(initialCard.await().currentDeckId())
         }
 
-    private suspend fun durationToShowQuestionFor() = settings.await().durationToShowQuestionFor
-
-    private suspend fun durationToShowAnswerFor() = settings.await().durationToShowAnswerFor
-
-    private suspend fun questionAction() = settings.await().questionAction
-
-    private suspend fun answerAction() = settings.await().answerAction
-
     suspend fun shouldWaitForAudio() = settings.await().waitForAudio
 
-    fun cancelQuestionAndAnswerActionJobs() {
-        questionActionJob?.cancel()
-        answerActionJob?.cancel()
+    @Synchronized
+    fun cancelPendingAction() {
+        pendingAction?.cancel()
+        pendingAction = null
     }
 
+    @Synchronized
     fun onCardChange(card: Card) {
-        cancelQuestionAndAnswerActionJobs()
+        cancelPendingAction()
         settings =
             scope.asyncIO {
                 AutoAdvanceSettings.createInstance(card.currentDeckId())
             }
     }
 
-    suspend fun onShowQuestion() {
-        answerActionJob?.cancel()
-        if (!durationToShowQuestionFor().isPositive() || !isEnabled) return
+    suspend fun onShowQuestion() = schedule { durationToShowQuestionFor to questionAction }
 
-        questionActionJob =
-            scope.launch {
-                delay(durationToShowQuestionFor())
-                listener.onAutoAdvanceAction(questionAction())
-            }
-    }
+    suspend fun onShowAnswer() = schedule { durationToShowAnswerFor to answerAction }
 
-    suspend fun onShowAnswer() {
-        questionActionJob?.cancel()
-        if (!durationToShowAnswerFor().isPositive() || !isEnabled) return
+    private suspend fun schedule(select: AutoAdvanceSettings.() -> Pair<Duration, AutoAdvanceAction>) {
+        val settings = settings
+        val (duration, action) = settings.await().select()
+        synchronized(this) {
+            cancelPendingAction()
+            // the card changed while its settings loaded: the new card schedules its own action
+            if (settings !== this.settings || !duration.isPositive() || !isEnabled) return
 
-        answerActionJob =
-            scope.launch {
-                delay(durationToShowAnswerFor())
-                listener.onAutoAdvanceAction(answerAction())
-            }
+            pendingAction =
+                scope.launch {
+                    delay(duration)
+                    listener.onAutoAdvanceAction(action)
+                }
+        }
     }
 }

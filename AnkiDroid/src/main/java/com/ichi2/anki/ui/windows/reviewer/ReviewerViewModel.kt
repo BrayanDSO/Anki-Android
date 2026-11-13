@@ -413,7 +413,7 @@ class ReviewerViewModel(
 
     fun stopAutoAdvance() {
         Timber.v("ReviewerViewModel::stopAutoAdvance")
-        autoAdvance.cancelQuestionAndAnswerActionJobs()
+        autoAdvance.cancelPendingAction()
     }
 
     private suspend fun toggleAutoAdvance() {
