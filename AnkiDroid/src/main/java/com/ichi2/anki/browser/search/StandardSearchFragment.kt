@@ -42,8 +42,8 @@ import com.ichi2.anki.libanki.DeckNameId
 import com.ichi2.anki.model.CardStateFilter
 import com.ichi2.anki.model.SelectableDeck
 import com.ichi2.anki.ui.internationalization.sentenceCase
+import com.ichi2.anki.utils.ext.collectInLifecycle
 import com.ichi2.anki.utils.ext.hasCheckedBackground
-import com.ichi2.anki.utils.ext.launchCollectionInLifecycleScope
 import dev.androidbroadcast.vbpd.viewBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -124,7 +124,7 @@ class StandardSearchFragment :
             }
         }
 
-        viewModel.filtersFlow.launchCollectionInLifecycleScope {
+        viewModel.filtersFlow.collectInLifecycle {
             binding.decksChip.hasCheckedBackground = it.decks.any()
             binding.tagsChip.hasCheckedBackground = it.tags.any()
             binding.cardStateChip.hasCheckedBackground = it.cardStates.any()
@@ -228,20 +228,20 @@ class StandardSearchFragment :
         }
 
         // replace the data when the displayed search history is updated
-        viewModel.displayedSearchHistoryFlow.launchCollectionInLifecycleScope {
+        viewModel.displayedSearchHistoryFlow.collectInLifecycle {
             searchHistoryAdapter.clear()
             searchHistoryAdapter.addAll(toUiModels(it))
         }
 
-        viewModel.showHistoryToggleFlow.launchCollectionInLifecycleScope {
+        viewModel.showHistoryToggleFlow.collectInLifecycle {
             binding.toggleSearchHistory.isVisible = it
         }
 
-        viewModel.isHistoryExpandedFlow.launchCollectionInLifecycleScope {
+        viewModel.isHistoryExpandedFlow.collectInLifecycle {
             binding.toggleSearchHistory.setText(if (it) CommonString.card_browser_see_less else CommonString.card_browser_see_more)
         }
 
-        viewModel.searchHistoryAvailableFlow.launchCollectionInLifecycleScope {
+        viewModel.searchHistoryAvailableFlow.collectInLifecycle {
             binding.searchHistoryContainer.isVisible = it
         }
     }
@@ -283,7 +283,7 @@ class StandardSearchFragment :
             )
         binding.savedSearches.adapter = adapter
 
-        viewModel.savedSearchesFlow.launchCollectionInLifecycleScope {
+        viewModel.savedSearchesFlow.collectInLifecycle {
             withContext(Dispatchers.Main) {
                 savedSearches.clear()
                 savedSearches.addAll(it)
@@ -291,7 +291,7 @@ class StandardSearchFragment :
             }
         }
 
-        viewModel.canManageSavedSearchesFlow.launchCollectionInLifecycleScope {
+        viewModel.canManageSavedSearchesFlow.collectInLifecycle {
             binding.manageSavedSearchesContainer.isVisible = it
         }
 
