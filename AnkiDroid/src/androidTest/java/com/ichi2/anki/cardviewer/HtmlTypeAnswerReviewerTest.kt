@@ -25,6 +25,7 @@ import com.ichi2.anki.testutil.AvoidDayRolloverRule
 import com.ichi2.anki.testutil.GrantStoragePermission.storagePermission
 import com.ichi2.anki.testutil.TestInputMethodRule
 import com.ichi2.anki.testutil.awaitJavascript
+import com.ichi2.anki.testutil.awaitReviewerAnswerButton
 import com.ichi2.anki.testutil.ensureWebViewIsSupported
 import com.ichi2.anki.testutil.focusInput
 import com.ichi2.anki.testutil.grantPermissions
@@ -39,6 +40,7 @@ import org.junit.runners.Parameterized
 import java.util.UUID
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import com.ichi2.anki.common.android.R.string as CommonString
 
 /** Checks the real reviewers' HTML, script loading, and WebView keyboard support together. */
 @RunWith(Parameterized::class)
@@ -175,9 +177,13 @@ class HtmlTypeAnswerReviewerTest : InstrumentedTest() {
                 keyboard.perform("done")
                 webView.awaitJavascript("document.querySelector('#typeans .typeGood')?.textContent === 'été'")
                 if (question != "Third") {
-                    onView(withId(if (newReviewer) R.id.good_button else R.id.flashcard_layout_ease3))
-                        .also { it.checkWithTimeout(matches(isDisplayed())) }
-                        .perform(click())
+                    if (newReviewer) {
+                        awaitReviewerAnswerButton(CommonString.ease_button_good).click()
+                    } else {
+                        onView(withId(R.id.flashcard_layout_ease3))
+                            .also { it.checkWithTimeout(matches(isDisplayed())) }
+                            .perform(click())
+                    }
                 }
             }
         }
