@@ -177,7 +177,7 @@ class ReviewerViewModelTest : RobolectricTest() {
             val viewModel = ReviewerViewModel(SavedStateHandle()).also { viewModelStore.put("reviewer", it) }
             viewModel.onPageFinished(false)
             advanceUntilIdle()
-            val answeredCardId = viewModel.getCardId()
+            val answeredCardId = assertNotNull(viewModel.getCardId())
             viewModel.onShowAnswer()
             advanceUntilIdle()
             assertIs<MockTime>(TimeManager.time).addM(2)

@@ -10,6 +10,7 @@ import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.OnErrorListener
 import com.ichi2.anki.cardviewer.CardMediaPlayer
 import com.ichi2.anki.cardviewer.MediaErrorHandler
+import com.ichi2.anki.cardviewer.SingleCardSide
 import com.ichi2.anki.launchCatchingIO
 import com.ichi2.anki.libanki.Card
 import com.ichi2.anki.libanki.TtsPlayer
@@ -17,7 +18,8 @@ import com.ichi2.anki.multimedia.getAvTag
 import com.ichi2.anki.multimedia.replaceAvRefsWithPlayButtons
 import com.ichi2.anki.pages.PostRequestHandler
 import com.ichi2.anki.pages.PostRequestUri
-import kotlinx.coroutines.Deferred
+import com.ichi2.anki.reviewer.CardSide
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -49,7 +51,25 @@ abstract class CardViewerViewModel(
         ).also {
             addCloseable(it)
         }
-    abstract var currentCard: Deferred<Card>
+
+    /** Runs everything that changes what is being shown, one at a time and in the order requested */
+    private val commands = Channel<suspend () -> Unit>(Channel.UNLIMITED)
+
+    /** The card last shown in the page */
+    @Volatile
+    private var shownCard: Card? = null
+
+    init {
+        viewModelScope.launch {
+            for (command in commands) {
+                launchCatchingIO { command() }.join()
+            }
+        }
+    }
+
+    protected fun enqueue(command: suspend () -> Unit) {
+        commands.trySend(command)
+    }
 
     /* *********************************************************************************************
      ************************ Public methods: meant to be used by the View **************************
@@ -70,7 +90,8 @@ abstract class CardViewerViewModel(
 
     fun playSoundFromUrl(url: String) {
         launchCatchingIO {
-            getAvTag(currentCard.await(), url)?.let {
+            val card = shownCard ?: return@launchCatchingIO
+            getAvTag(card, url)?.let {
                 cardMediaPlayer.playOne(it)
             }
         }
@@ -86,32 +107,45 @@ abstract class CardViewerViewModel(
      *************************************** Internal methods ***************************************
      ********************************************************************************************* */
 
-    protected abstract suspend fun typeAnsFilter(text: String): String
-
-    private suspend fun bodyClass() = bodyClassForCardOrd(currentCard.await().ord)
+    /**
+     * @param text the text of [side] of [card], to replace its `[[type:]]` tags
+     */
+    protected abstract suspend fun typeAnsFilter(
+        card: Card,
+        text: String,
+        side: SingleCardSide,
+    ): String
 
     /** From the [desktop code](https://github.com/ankitects/anki/blob/1ff55475b93ac43748d513794bcaabd5d7df6d9d/qt/aqt/reviewer.py#L358) */
-    private suspend fun mungeQA(text: String) = typeAnsFilter(prepareCardTextForDisplay(text))
+    private suspend fun mungeQA(
+        card: Card,
+        text: String,
+        side: SingleCardSide,
+    ) = typeAnsFilter(card, prepareCardTextForDisplay(card, text), side)
 
     @VisibleForTesting
-    suspend fun prepareCardTextForDisplay(text: String): String =
+    suspend fun prepareCardTextForDisplay(
+        card: Card,
+        text: String,
+    ): String =
         replaceAvRefsWithPlayButtons(
             text = withCol { media.escapeMediaFilenames(text) },
-            renderOutput = currentCard.await().let { card -> withCol { card.renderOutput(this) } },
+            renderOutput = withCol { card.renderOutput(this) },
         )
 
-    protected open suspend fun showQuestion() {
+    protected open suspend fun showQuestion(card: Card) {
         Timber.v("showQuestion")
+        shownCard = card
         showingAnswer.emit(false)
         mediaErrorHandler.onCardSideChange()
 
-        val card = currentCard.await()
         val questionData = withCol { card.question(this) }
-        val question = mungeQA(questionData)
+        val question = mungeQA(card, questionData, SingleCardSide.FRONT)
         val answer =
             withCol { media.escapeMediaFilenames(card.answer(this)) }
+        val bodyClass = bodyClassForCardOrd(card.ord)
 
-        eval.emit("_showQuestion(${Json.encodeToString(question)}, ${Json.encodeToString(answer)}, '${bodyClass()}');")
+        eval.emit("_showQuestion(${Json.encodeToString(question)}, ${Json.encodeToString(answer)}, '$bodyClass');")
     }
 
     /**
@@ -122,16 +156,25 @@ abstract class CardViewerViewModel(
      *
      * @see [stdHtml]
      */
-    protected open suspend fun showAnswer() {
+    protected open suspend fun showAnswer(card: Card) {
         Timber.v("showAnswer()")
+        shownCard = card
         showingAnswer.emit(true)
         mediaErrorHandler.onCardSideChange()
 
-        val card = currentCard.await()
         val answerData = withCol { card.answer(this) }
-        val answer = mungeQA(answerData)
+        val answer = mungeQA(card, answerData, SingleCardSide.BACK)
 
-        eval.emit("_showAnswer(${Json.encodeToString(answer)}, '${bodyClass()}');")
+        eval.emit("_showAnswer(${Json.encodeToString(answer)}, '${bodyClassForCardOrd(card.ord)}');")
+    }
+
+    /** Stops the media being played, and plays the media of [side] of [card] if it should be played automatically */
+    protected suspend fun loadAndPlayMedia(
+        card: Card,
+        side: CardSide,
+    ) {
+        cardMediaPlayer.loadCardAvTags(card)
+        cardMediaPlayer.autoplayAllForSide(side)
     }
 
     override suspend fun handlePostRequest(

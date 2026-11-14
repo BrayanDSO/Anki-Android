@@ -4,6 +4,7 @@ package com.ichi2.anki.previewer
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import app.cash.turbine.test
 import com.ichi2.anki.CollectionManager
 import com.ichi2.anki.CollectionManager.TR
 import com.ichi2.anki.NotetypeFile
@@ -12,8 +13,10 @@ import com.ichi2.testutils.common.Flaky
 import com.ichi2.testutils.common.OS
 import io.mockk.coEvery
 import io.mockk.spyk
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
+import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Rule
@@ -33,7 +36,7 @@ class TemplatePreviewerViewModelTest : JvmTest() {
         return spyk(viewModel).apply {
             // the default implementation requires the Collection media directory,
             // which needs a Robolectric setup with CollectionStorageMode.IN_MEMORY_WITH_MEDIA or ON_DISK
-            coEvery { prepareCardTextForDisplay(any()) } answers { firstArg() }
+            coEvery { prepareCardTextForDisplay(any(), any()) } answers { secondArg() }
         }
     }
 
@@ -63,17 +66,16 @@ class TemplatePreviewerViewModelTest : JvmTest() {
                 ),
         ) {
             onPageFinished(false)
-            assertThat(this.cardsWithEmptyFronts!!.await()[0], equalTo(false))
-            assertThat(this.cardsWithEmptyFronts.await()[1], equalTo(true))
+            assertThat(getCardsWithEmptyFronts(), equalTo(listOf(false, true)))
         }
 
     @Test
     fun `card ords are changed`() {
         runClozeTest(tempDirectory = tempDirectory, fields = listOf("{{c1::one}} {{c2::bar}}")) {
             onPageFinished(false)
-            val ord1 = currentCard.await().ord
+            val ord1 = ordFlow.value
             onTabSelected(1)
-            val ord2 = currentCard.await().ord
+            val ord2 = ordFlow.value
             assertNotEquals(ord1, ord2)
         }
     }
@@ -92,7 +94,7 @@ class TemplatePreviewerViewModelTest : JvmTest() {
                 )
             createViewModel(arguments).run {
                 assertThat(getTemplateNames(), equalTo(cardNames(1, 2)))
-                assertThat(cardsWithEmptyFronts!!.await(), equalTo(listOf(false, true)))
+                assertThat(getCardsWithEmptyFronts(), equalTo(listOf(false, true)))
             }
         }
 
@@ -113,7 +115,7 @@ class TemplatePreviewerViewModelTest : JvmTest() {
             createViewModel(arguments).run {
                 assertThat(getTemplateNames(), equalTo(cardNames(1, 2)))
                 assertThat(getCurrentTabIndex(), equalTo(0))
-                assertThat(cardsWithEmptyFronts!!.await(), equalTo(listOf(true, false)))
+                assertThat(getCardsWithEmptyFronts(), equalTo(listOf(true, false)))
             }
         }
 
@@ -123,7 +125,7 @@ class TemplatePreviewerViewModelTest : JvmTest() {
             createViewModel(previewWithDeletedCard1()).run {
                 assertThat(getTemplateNames(), equalTo(cardNames(2)))
                 assertThat(getCurrentTabIndex(), equalTo(0))
-                assertThat(currentCard.await().ord, equalTo(1))
+                assertThat(ordFlow.value, equalTo(1))
             }
         }
 
@@ -135,14 +137,47 @@ class TemplatePreviewerViewModelTest : JvmTest() {
             val previousQueue = CollectionManager.setTestDispatcher(StandardTestDispatcher(testScheduler), useReentrantLock = false)
             try {
                 val viewModel = createViewModel(arguments)
-                viewModel.onPageFinished(isAfterRecreation = false)
-                val shownCard = viewModel.currentCard
-                advanceUntilIdle()
-                assertThat(shownCard.await().ord, equalTo(1))
+                viewModel.shownQuestions().test {
+                    viewModel.onPageFinished(isAfterRecreation = false)
+                    advanceUntilIdle()
+                    assertThat(awaitItem(), containsString("card2"))
+                }
             } finally {
                 CollectionManager.setTestDispatcher(previousQueue)
             }
         }
+
+    @Test
+    fun `tabs change the card after the screen is recreated`() =
+        runOptionalReversedTest {
+            shownQuestions().test {
+                onPageFinished(isAfterRecreation = true)
+                assertThat(awaitItem(), containsString("card1"))
+
+                onTabSelected(1)
+
+                assertThat(awaitItem(), containsString("card2"))
+            }
+        }
+
+    @Test
+    fun `tabs show their card once if the page was loaded twice`() =
+        runOptionalReversedTest {
+            shownQuestions().test {
+                onPageFinished(isAfterRecreation = false)
+                awaitItem()
+                onPageFinished(isAfterRecreation = false)
+                awaitItem()
+
+                onTabSelected(1)
+
+                assertThat(awaitItem(), containsString("card2"))
+                expectNoEvents()
+            }
+        }
+
+    /** The requests to show a question in the page */
+    private fun TemplatePreviewerViewModel.shownQuestions() = eval.filter { it.startsWith("_showQuestion(") }
 
     /** The template editor previewing a cloze note whose card 1 was deleted by 'Empty Cards' */
     private fun previewWithDeletedCard1(): TemplatePreviewerArguments {

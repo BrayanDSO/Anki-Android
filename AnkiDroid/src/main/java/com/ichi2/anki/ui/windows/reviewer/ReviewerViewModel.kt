@@ -64,7 +64,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import org.intellij.lang.annotations.Language
 import timber.log.Timber
 
@@ -79,11 +78,6 @@ class ReviewerViewModel(
     private var session: Deferred<CardSession?> =
         asyncIO {
             withCol { sched.currentQueueState() }?.let { CardSession(it) }
-        }
-    override var currentCard =
-        asyncIO {
-            session.await()?.card
-                ?: Card(anki.cards.Card.getDefaultInstance())
         }
     private val repository = StudyScreenRepository()
     private var isInputFocused = false
@@ -104,12 +98,15 @@ class ReviewerViewModel(
     private val stateMutationKey = repository.generateStateMutationKey()
     private val stateMutationJs: Deferred<String> = asyncIO { repository.getCustomSchedulingJs() }
 
-    private val autoAdvance = AutoAdvance(viewModelScope, this, currentCard, cardMediaPlayer::awaitIdle)
+    private val autoAdvance =
+        AutoAdvance(
+            viewModelScope,
+            this,
+            asyncIO { session.await()?.card ?: Card(anki.cards.Card.getDefaultInstance()) },
+            cardMediaPlayer::awaitIdle,
+        )
     private val isHtmlTypeAnswerEnabled = repository.isHtmlTypeAnswerEnabled
     val answerTimer = AnswerTimer()
-
-    /** Runs everything that changes what is being studied, one at a time and in the order requested */
-    private val commands = Channel<suspend () -> Unit>(Channel.UNLIMITED)
 
     /** What is only valid for the card being studied, so it is replaced along with it */
     private class CardSession(
@@ -135,9 +132,8 @@ class ReviewerViewModel(
         var typedAnswer = ""
     }
 
-    private fun enqueue(command: suspend () -> Unit) {
-        commands.trySend(command)
-    }
+    /** The card being studied, or `null` if there is none */
+    private suspend fun currentCard(): Card? = session.await()?.card
 
     /**
      * @return the card being studied, if the custom scheduler has mutated its states.
@@ -170,11 +166,6 @@ class ReviewerViewModel(
 
     init {
         ChangeManager.subscribe(this)
-        viewModelScope.launch {
-            for (command in commands) {
-                launchCatchingIO { command() }.join()
-            }
-        }
         launchCatchingIO {
             withCol { startTimebox() }
             updateUndoAndRedoLabels()
@@ -189,9 +180,10 @@ class ReviewerViewModel(
         Timber.v("ReviewerViewModel::onPageFinished %b", isAfterRecreation)
         if (isAfterRecreation) {
             enqueue {
+                val card = currentCard() ?: return@enqueue
                 // TODO handle "Don't keep activities"
                 if (showingAnswer.value) {
-                    showAnswer()
+                    showAnswer(card)
                     // on configuration change: the session is retained
                     // on process death: a new session exists. Call
                     // `runStateMutationHook` to ensure its statesMutated completes.
@@ -199,7 +191,7 @@ class ReviewerViewModel(
                         runStateMutationHook()
                     }
                 } else {
-                    showQuestion()
+                    showQuestion(card)
                     autoAdvance.onShowQuestion()
                 }
             }
@@ -229,7 +221,7 @@ class ReviewerViewModel(
         executeAction(action)
     }
 
-    suspend fun getCardId() = currentCard.await().id
+    suspend fun getCardId(): CardId? = currentCard()?.id
 
     /**
      * Sends an [eval] request to load the card answer, and updates components
@@ -242,12 +234,12 @@ class ReviewerViewModel(
         val session = mutatedSessionOrDefer(ViewerAction.SHOW_ANSWER) ?: return
 
         updateNextTimes()
-        showAnswer()
-        loadAndPlayMedia(CardSide.ANSWER)
+        showAnswer(session.card)
+        loadAndPlayMedia(session.card, CardSide.ANSWER)
         autoAdvance.onShowAnswer()
 
         if (answerTimer.state.value == AnswerTimerState.Hidden) return
-        val did = currentCard.await().currentDeckId()
+        val did = session.card.currentDeckId()
         val stopTimerOnAnswer = withCol { decks.configDictForDeckId(did) }.stopTimerOnAnswer
         if (stopTimerOnAnswer) {
             answerTimer.stop()
@@ -256,7 +248,7 @@ class ReviewerViewModel(
 
     private suspend fun toggleMark() {
         Timber.v("ReviewerViewModel::toggleMark")
-        val card = currentCard.await()
+        val card = currentCard() ?: return
         val note = withCol { card.note(this@withCol) }
         NoteService.toggleMark(note)
         cardState.update { it.copy(isMarked = NoteService.isMarked(note)) }
@@ -264,7 +256,7 @@ class ReviewerViewModel(
 
     private suspend fun setFlag(flag: Flag) {
         Timber.v("ReviewerViewModel::setFlag")
-        val card = currentCard.await()
+        val card = currentCard() ?: return
         undoableOp {
             setUserFlagForCards(listOf(card.id), flag)
         }
@@ -290,7 +282,7 @@ class ReviewerViewModel(
     }
 
     private suspend fun emitEditNoteDestination() {
-        val cardId = currentCard.await().id
+        val cardId = (currentCard() ?: return).id
         Timber.i("Opening 'edit note' for card %d", cardId)
         eventChannel.send(ReviewerEvent.Navigate(NoteEditorDestination.EditNoteFromPreviewer(cardId)))
     }
@@ -301,7 +293,7 @@ class ReviewerViewModel(
     }
 
     private suspend fun emitCardInfoDestination() {
-        val cardId = currentCard.await().id
+        val cardId = (currentCard() ?: return).id
         val destination = CardInfoDestination(cardId, EntryPoint.CURRENT_CARD_STUDY)
         Timber.i("Launching 'card info' for card %d", cardId)
         eventChannel.send(ReviewerEvent.Navigate(destination))
@@ -322,7 +314,7 @@ class ReviewerViewModel(
     @NeedsTest("verify that we show the proper deck option targets for the current card")
     private suspend fun emitDeckOptionsDestination() {
         val deckId = withCol { decks.getCurrentId() }
-        val card = currentCard.await()
+        val card = currentCard() ?: return
         val options = getDeckOptionsTargets(deckId, card)
         val isFiltered = options.first { it.deckId == deckId }.isFiltered
         val destination = DeckOptionsDestination(deckId, isFiltered, options)
@@ -364,14 +356,14 @@ class ReviewerViewModel(
 
     private suspend fun emitBrowseDestination() {
         val deckId = withCol { decks.getCurrentId() }
-        val cardId = currentCard.await().id
+        val cardId = (currentCard() ?: return).id
         val destination = BrowserDestination.ScrollToCard(deckId, cardId)
         Timber.i("Launching 'browse options' for deck %d", deckId)
         eventChannel.send(ReviewerEvent.Navigate(destination))
     }
 
     private suspend fun deleteNote() {
-        val cardId = currentCard.await().id
+        val cardId = (currentCard() ?: return).id
         val noteCount =
             undoableOp(handler = this) {
                 removeNotes(cardIds = listOf(cardId))
@@ -381,7 +373,7 @@ class ReviewerViewModel(
     }
 
     private suspend fun buryCard() {
-        val cardId = currentCard.await().id
+        val cardId = (currentCard() ?: return).id
         val noteCount =
             undoableOp(handler = this) {
                 sched.buryCards(cids = listOf(cardId))
@@ -391,7 +383,7 @@ class ReviewerViewModel(
     }
 
     private suspend fun buryNote() {
-        val noteId = currentCard.await().nid
+        val noteId = (currentCard() ?: return).nid
         val noteCount =
             undoableOp(handler = this) {
                 sched.buryNotes(nids = listOf(noteId))
@@ -401,7 +393,7 @@ class ReviewerViewModel(
     }
 
     private suspend fun suspendCard() {
-        val cardId = currentCard.await().id
+        val cardId = (currentCard() ?: return).id
         undoableOp(handler = this) {
             sched.suspendCards(ids = listOf(cardId))
         }.count
@@ -410,7 +402,7 @@ class ReviewerViewModel(
     }
 
     private suspend fun suspendNote() {
-        val noteId = currentCard.await().nid
+        val noteId = (currentCard() ?: return).nid
         undoableOp(handler = this) {
             sched.suspendNotes(ids = listOf(noteId))
         }
@@ -487,7 +479,7 @@ class ReviewerViewModel(
         }
     }
 
-    override suspend fun showQuestion() {
+    override suspend fun showQuestion(card: Card) {
         Timber.v("ReviewerViewModel::showQuestion")
         // 'Show answer' may be pressed while the question loads: reset before, not after.
         // If it was pressed earlier, it is already waiting on the pending signal: keep it.
@@ -496,7 +488,7 @@ class ReviewerViewModel(
             // the HTML field is created again, empty
             if (isHtmlTypeAnswerEnabled) it.typedAnswer = ""
         }
-        super.showQuestion()
+        super.showQuestion(card)
         runStateMutationHook()
         updateMarkIcon()
         updateFlagIcon()
@@ -588,22 +580,16 @@ class ReviewerViewModel(
         eventChannel.send(ReviewerEvent.Feedback(message.toString()))
     }
 
-    private suspend fun loadAndPlayMedia(side: CardSide) {
-        Timber.v("ReviewerViewModel::loadAndPlaySounds")
-        cardMediaPlayer.loadCardAvTags(currentCard.await())
-        cardMediaPlayer.autoplayAllForSide(side)
-    }
-
     private suspend fun updateMarkIcon() {
         Timber.v("ReviewerViewModel::updateMarkIcon")
-        val card = currentCard.await()
+        val card = currentCard() ?: return
         val isMarkedValue = withCol { card.note(this@withCol).hasTag(this@withCol, MARKED_TAG) }
         cardState.update { it.copy(isMarked = isMarkedValue) }
     }
 
     private suspend fun updateFlagIcon() {
         Timber.v("ReviewerViewModel::updateFlagIcon")
-        val card = currentCard.await()
+        val card = currentCard() ?: return
         cardState.update { it.copy(flag = card.flag) }
     }
 
@@ -627,12 +613,11 @@ class ReviewerViewModel(
         }
 
         val card = state.topCard
-        currentCard = CompletableDeferred(card)
         setupAnswerTimer(card)
         autoAdvance.onCardChange(card)
         onCardUpdatedFlow.emit(Unit) // must be before showQuestion()
-        showQuestion()
-        loadAndPlayMedia(CardSide.QUESTION)
+        showQuestion(card)
+        loadAndPlayMedia(card, CardSide.QUESTION)
         autoAdvance.onShowQuestion() // after the media starts, as it may wait for it
         cardState.update { it.copy(canBuryNote = isBuryNoteAvailable(card)) }
         cardState.update { it.copy(canSuspendNote = isSuspendNoteAvailable(card)) }
@@ -641,10 +626,14 @@ class ReviewerViewModel(
         cardState.update { it.copy(counts = counts) }
     }
 
-    override suspend fun typeAnsFilter(text: String): String {
+    override suspend fun typeAnsFilter(
+        card: Card,
+        text: String,
+        side: SingleCardSide,
+    ): String {
         Timber.v("ReviewerViewModel::typeAnsFilter")
-        val typeAnswer = TypeAnswer.getInstance(currentCard.await(), text)
-        return if (showingAnswer.value) {
+        val typeAnswer = TypeAnswer.getInstance(card, text)
+        return if (side == SingleCardSide.BACK) {
             cardState.update { it.copy(typeAnswer = null) }
             typeAnswer?.answerFilter(session.await()?.typedAnswer ?: "") ?: text
         } else {
@@ -696,13 +685,13 @@ class ReviewerViewModel(
     }
 
     private suspend fun editNoteTags() {
-        val noteId = currentCard.await().nid
+        val noteId = (currentCard() ?: return).nid
         eventChannel.send(ReviewerEvent.EditTags(noteId))
     }
 
     fun onEditedTags(selectedTags: List<String>) {
         enqueue {
-            val card = currentCard.await()
+            val card = currentCard() ?: return@enqueue
             val note = withCol { card.note(this@withCol) }
             if (note.tags == selectedTags) {
                 Timber.d("No changed tags")
@@ -718,7 +707,7 @@ class ReviewerViewModel(
     }
 
     private suspend fun launchSetDueDate() {
-        val cardId = currentCard.await().id
+        val cardId = (currentCard() ?: return).id
         eventChannel.send(ReviewerEvent.SetDueDate(cardId))
     }
 
@@ -864,19 +853,19 @@ class ReviewerViewModel(
             when {
                 changes.studyQueues -> updateCurrentCard()
                 changes.noteText -> {
-                    val card = currentCard.await()
+                    val card = currentCard() ?: return@enqueue
                     withCol { card.load(this) }
                     cardMediaPlayer.loadCardAvTags(card)
                     updateMarkIcon()
                     if (showingAnswer.value) {
-                        showAnswer()
+                        showAnswer(card)
                     } else {
-                        showQuestion()
+                        showQuestion(card)
                         autoAdvance.onShowQuestion()
                     }
                 }
                 changes.card -> {
-                    val card = currentCard.await()
+                    val card = currentCard() ?: return@enqueue
                     withCol { card.load(this) }
                     updateFlagIcon()
                 }

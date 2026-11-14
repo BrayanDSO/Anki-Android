@@ -16,10 +16,8 @@ import io.mockk.spyk
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -27,11 +25,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import kotlin.time.Duration.Companion.seconds
 
 @RunWith(AndroidJUnit4::class)
 class PreviewerViewModelTest : JvmTest() {
     private lateinit var viewModel: PreviewerViewModel
+
+    private fun currentCard() = col.getCard(viewModel.selectedCardIds[viewModel.currentIndex.value])
 
     private fun TestScope.onNextButtonClick() {
         viewModel.onNextButtonClick()
@@ -65,8 +64,7 @@ class PreviewerViewModelTest : JvmTest() {
         viewModel = spyk(PreviewerViewModel(SavedStateHandle(), cardIds, initialIndex = 0))
         // the default implementation requires the Collection media directory,
         // which needs Robolectric with CollectionStorageMode.IN_MEMORY_WITH_MEDIA or ON_DISK
-        coEvery { viewModel.prepareCardTextForDisplay(any()) } answers { firstArg() }
-        runBlocking { withTimeout(10.seconds) { viewModel.currentCard.await() } }
+        coEvery { viewModel.prepareCardTextForDisplay(any(), any()) } answers { secondArg() }
     }
 
     @After
@@ -114,6 +112,18 @@ class PreviewerViewModelTest : JvmTest() {
         }
 
     @Test
+    fun `next does not go past the last card when showing only the back side`() =
+        runTest {
+            toggleBackSideOnly()
+            onSliderChange(sliderPosition = 4)
+            assertEquals(3, viewModel.currentIndex.value)
+
+            onNextButtonClick()
+
+            assertEquals(3, viewModel.currentIndex.value)
+        }
+
+    @Test
     fun `previous button`() =
         runTest {
             // Start at Index 1
@@ -149,7 +159,7 @@ class PreviewerViewModelTest : JvmTest() {
             val newFlag = Flag.RED
             viewModel.toggleFlag(newFlag)
             assertEquals(newFlag, viewModel.flag.value)
-            assertTrue(viewModel.currentCard.await().flag == newFlag)
+            assertTrue(currentCard().flag == newFlag)
 
             // Toggling the same flag should unset it
             viewModel.toggleFlag(newFlag)
@@ -182,7 +192,7 @@ class PreviewerViewModelTest : JvmTest() {
             viewModel.toggleMark()
             assertTrue(viewModel.isMarked.value)
 
-            val note = viewModel.currentCard.await().note()
+            val note = currentCard().note()
             assertTrue(NoteService.isMarked(note))
         }
 

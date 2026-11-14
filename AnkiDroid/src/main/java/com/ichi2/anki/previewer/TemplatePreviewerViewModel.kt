@@ -11,9 +11,10 @@ import com.ichi2.anki.CollectionManager
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.NotetypeFile
 import com.ichi2.anki.asyncIO
-import com.ichi2.anki.launchCatchingIO
+import com.ichi2.anki.cardviewer.SingleCardSide
 import com.ichi2.anki.libanki.Card
 import com.ichi2.anki.libanki.CardOrdinal
+import com.ichi2.anki.libanki.Collection
 import com.ichi2.anki.libanki.Consts.DEFAULT_DECK_ID
 import com.ichi2.anki.libanki.DeckId
 import com.ichi2.anki.libanki.Note
@@ -22,10 +23,8 @@ import com.ichi2.anki.libanki.NotetypeJson
 import com.ichi2.anki.libanki.clozeNumbersInNote
 import com.ichi2.anki.reviewer.CardSide
 import com.ichi2.anki.utils.ext.require
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.parcelize.Parcelize
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.VisibleForTesting
@@ -33,9 +32,9 @@ import org.jetbrains.annotations.VisibleForTesting
 class TemplatePreviewerViewModel(
     savedStateHandle: SavedStateHandle,
 ) : CardViewerViewModel(savedStateHandle) {
-    private val notetype: NotetypeJson
-    private val fillEmpty: Boolean
-    private val isCloze: Boolean
+    private val arguments = savedStateHandle.require<TemplatePreviewerArguments>(TemplatePreviewerFragment.ARG_KEY)
+    private val notetype: NotetypeJson = arguments.notetype
+    private val isCloze: Boolean = notetype.isCloze
 
     /**
      * Identifies which of the card templates or cloze deletions it corresponds to
@@ -43,104 +42,75 @@ class TemplatePreviewerViewModel(
      * @see CardOrdinal
      */
     @VisibleForTesting
-    val ordFlow: MutableStateFlow<CardOrdinal>
-
-    private val note: Deferred<Note>
-    private val templateNames: Deferred<List<String>>
-    private val clozeOrds: Deferred<List<CardOrdinal>>?
-    override var currentCard: Deferred<Card>
+    val ordFlow: MutableStateFlow<CardOrdinal> = savedStateHandle.getMutableStateFlow(KEY_ORD, arguments.ord)
 
     /**
-     * Ordered list of cards with empty fronts
+     * @param clozeOrds the ords of the cloze cards. `null` if the note type isn't cloze
+     * @param cardsWithEmptyFronts whether the front of each card is empty, in the order of [templateNames]
      */
-    internal val cardsWithEmptyFronts: Deferred<List<Boolean>>?
+    private class Content(
+        val note: Note,
+        val clozeOrds: List<CardOrdinal>?,
+        val templateNames: List<String>,
+        val cardsWithEmptyFronts: List<Boolean>,
+    )
 
-    init {
-        val arguments = savedStateHandle.require<TemplatePreviewerArguments>(TemplatePreviewerFragment.ARG_KEY)
-        notetype = arguments.notetype
-        fillEmpty = arguments.fillEmpty
-        isCloze = notetype.isCloze
-        ordFlow = MutableStateFlow(arguments.ord)
+    private val content: Deferred<Content> = asyncIO { loadContent() }
 
-        note =
-            asyncIO {
-                withCol {
-                    if (arguments.id != 0L) {
-                        Note(this, arguments.id)
-                    } else {
-                        Note.fromNotetypeId(this@withCol, arguments.notetype.id)
-                    }
-                }.apply {
-                    fields = arguments.fields.toMutableList()
-                    tags = arguments.tags.toMutableList()
+    private suspend fun loadContent(): Content {
+        val note =
+            withCol {
+                if (arguments.id != 0L) {
+                    Note(this, arguments.id)
+                } else {
+                    Note.fromNotetypeId(this@withCol, arguments.notetype.id)
                 }
+            }.apply {
+                fields = arguments.fields.toMutableList()
+                tags = arguments.tags.toMutableList()
             }
-        if (isCloze) {
-            val clozeNumbers =
-                asyncIO {
-                    val note = note.await()
-                    withCol { clozeNumbersInNote(note) }
+        if (!isCloze) {
+            val templateNames = notetype.templatesNames
+            val cardsWithEmptyFronts =
+                List(templateNames.size) { ord ->
+                    val questionText = withCol { buildCard(note, ord).renderOutput(this) }.questionText
+                    EMPTY_FRONT_LINK in questionText
                 }
-            val ords =
-                asyncIO {
-                    val note = note.await()
-                    // cards of removed clozes are kept until 'Empty Cards' is used
-                    val existingCardOrds = withCol { note.cards(this) }.map { it.ord }
-                    val cardOrds = (clozeNumbers.await().map { it - 1 } + existingCardOrds).distinct().sorted()
-                    // the requested card may not exist, e.g. the template editor requests the first card
-                    if (cardOrds.isNotEmpty() && ordFlow.value !in cardOrds) {
-                        ordFlow.value = cardOrds.first()
-                    }
-                    cardOrds
-                }
-            clozeOrds = ords
-            templateNames =
-                asyncIO {
-                    val tr = CollectionManager.TR
-                    ords.await().map { tr.cardTemplatesCard(it + 1) }
-                }
-            cardsWithEmptyFronts =
-                asyncIO {
-                    val ordsInFields = clozeNumbers.await().map { it - 1 }
-                    ords.await().map { it !in ordsInFields }
-                }
-        } else {
-            clozeOrds = null
-            templateNames = CompletableDeferred(notetype.templatesNames)
-            cardsWithEmptyFronts =
-                asyncIO {
-                    val note = note.await()
-                    List(templateNames.await().size) { ord ->
-                        val questionText =
-                            withCol {
-                                note
-                                    .ephemeralCard(
-                                        col = this,
-                                        ord = ord,
-                                        customNoteType = notetype,
-                                        fillEmpty = fillEmpty,
-                                        deckId = arguments.deckId,
-                                    ).renderOutput(this)
-                            }.questionText
-                        EMPTY_FRONT_LINK in questionText
-                    }
-                }
+            return Content(note, clozeOrds = null, templateNames, cardsWithEmptyFronts)
         }
-        currentCard =
-            asyncIO {
-                // a cloze card is only selected after its ords are loaded
-                clozeOrds?.await()
-                val note = note.await()
-                withCol {
-                    note.ephemeralCard(
-                        col = this,
-                        ord = ordFlow.value,
-                        customNoteType = notetype,
-                        fillEmpty = fillEmpty,
-                        deckId = arguments.deckId,
-                    )
-                }
-            }
+        val ordsInFields = withCol { clozeNumbersInNote(note) }.map { it - 1 }
+        // cards of removed clozes are kept until 'Empty Cards' is used
+        val existingCardOrds = withCol { note.cards(this) }.map { it.ord }
+        val cardOrds = (ordsInFields + existingCardOrds).distinct().sorted()
+        // the requested card may not exist, e.g. the template editor requests the first card
+        if (cardOrds.isNotEmpty() && ordFlow.value !in cardOrds) {
+            ordFlow.value = cardOrds.first()
+        }
+        val tr = CollectionManager.TR
+        return Content(
+            note = note,
+            clozeOrds = cardOrds,
+            templateNames = cardOrds.map { tr.cardTemplatesCard(it + 1) },
+            cardsWithEmptyFronts = cardOrds.map { it !in ordsInFields },
+        )
+    }
+
+    private fun Collection.buildCard(
+        note: Note,
+        ord: CardOrdinal,
+    ): Card =
+        note.ephemeralCard(
+            col = this,
+            ord = ord,
+            customNoteType = notetype,
+            fillEmpty = arguments.fillEmpty,
+            deckId = arguments.deckId,
+        )
+
+    /** The card to preview. A cloze card is only selected after its ords are loaded */
+    private suspend fun currentCard(): Card {
+        val note = content.await().note
+        return withCol { buildCard(note, ordFlow.value) }
     }
 
     /* *********************************************************************************************
@@ -148,73 +118,48 @@ class TemplatePreviewerViewModel(
      ********************************************************************************************* */
 
     override fun onPageFinished(isAfterRecreation: Boolean) {
-        if (isAfterRecreation) {
-            launchCatchingIO {
-                // TODO: We should persist showingAnswer to SavedStateHandle
-                if (showingAnswer.value) showAnswer() else showQuestion()
+        enqueue {
+            val card = currentCard()
+            if (isAfterRecreation && showingAnswer.value) {
+                showAnswer(card)
+            } else {
+                showQuestion(card)
             }
-            return
-        }
-        launchCatchingIO {
-            // a cloze card is only selected after its ords are loaded
-            clozeOrds?.await()
-            ordFlow.collectLatest { ord ->
-                currentCard =
-                    asyncIO {
-                        val note = note.await()
-                        withCol {
-                            note.ephemeralCard(
-                                col = this,
-                                ord = ord,
-                                customNoteType = notetype,
-                                fillEmpty = fillEmpty,
-                            )
-                        }
-                    }
-                showQuestion()
-                loadAndPlaySounds(CardSide.QUESTION)
+            if (!isAfterRecreation) {
+                loadAndPlayMedia(card, CardSide.QUESTION)
             }
         }
     }
 
     fun toggleShowAnswer() {
-        launchCatchingIO {
-            if (showingAnswer.value) {
-                showQuestion()
-                loadAndPlaySounds(CardSide.QUESTION)
-            } else {
-                showAnswer()
-                loadAndPlaySounds(CardSide.ANSWER)
-            }
-        }
+        enqueue { showSide(showAnswer = !showingAnswer.value) }
     }
 
     @CheckResult
-    suspend fun getTemplateNames(): List<String> = templateNames.await()
+    suspend fun getTemplateNames(): List<String> = content.await().templateNames
+
+    /** Whether the front of each card is empty, in the order of [getTemplateNames] */
+    @CheckResult
+    suspend fun getCardsWithEmptyFronts(): List<Boolean> = content.await().cardsWithEmptyFronts
 
     fun onTabSelected(position: Int) {
-        launchCatchingIO {
-            val ord =
-                if (isCloze) {
-                    clozeOrds!!.await()[position]
-                } else {
-                    position
-                }
-            ordFlow.emit(ord)
+        enqueue {
+            val ord = content.await().clozeOrds?.get(position) ?: position
+            if (ord == ordFlow.value) return@enqueue
+            ordFlow.value = ord
+            showSide(showAnswer = false)
         }
     }
 
     @CheckResult
-    suspend fun getCurrentTabIndex(): Int =
-        if (isCloze) {
-            clozeOrds!!.await().indexOf(ordFlow.value)
-        } else {
-            ordFlow.value
-        }
+    suspend fun getCurrentTabIndex(): Int {
+        val clozeOrds = content.await().clozeOrds
+        return clozeOrds?.indexOf(ordFlow.value) ?: ordFlow.value
+    }
 
     suspend fun getSafeClozeOrd(): CardOrdinal {
-        if (clozeOrds == null) return 0
-        clozeOrds.await()
+        if (!isCloze) return 0
+        content.await()
         // the previewer is recreated on the same card, e.g. after an edit
         return ordFlow.value
     }
@@ -223,30 +168,12 @@ class TemplatePreviewerViewModel(
         fields: List<String>,
         tags: List<String>,
     ) {
-        launchCatchingIO {
+        enqueue {
             // Update note fields and tags
-            val note = note.await()
+            val note = content.await().note
             note.fields = fields.toMutableList()
             note.tags = tags.toMutableList()
-
-            currentCard =
-                asyncIO {
-                    withCol {
-                        note.ephemeralCard(
-                            col = this,
-                            ord = ordFlow.value,
-                            customNoteType = notetype,
-                            fillEmpty = fillEmpty,
-                        )
-                    }
-                }
-            if (showingAnswer.value) {
-                showAnswer()
-                loadAndPlaySounds(CardSide.ANSWER)
-            } else {
-                showQuestion()
-                loadAndPlaySounds(CardSide.QUESTION)
-            }
+            showSide(showAnswer = showingAnswer.value)
         }
     }
 
@@ -254,15 +181,26 @@ class TemplatePreviewerViewModel(
      *************************************** Internal methods ***************************************
      ********************************************************************************************* */
 
-    private suspend fun loadAndPlaySounds(side: CardSide) {
-        cardMediaPlayer.loadCardAvTags(currentCard.await())
-        cardMediaPlayer.autoplayAllForSide(side)
+    /** Shows a side of the current card, and plays its media */
+    private suspend fun showSide(showAnswer: Boolean) {
+        val card = currentCard()
+        if (showAnswer) {
+            showAnswer(card)
+            loadAndPlayMedia(card, CardSide.ANSWER)
+        } else {
+            showQuestion(card)
+            loadAndPlayMedia(card, CardSide.QUESTION)
+        }
     }
 
     // https://github.com/ankitects/anki/blob/df70564079f53e587dc44f015c503fdf6a70924f/qt/aqt/clayout.py#L579
-    override suspend fun typeAnsFilter(text: String): String =
-        if (showingAnswer.value) {
-            val typeAnswer = TypeAnswer.getInstance(currentCard.await(), text)
+    override suspend fun typeAnsFilter(
+        card: Card,
+        text: String,
+        side: SingleCardSide,
+    ): String =
+        if (side == SingleCardSide.BACK) {
+            val typeAnswer = TypeAnswer.getInstance(card, text)
             if (typeAnswer?.expectedAnswer?.isEmpty() == true) {
                 typeAnswer.expectedAnswer = "sample"
             }
@@ -276,6 +214,7 @@ class TemplatePreviewerViewModel(
     companion object {
         @Language("HTML")
         private const val EMPTY_FRONT_LINK = """<a href='https://docs.ankiweb.net/templates/errors.html#front-of-card-is-blank'>"""
+        private const val KEY_ORD = "ord"
     }
 }
 

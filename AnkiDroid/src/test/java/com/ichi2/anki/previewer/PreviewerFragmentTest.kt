@@ -13,8 +13,6 @@ import com.ichi2.anki.browser.IdsFile
 import com.ichi2.testutils.createTransientDirectory
 import com.ichi2.testutils.parcelledCopy
 import com.ichi2.testutils.saveState
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -25,7 +23,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
-import kotlin.time.Duration.Companion.seconds
 
 @RunWith(AndroidJUnit4::class)
 class PreviewerFragmentTest : RobolectricTest() {
@@ -84,14 +81,10 @@ class PreviewerFragmentTest : RobolectricTest() {
                 val activity = controller.setup().get()
                 original = (activity.supportFragmentManager.fragments.single() as PreviewerFragment).viewModel
                 assertEquals(1, original.currentIndex.value)
-                runBlocking { withTimeout(10.seconds) { assertEquals(ids[1], original.currentCard.await().id) } }
 
                 // Slider positions are one-based; move away from the launch index before saving.
-                val launchCard = original.currentCard
                 original.onSliderChange(3)
-                advanceRobolectricLooperUntil { original.currentCard !== launchCard && original.currentCard.isCompleted }
-                assertEquals(2, original.currentIndex.value)
-                runBlocking { withTimeout(10.seconds) { assertEquals(ids[2], original.currentCard.await().id) } }
+                advanceRobolectricLooperUntil { original.currentIndex.value == 2 }
                 controller.saveState().parcelledCopy(javaClass.classLoader)
             }
 
@@ -101,7 +94,7 @@ class PreviewerFragmentTest : RobolectricTest() {
             val restored = (activity.supportFragmentManager.fragments.single() as PreviewerFragment).viewModel
             assertNotSame(original, restored)
             assertEquals(2, restored.currentIndex.value)
-            runBlocking { withTimeout(10.seconds) { assertEquals(ids[2], restored.currentCard.await().id) } }
+            assertEquals(ids[2], restored.selectedCardIds[restored.currentIndex.value])
         }
     }
 

@@ -518,7 +518,7 @@ class ReviewerFragment :
     private fun setupResetProgress() {
         // TODO handle 'Reset progress' in the ViewModel instead of the activity, once
         //  a mechanism of showing a progress bar if the operation takes too long is implemented
-        registerOnForgetHandler { listOf(viewModel.getCardId()) }
+        registerOnForgetHandler { listOfNotNull(viewModel.getCardId()) }
     }
 
     private fun setupCheckPronunciation() {

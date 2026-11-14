@@ -5,16 +5,16 @@ package com.ichi2.anki.previewer
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
+import com.google.android.material.tabs.TabLayout
 import com.ichi2.anki.CommonString
 import com.ichi2.anki.R
 import com.ichi2.anki.databinding.FragmentTemplatePreviewerBinding
 import com.ichi2.anki.libanki.CardOrdinal
 import com.ichi2.anki.snackbar.BaseSnackbarBuilderProvider
 import com.ichi2.anki.snackbar.SnackbarBuilder
+import com.ichi2.anki.utils.ext.collectInViewLifecycle
+import com.ichi2.anki.utils.ext.doOnTabSelected
 import com.ichi2.anki.workarounds.SafeWebViewLayout
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import timber.log.Timber
 
 class TemplatePreviewerFragment :
@@ -49,17 +49,58 @@ class TemplatePreviewerFragment :
         super.onViewCreated(view, savedInstanceState)
 
         binding.showAnswer.setOnClickListener { viewModel.toggleShowAnswer() }
-        viewModel.showingAnswer
-            .onEach { showingAnswer ->
-                binding.showAnswer.text =
-                    if (showingAnswer) {
-                        getString(CommonString.hide_answer)
-                    } else {
-                        getString(CommonString.show_answer)
-                    }
-            }.launchIn(lifecycleScope)
+        viewModel.showingAnswer.collectInViewLifecycle { showingAnswer ->
+            binding.showAnswer.text =
+                if (showingAnswer) {
+                    getString(CommonString.hide_answer)
+                } else {
+                    getString(CommonString.show_answer)
+                }
+        }
 
         binding.webViewContainer.setFrameStyle()
+    }
+
+    /**
+     * Sets up the previewer tabs with appropriate titles and selection handling.
+     *
+     * @param tabLayout The tab layout to configure
+     */
+    suspend fun setupTabs(tabLayout: TabLayout) {
+        tabLayout.removeAllTabs()
+
+        val cardsWithEmptyFronts = viewModel.getCardsWithEmptyFronts()
+        val templateNames = viewModel.getTemplateNames()
+
+        for ((index, templateName) in templateNames.withIndex()) {
+            val tabTitle =
+                if (cardsWithEmptyFronts[index]) {
+                    getString(CommonString.card_previewer_empty_front_indicator, templateName)
+                } else {
+                    templateName
+                }
+            val newTab = tabLayout.newTab().setText(tabTitle)
+            tabLayout.addTab(newTab)
+        }
+
+        // Ensure tab index is within valid range
+        val currentTabIndex = viewModel.getCurrentTabIndex()
+        val safeTabIndex = currentTabIndex.coerceIn(0, maxOf(0, templateNames.size - 1))
+
+        if (templateNames.isNotEmpty()) {
+            tabLayout.selectTab(tabLayout.getTabAt(safeTabIndex))
+            // Update ViewModel if index was adjusted
+            if (safeTabIndex != currentTabIndex) {
+                viewModel.onTabSelected(safeTabIndex)
+            }
+        }
+
+        // Remove any existing listeners to avoid duplicates
+        tabLayout.clearOnTabSelectedListeners()
+        tabLayout.doOnTabSelected { tab ->
+            Timber.v("Selected tab %d", tab.position)
+            viewModel.onTabSelected(tab.position)
+        }
     }
 
     /**

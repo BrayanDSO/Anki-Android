@@ -10,14 +10,11 @@ import androidx.core.os.BundleCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.lifecycleScope
-import com.ichi2.anki.CommonString
 import com.ichi2.anki.R
 import com.ichi2.anki.databinding.FragmentTemplatePreviewerContainerBinding
 import com.ichi2.anki.previewer.TemplatePreviewerFragment.Companion.ARG_KEY
-import com.ichi2.anki.utils.ext.doOnTabSelected
 import dev.androidbroadcast.vbpd.viewBinding
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 /**
  * Container for [TemplatePreviewerFragment] that works as a standalone page
@@ -45,26 +42,7 @@ class TemplatePreviewerPage : Fragment(R.layout.fragment_template_previewer_cont
             fragment = childFragmentManager.findFragmentById(R.id.fragment_container) as TemplatePreviewerFragment
         }
 
-        val viewModel = fragment.viewModel
-
-        lifecycleScope.launch {
-            val cardsWithEmptyFronts = viewModel.cardsWithEmptyFronts?.await()
-            for ((index, templateName) in viewModel.getTemplateNames().withIndex()) {
-                val tabTitle =
-                    if (cardsWithEmptyFronts?.get(index) == true) {
-                        getString(CommonString.card_previewer_empty_front_indicator, templateName)
-                    } else {
-                        templateName
-                    }
-                val newTab = binding.tabLayout.newTab().setText(tabTitle)
-                binding.tabLayout.addTab(newTab)
-            }
-            binding.tabLayout.selectTab(binding.tabLayout.getTabAt(viewModel.getCurrentTabIndex()))
-            binding.tabLayout.doOnTabSelected { tab ->
-                Timber.v("Selected tab %d", tab.position)
-                viewModel.onTabSelected(tab.position)
-            }
-        }
+        lifecycleScope.launch { fragment.setupTabs(binding.tabLayout) }
     }
 
     companion object {
