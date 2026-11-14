@@ -41,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -74,10 +75,16 @@ fun PreferenceSwitchCard(
     isChecked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    @DrawableRes icon: Int? = null,
 ) {
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
-    val containerColor = MaterialTheme.colorScheme.surfaceVariant
-    val contentColor = preferenceCardContentColor()
+    val colors = MaterialTheme.colorScheme
+    val enabledContentColor = preferenceCardContentColor()
+    val containerColor =
+        if (enabled) colors.surfaceVariant else colors.surfaceVariant.copy(alpha = 0.38f).compositeOver(colors.surface)
+    val contentColor =
+        if (enabled) enabledContentColor else enabledContentColor.copy(alpha = 0.38f).compositeOver(containerColor)
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -89,6 +96,7 @@ fun PreferenceSwitchCard(
                 .toggleable(
                     value = isChecked,
                     role = Role.Switch,
+                    enabled = enabled,
                     onValueChange = { checked ->
                         keyboardController?.hide()
                         focusManager.clearFocus()
@@ -104,8 +112,11 @@ fun PreferenceSwitchCard(
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp, vertical = if (isLandscape) 12.dp else 20.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            if (icon != null) {
+                Icon(painterResource(icon), contentDescription = null, tint = contentColor)
+            }
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
@@ -115,6 +126,7 @@ fun PreferenceSwitchCard(
             )
             Switch(
                 checked = isChecked,
+                enabled = enabled,
                 onCheckedChange = null,
                 modifier =
                     Modifier.semantics {

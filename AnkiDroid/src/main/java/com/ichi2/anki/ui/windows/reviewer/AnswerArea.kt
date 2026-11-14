@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -27,6 +28,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import anki.scheduler.CardAnswer.Rating
 import com.ichi2.anki.R
@@ -43,15 +45,11 @@ internal fun AnswerArea(
     buttonSizePercentage: Int,
     onShowAnswer: () -> Unit,
     onRating: (Rating) -> Unit,
+    useThemeColors: Boolean = false,
 ) {
     val context = LocalContext.current
-    val minHeight =
-        with(LocalDensity.current) {
-            context.usingStyledAttributes(null, intArrayOf(MaterialR.attr.minTouchTargetSize)) {
-                getDimension(0, 48.dp.toPx()).toDp()
-            }
-        }
-    val buttonHeight = minHeight * (buttonSizePercentage.coerceAtLeast(100) / 100f)
+    val themeColors = MaterialTheme.colorScheme.takeIf { useThemeColors }
+    val buttonHeight = answerAreaHeight(buttonSizePercentage)
 
     Box(
         Modifier
@@ -64,8 +62,8 @@ internal fun AnswerArea(
                     if (hideHardAndEasy && (button.rating == Rating.HARD || button.rating == Rating.EASY)) continue
                     ReviewerAnswerButton(
                         label = stringResource(button.label),
-                        background = Color(getColorFromAttr(context, button.background)),
-                        foreground = Color(getColorFromAttr(context, button.foreground)),
+                        background = themeColors?.primaryContainer ?: Color(getColorFromAttr(context, button.background)),
+                        foreground = themeColors?.onPrimaryContainer ?: Color(getColorFromAttr(context, button.foreground)),
                         onClick = { onRating(button.rating) },
                         modifier = Modifier.weight(1f).fillMaxHeight(),
                         nextTime = nextTimes?.let(button.nextTime),
@@ -75,13 +73,25 @@ internal fun AnswerArea(
         } else {
             ReviewerAnswerButton(
                 label = stringResource(CommonR.string.show_answer),
-                background = Color(getColorFromAttr(context, CommonR.attr.showAnswerButtonBackground)),
-                foreground = Color.White,
+                background = themeColors?.primaryContainer ?: Color(getColorFromAttr(context, CommonR.attr.showAnswerButtonBackground)),
+                foreground = themeColors?.onPrimaryContainer ?: Color.White,
                 onClick = onShowAnswer,
                 modifier = Modifier.fillMaxSize(),
             )
         }
     }
+}
+
+@Composable
+internal fun answerAreaHeight(buttonSizePercentage: Int): Dp {
+    val context = LocalContext.current
+    val minHeight =
+        with(LocalDensity.current) {
+            context.usingStyledAttributes(null, intArrayOf(MaterialR.attr.minTouchTargetSize)) {
+                getDimension(0, 48.dp.toPx()).toDp()
+            }
+        }
+    return minHeight * (buttonSizePercentage.coerceAtLeast(100) / 100f)
 }
 
 @Composable

@@ -398,6 +398,7 @@ class ReviewerFragment :
                         nextTimes = nextTimes,
                         hideHardAndEasy = hideHardAndEasy,
                         buttonSizePercentage = buttonSizePercentage,
+                        useThemeColors = Prefs.answerButtonsUseThemeColors,
                         onShowAnswer = viewModel::onShowAnswer,
                         onRating = viewModel::answerCard,
                     )

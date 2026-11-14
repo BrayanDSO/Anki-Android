@@ -126,6 +126,11 @@ class PreferencesFragment :
             return
         }
 
+        if (result.key == getString(R.string.answer_buttons_settings_key)) {
+            openPreferencesFragmentFromSearch(AnswerButtonSettingsFragment())
+            return
+        }
+
         val fragment = getFragmentFromXmlRes(result.resourceFile) ?: return
         openPreferencesFragmentFromSearch(fragment)
 

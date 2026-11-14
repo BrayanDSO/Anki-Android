@@ -25,7 +25,14 @@ class PreferencesAnalyticsTest : RobolectricTest() {
     private val allKeys =
         PreferenceTestUtils
             .getAllPreferenceKeys(targetContext)
-            .subtract(developerOptionsKeys)
+            .subtract(developerOptionsKeys) +
+            // These keys are used directly by the Compose Answer buttons page.
+            setOf(
+                R.string.show_answer_buttons_key,
+                R.string.answer_buttons_use_theme_colors_key,
+                R.string.hide_hard_and_easy_key,
+                R.string.answer_button_size_pref_key,
+            ).toStringResourceSet()
 
     private val reportableKeys = AnalyticsConstants.reportablePrefKeys.toStringResourceSet()
 
@@ -79,9 +86,12 @@ class PreferencesAnalyticsTest : RobolectricTest() {
             R.string.custom_sync_server_collection_url_key, // syncBaseUrl
             R.string.pref_language_key, // language
             R.string.custom_sync_certificate_key, // customSyncCertificate
+            // Opens Answer buttons settings fragment
+            R.string.answer_buttons_settings_key,
             // Experimental settings
             R.string.reviewer_menu_settings_key, // reviewerMenuSettings
             R.string.show_answer_buttons_key, // showAnswerButtons
+            R.string.answer_buttons_use_theme_colors_key,
             R.string.hide_hard_and_easy_key, // hideHardAndEasy
             R.string.reviewer_frame_style_key, // reviewerFrameStyle
             R.string.hide_system_bars_key, // hideSystemBars

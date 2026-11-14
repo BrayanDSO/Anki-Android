@@ -181,6 +181,7 @@
     <string name="card_zoom_preference">cardZoom</string>
     <string name="image_zoom_preference">imageZoom</string>
     <string name="answer_button_size_preference">answerButtonSize</string>
+    <string name="answer_buttons_settings_key">answerButtonsSettings</string>
     <string name="answer_button_size_pref_key">answerBtnSize</string>
     <string name="show_large_answer_buttons_preference">showLargeAnswerButtons</string>
     <string name="pref_card_minimal_click_time">showCardAnswerButtonTime</string>
@@ -266,6 +267,7 @@
     <string name="hide_system_bars_key">hideSystemBars</string>
     <string name="ignore_display_cutout_key">ignoreDisplayCutout</string>
     <string name="show_answer_buttons_key">showAnswerButtons</string>
+    <string name="answer_buttons_use_theme_colors_key">answerButtonsUseThemeColors</string>
     <string name="hide_hard_and_easy_key">hideHardAndEasy</string>
     <string name="reviewer_menu_settings_key">reviewerMenuSettings</string>
     <string name="reviewer_frame_style_key">reviewerFrameStyle</string>
