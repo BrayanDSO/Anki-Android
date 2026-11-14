@@ -24,6 +24,7 @@ import com.ichi2.anki.libanki.TtsPlayer
 import com.ichi2.anki.reviewer.CardSide
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -32,6 +33,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -110,9 +113,28 @@ class CardMediaPlayer : Closeable {
         this.isEnabled = enabled
     }
 
+    private val playingJob = MutableStateFlow<Job?>(null)
+
     @VisibleForTesting
-    var playAvTagsJob: Job? = null
+    var playAvTagsJob: Job?
+        get() = playingJob.value
+        set(value) {
+            playingJob.value = value
+        }
     val isPlaying get() = playAvTagsJob != null
+
+    /** Suspends while media is playing */
+    suspend fun awaitIdle() {
+        playingJob.first { it == null }
+    }
+
+    /** Launches [block] as [playAvTagsJob], which is cleared however the playback ends */
+    private fun launchPlayback(block: suspend CoroutineScope.() -> Unit): Job =
+        scope.launch(start = CoroutineStart.LAZY, block = block).also { job ->
+            playingJob.value = job
+            job.invokeOnCompletion { playingJob.compareAndSet(job, null) }
+            job.start()
+        }
 
     private var onMediaGroupCompleted: (suspend () -> Unit)? = null
 
@@ -166,15 +188,13 @@ class CardMediaPlayer : Closeable {
 
     suspend fun playAllForSide(cardSide: CardSide) {
         if (!isEnabled) return
-        playAvTagsJob =
-            playbackMutex.withLock {
-                playAvTagsJob?.cancelAndJoin()
-                scope.launch {
-                    Timber.i("playing sounds for %s", cardSide)
-                    playAllAvTagsInternal(cardSide, isAutomaticPlayback = true)
-                    playAvTagsJob = null
-                }
+        playbackMutex.withLock {
+            playAvTagsJob?.cancelAndJoin()
+            launchPlayback {
+                Timber.i("playing sounds for %s", cardSide)
+                playAllAvTagsInternal(cardSide, isAutomaticPlayback = true)
             }
+        }
     }
 
     suspend fun playOne(tag: AvTag) {
@@ -192,28 +212,26 @@ class CardMediaPlayer : Closeable {
             }
         }
 
-        playAvTagsJob =
-            playbackMutex.withLock {
-                playAvTagsJob?.cancelAndJoin()
-                Timber.i("playing one AV Tag")
+        playbackMutex.withLock {
+            playAvTagsJob?.cancelAndJoin()
+            Timber.i("playing one AV Tag")
 
-                scope.launch {
-                    try {
-                        play(tag)
-                    } catch (e: MediaException) {
-                        when (e.continuationBehavior) {
-                            RETRY_MEDIA -> retry()
-                            CONTINUE_MEDIA, STOP_MEDIA -> { }
-                        }
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Timber.w(e, "Exception playing AV Tag")
+            launchPlayback {
+                try {
+                    play(tag)
+                } catch (e: MediaException) {
+                    when (e.continuationBehavior) {
+                        RETRY_MEDIA -> retry()
+                        CONTINUE_MEDIA, STOP_MEDIA -> { }
                     }
-                    Timber.v("completed playing one AV Tag")
-                    playAvTagsJob = null
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.w(e, "Exception playing AV Tag")
                 }
+                Timber.v("completed playing one AV Tag")
             }
+        }
     }
 
     suspend fun stop() {
