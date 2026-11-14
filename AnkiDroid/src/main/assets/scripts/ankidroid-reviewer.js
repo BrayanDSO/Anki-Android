@@ -49,6 +49,15 @@ globalThis.ankidroid.onTypeAnswerKeyDown = function (event) {
     }
 };
 
+/**
+ * @param {InputEvent} event - the oninput event of the type answer <input>
+ */
+globalThis.ankidroid.onTypeAnswerInput = function (event) {
+    fetch("ankidroid/typedAnswer", { method: "POST", body: event.target.value }).catch(err =>
+        console.log("Failed to send the typed answer:", err),
+    );
+};
+
 // ============================================================================
 // Input focus listeners
 // ============================================================================

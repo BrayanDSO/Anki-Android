@@ -25,6 +25,7 @@ class AutoAdvance(
     private val scope: CoroutineScope,
     private val listener: ActionListener,
     initialCard: Deferred<Card>,
+    private val awaitMediaIdle: suspend () -> Unit,
 ) {
     /**
      * Listens to the `Auto Advance` actions set in Deck options,
@@ -51,8 +52,6 @@ class AutoAdvance(
             AutoAdvanceSettings.createInstance(initialCard.await().currentDeckId())
         }
 
-    suspend fun shouldWaitForAudio() = settings.await().waitForAudio
-
     @Synchronized
     fun cancelPendingAction() {
         pendingAction?.cancel()
@@ -74,6 +73,7 @@ class AutoAdvance(
 
     private suspend fun schedule(select: AutoAdvanceSettings.() -> Pair<Duration, AutoAdvanceAction>) {
         val settings = settings
+        val waitForAudio = settings.await().waitForAudio
         val (duration, action) = settings.await().select()
         synchronized(this) {
             cancelPendingAction()
@@ -82,6 +82,8 @@ class AutoAdvance(
 
             pendingAction =
                 scope.launch {
+                    // the timer starts once the media of the side being shown ends
+                    if (waitForAudio) awaitMediaIdle()
                     delay(duration)
                     listener.onAutoAdvanceAction(action)
                 }

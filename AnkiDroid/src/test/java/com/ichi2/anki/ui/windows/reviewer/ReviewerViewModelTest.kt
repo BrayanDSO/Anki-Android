@@ -11,6 +11,8 @@ import app.cash.turbine.test
 import com.ichi2.anki.RobolectricTest
 import com.ichi2.anki.cardviewer.SoundTagPlayer
 import com.ichi2.anki.common.preferences.sharedPrefs
+import com.ichi2.anki.common.time.MockTime
+import com.ichi2.anki.common.time.TimeManager
 import com.ichi2.anki.common.utils.ext.cardStateCustomizer
 import com.ichi2.anki.libanki.DeckConfig.Companion.ANSWER_ACTION
 import com.ichi2.anki.preferences.reviewer.ViewerAction
@@ -127,7 +129,7 @@ class ReviewerViewModelTest : RobolectricTest() {
 
     /** Waits for the previously requested actions to complete: they are executed in order */
     private suspend fun ReviewerViewModel.awaitPendingActions() =
-        pageUpFlow.test {
+        events.filter { it is ReviewerEvent.PageUp }.test {
             executeAction(ViewerAction.PAGE_UP)
             awaitItem()
         }
@@ -147,6 +149,90 @@ class ReviewerViewModelTest : RobolectricTest() {
                 awaitItem()
                 expectNoEvents()
             }
+        }
+
+    @Test
+    fun `answering twice in a row only answers the card being shown`() =
+        runTest {
+            val cards = listOf(addBasicNote("one", "1").firstCard(), addBasicNote("two", "2").firstCard())
+            val viewModel = ReviewerViewModel(SavedStateHandle()).also { viewModelStore.put("reviewer", it) }
+            viewModel.onPageFinished(false)
+            advanceUntilIdle()
+            viewModel.onShowAnswer()
+            advanceUntilIdle()
+
+            viewModel.answerCard(Rating.GOOD)
+            viewModel.answerCard(Rating.GOOD)
+            advanceUntilIdle()
+
+            assertEquals(1, cards.sumOf { col.getCard(it.id).reps }, "a card was answered without being shown")
+        }
+
+    @Test
+    fun `answering after the timebox is reached does not answer the previous card again`() =
+        runTest {
+            addBasicNote("one", "1")
+            addBasicNote("two", "2")
+            col.config.set("timeLim", 60)
+            val viewModel = ReviewerViewModel(SavedStateHandle()).also { viewModelStore.put("reviewer", it) }
+            viewModel.onPageFinished(false)
+            advanceUntilIdle()
+            val answeredCardId = viewModel.getCardId()
+            viewModel.onShowAnswer()
+            advanceUntilIdle()
+            assertIs<MockTime>(TimeManager.time).addM(2)
+            viewModel.events.filter { it is ReviewerEvent.TimeboxReached }.test {
+                viewModel.answerCard(Rating.GOOD)
+                advanceUntilIdle()
+                awaitItem()
+            }
+
+            // the timebox dialog isn't shown if the screen is in the background
+            viewModel.answerCard(Rating.GOOD)
+            advanceUntilIdle()
+
+            assertEquals(1, col.getCard(answeredCardId).reps, "the previous card was answered again")
+        }
+
+    @Test
+    fun `auto advance waiting for audio shows the answer if audio is not played automatically`() =
+        runTest {
+            addBasicNote("one", "1")
+            addBasicNote("two", "2")
+            updateDeckConfig(col.decks.selected()) { secondsToShowQuestion = 5.0 } // autoplay is off
+            assertTrue(col.decks.configDictForDeckId(col.decks.selected()).waitForAudio, "'Wait for audio' is on by default")
+            val viewModel = ReviewerViewModel(SavedStateHandle()).also { viewModelStore.put("reviewer", it) }
+            viewModel.onPageFinished(false)
+            advanceUntilIdle()
+            viewModel.executeAction(ViewerAction.TOGGLE_AUTO_ADVANCE)
+            advanceUntilIdle()
+            assertTrue(viewModel.showingAnswer.value, "the answer of the first card was not shown")
+
+            viewModel.answerCard(Rating.GOOD)
+            advanceUntilIdle()
+            advanceTimeBy(6.seconds)
+
+            assertTrue(viewModel.showingAnswer.value, "the answer of the next card was not shown")
+        }
+
+    @Test
+    fun `typed answer is compared when the answer is shown`() =
+        runTest {
+            addBasicWithTypingNote("front", "a \"b\" <c")
+            val viewModel = ReviewerViewModel(SavedStateHandle()).also { viewModelStore.put("reviewer", it) }
+            viewModel.onPageFinished(false)
+            advanceUntilIdle()
+            viewModel.onTypedAnswerChanged("a \"b\" <c")
+
+            viewModel.eval
+                .filter { it.startsWith("_showAnswer(") }
+                .test {
+                    viewModel.onShowAnswer()
+                    advanceUntilIdle()
+                    val answer = awaitItem()
+                    assertTrue("typeGood" in answer, "the typed answer was not compared")
+                    assertFalse("typeBad" in answer, "the typed answer was not the one compared")
+                }
         }
 
     @Test

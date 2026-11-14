@@ -27,6 +27,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
@@ -41,6 +42,7 @@ import com.ichi2.anki.android.AnkiShakeDetector
 import com.ichi2.anki.cardviewer.Gesture
 import com.ichi2.anki.common.annotations.NeedsTest
 import com.ichi2.anki.common.destinations.DeckOptionsDestination
+import com.ichi2.anki.common.destinations.Destination
 import com.ichi2.anki.common.destinations.navigate
 import com.ichi2.anki.common.utils.android.isRobolectric
 import com.ichi2.anki.common.utils.dp
@@ -48,6 +50,7 @@ import com.ichi2.anki.databinding.FragmentReviewerBinding
 import com.ichi2.anki.dialogs.showDeckOptionsSelectionDialog
 import com.ichi2.anki.dialogs.tags.TagsDialogFactory
 import com.ichi2.anki.dialogs.tags.TagsDialogListener
+import com.ichi2.anki.libanki.Collection
 import com.ichi2.anki.model.CardStateFilter
 import com.ichi2.anki.preferences.reviewer.ViewerAction
 import com.ichi2.anki.preferences.reviewer.WhiteboardAction
@@ -84,7 +87,10 @@ import com.squareup.seismic.ShakeDetector
 import dev.androidbroadcast.vbpd.viewBinding
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -171,19 +177,10 @@ class ReviewerFragment :
         setupMargins()
         setupResetProgress()
         setupCheckPronunciation()
-        setupActions()
+        setupCardState()
         setupWhiteboard()
-        setupTimebox()
 
         val viewScope = viewLifecycleOwner.lifecycleScope
-
-        viewModel.finishResultFlow
-            .onEach { result ->
-                requireActivity().run {
-                    setResult(result)
-                    finish()
-                }
-            }.launchIn(viewScope)
 
         viewModel.statesMutationEvalFlow
             .onEach { eval ->
@@ -214,35 +211,50 @@ class ReviewerFragment :
                 whiteboardFragment?.resetCanvas()
             }.launchIn(viewScope)
 
-        viewModel.navigateFlow.collectInViewLifecycle { destination ->
-            if (destination is DeckOptionsDestination && destination.options.size > 1) {
-                requireContext().showDeckOptionsSelectionDialog(destination.options) { selectedOption ->
-                    Timber.i("Deck options target selected: ${selectedOption.deckId}")
-                    navigate(
-                        destination.copy(
-                            deckId = selectedOption.deckId,
-                            isFiltered = selectedOption.isFiltered,
-                        ),
-                    )
-                }
-                return@collectInViewLifecycle
-            }
-            navigate(destination)
-        }
+        viewModel.events.collectInViewLifecycle { event -> handleEvent(event) }
 
         binding.webViewContainer.setFrameStyle()
-
-        if (Prefs.showAnswerFeedback) {
-            viewModel.answerFeedbackFlow.collectInViewLifecycle { rating ->
-                binding.answerFeedback.show(rating)
-            }
-        }
 
         if (Prefs.keepScreenOn) {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
 
         setRenderWorkaround(requireActivity())
+    }
+
+    private fun handleEvent(event: ReviewerEvent) {
+        when (event) {
+            is ReviewerEvent.Finish ->
+                requireActivity().run {
+                    setResult(event.result)
+                    finish()
+                }
+            is ReviewerEvent.Feedback -> showSnackbar(event.message, duration = 500)
+            is ReviewerEvent.Navigate -> onNavigate(event.destination)
+            is ReviewerEvent.EditTags -> tagsDialogFactory.show(requireActivity(), noteIds = listOf(event.noteId))
+            is ReviewerEvent.SetDueDate -> SetDueDateDialog.show(requireActivity(), listOf(event.cardId))
+            ReviewerEvent.ResetProgress -> showDialogFragment(ForgetCardsDialog())
+            is ReviewerEvent.AnswerFeedback -> if (Prefs.showAnswerFeedback) binding.answerFeedback.show(event.rating)
+            is ReviewerEvent.TimeboxReached -> onTimeboxReached(event.timebox)
+            ReviewerEvent.PageUp -> webViewLayout.pageUp()
+            ReviewerEvent.PageDown -> webViewLayout.pageDown()
+        }
+    }
+
+    private fun onNavigate(destination: Destination) {
+        if (destination is DeckOptionsDestination && destination.options.size > 1) {
+            requireContext().showDeckOptionsSelectionDialog(destination.options) { selectedOption ->
+                Timber.i("Deck options target selected: ${selectedOption.deckId}")
+                navigate(
+                    destination.copy(
+                        deckId = selectedOption.deckId,
+                        isFiltered = selectedOption.isFiltered,
+                    ),
+                )
+            }
+            return
+        }
+        navigate(destination)
     }
 
     override fun onWebViewRecreated() {
@@ -291,7 +303,7 @@ class ReviewerFragment :
             return changed
         }
 
-        viewModel.typeAnswerFlow.collectInViewLifecycle { typeInAnswer ->
+        viewModel.cardState.distinctBy { it.typeAnswer }.collectInViewLifecycle { typeInAnswer ->
             if (typeInAnswer == null) {
                 binding.typeAnswerContainer.isVisible = false
                 return@collectInViewLifecycle
@@ -317,17 +329,9 @@ class ReviewerFragment :
             }
         }
 
-        viewModel.onTypedAnswerResultFlow.collectInViewLifecycle { request ->
-            if (isHtmlTypeAnswerEnabled) {
-                val script = """document.getElementById("typeans").value;"""
-                webViewLayout.evaluateJavascript(script) { callback ->
-                    // the retuned string comes with surrounding `"`, so remove it once
-                    val typedAnswer = callback.removeSurrounding("\"")
-                    request.complete(typedAnswer)
-                }
-            } else {
-                val typedAnswer = binding.typeAnswerEditText.text.toString()
-                request.complete(typedAnswer)
+        if (!isHtmlTypeAnswerEnabled) {
+            binding.typeAnswerEditText.doAfterTextChanged { text ->
+                viewModel.onTypedAnswerChanged(text?.toString().orEmpty())
             }
         }
     }
@@ -390,10 +394,6 @@ class ReviewerFragment :
 
         binding.answerArea.setRelativeHeight(Prefs.newStudyScreenAnswerButtonSize)
 
-        viewModel.answerButtonsNextTimeFlow.collectInViewLifecycle { times ->
-            binding.answerArea.setNextTimes(times)
-        }
-
         val insetsController = WindowInsetsControllerCompat(window, binding.rootLayout)
         viewModel.showingAnswer
             .onEach { isAnswerShown ->
@@ -409,10 +409,6 @@ class ReviewerFragment :
     }
 
     private fun setupCounts() {
-        viewModel.countsFlow.collectInViewLifecycle { counts ->
-            binding.studyCounts.updateCounts(counts)
-        }
-
         lifecycleScope.launch {
             if (!CollectionPreferences.getShowRemainingDueCounts()) {
                 binding.studyCounts.isVisible = false
@@ -520,9 +516,6 @@ class ReviewerFragment :
     }
 
     private fun setupResetProgress() {
-        viewModel.resetProgressFlow.collectInViewLifecycle {
-            showDialogFragment(ForgetCardsDialog())
-        }
         // TODO handle 'Reset progress' in the ViewModel instead of the activity, once
         //  a mechanism of showing a progress bar if the operation takes too long is implemented
         registerOnForgetHandler { listOf(viewModel.getCardId()) }
@@ -575,67 +568,41 @@ class ReviewerFragment :
         }
     }
 
-    private fun setupTimebox() {
-        viewModel.timeBoxReachedFlow.collectInViewLifecycle { timebox ->
-            Timber.i("ReviewerFragment: Timebox reached (reps %d - secs %d)", timebox.reps, timebox.secs)
+    private fun onTimeboxReached(timebox: Collection.TimeboxReached) {
+        Timber.i("ReviewerFragment: Timebox reached (reps %d - secs %d)", timebox.reps, timebox.secs)
 
-            viewModel.stopAutoAdvance()
+        viewModel.stopAutoAdvance()
 
-            val minutes = (timebox.secs / 60f).roundToInt()
-            val message = CollectionManager.TR.studyingCardStudiedIn(timebox.reps) + " " + CollectionManager.TR.studyingMinute(minutes)
+        val minutes = (timebox.secs / 60f).roundToInt()
+        val message = CollectionManager.TR.studyingCardStudiedIn(timebox.reps) + " " + CollectionManager.TR.studyingMinute(minutes)
 
-            AlertDialog.Builder(requireContext()).show {
-                setTitle(CommonString.timebox_reached_title)
-                setMessage(message)
-                setPositiveButton(CollectionManager.TR.studyingContinue()) { _, _ ->
-                    Timber.i("ReviewerFragment: Timebox 'Continue'")
-                    viewModel.onPageFinished(false)
-                }
-                setNegativeButton(CollectionManager.TR.studyingFinish()) { _, _ ->
-                    Timber.i("ReviewerFragment: Timebox 'Finish'")
-                    requireActivity().finish()
-                }
-                setCancelable(false)
+        AlertDialog.Builder(requireContext()).show {
+            setTitle(CommonString.timebox_reached_title)
+            setMessage(message)
+            setPositiveButton(CollectionManager.TR.studyingContinue()) { _, _ ->
+                Timber.i("ReviewerFragment: Timebox 'Continue'")
+                viewModel.continueAfterTimebox()
             }
+            setNegativeButton(CollectionManager.TR.studyingFinish()) { _, _ ->
+                Timber.i("ReviewerFragment: Timebox 'Finish'")
+                requireActivity().finish()
+            }
+            setCancelable(false)
         }
     }
 
-    private fun setupActions() {
-        viewModel.actionFeedbackFlow.collectInViewLifecycle { message ->
-            showSnackbar(message, duration = 500)
-        }
-
-        viewModel.editNoteTagsFlow.collectInViewLifecycle { noteId ->
-            tagsDialogFactory.show(requireActivity(), noteIds = listOf(noteId))
-        }
-
-        viewModel.setDueDateFlow.collectInViewLifecycle { cardId ->
-            SetDueDateDialog.show(requireActivity(), listOf(cardId))
-        }
-
-        viewModel.pageUpFlow.collectInViewLifecycle {
-            webViewLayout.pageUp()
-        }
-
-        viewModel.pageDownFlow.collectInViewLifecycle {
-            webViewLayout.pageDown()
-        }
-
+    private fun setupCardState() {
         val repository = StudyScreenRepository()
-
-        viewModel.isMarkedFlow.collectInViewLifecycle { isMarked ->
+        viewModel.cardState.collectInViewLifecycle { state ->
+            binding.studyCounts.updateCounts(state.counts)
+            binding.answerArea.setNextTimes(state.nextTimes)
             if (!repository.isMarkShownInToolbar) {
-                binding.markIcon.isVisible = isMarked
+                binding.markIcon.isVisible = state.isMarked
             }
-        }
-        val flagView = binding.flagIcon
-        viewModel.flagFlow.collectInViewLifecycle { flag ->
             if (!repository.isFlagShownInToolbar) {
-                if (flag == Flag.NONE) {
-                    flagView.isVisible = false
-                } else {
-                    flagView.setImageDrawable(ContextCompat.getDrawable(requireContext(), flag.drawableRes))
-                    flagView.isVisible = true
+                binding.flagIcon.isVisible = state.flag != Flag.NONE
+                if (state.flag != Flag.NONE) {
+                    binding.flagIcon.setImageDrawable(ContextCompat.getDrawable(requireContext(), state.flag.drawableRes))
                 }
             }
         }
@@ -775,6 +742,9 @@ class ReviewerFragment :
     }
 
     companion object {
+        /** The values of a property of the state, each time it changes */
+        private fun <T, R> Flow<T>.distinctBy(selector: (T) -> R): Flow<R> = map(selector).distinctUntilChanged()
+
         fun getIntent(context: Context): Intent = CardViewerActivity.getIntent(context, ReviewerFragment::class)
     }
 }

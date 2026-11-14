@@ -18,7 +18,9 @@ import com.ichi2.anki.ui.internationalization.sentenceCase
 import com.ichi2.anki.utils.ext.menu
 import com.ichi2.anki.utils.ext.removeSubMenu
 import com.ichi2.utils.setPaddedIcon
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 
 fun ReviewerMenuView.setup(
@@ -31,7 +33,9 @@ fun ReviewerMenuView.setup(
     }
 
     findItem(ViewerAction.FLAG_MENU.menuId)?.let { flagItem ->
-        viewModel.flagFlow
+        viewModel.cardState
+            .map { it.flag }
+            .distinctUntilChanged()
             .flowWithLifecycle(lifecycle)
             .onEach { flagCode ->
                 flagItem.setPaddedIcon(context, flagCode.drawableRes)
@@ -39,7 +43,9 @@ fun ReviewerMenuView.setup(
     }
 
     findItem(ViewerAction.MARK.menuId)?.let { markItem ->
-        viewModel.isMarkedFlow
+        viewModel.cardState
+            .map { it.isMarked }
+            .distinctUntilChanged()
             .flowWithLifecycle(lifecycle)
             .onEach { isMarked ->
                 if (isMarked) {
@@ -71,7 +77,11 @@ fun ReviewerMenuView.setup(
     }
 
     findItem(ViewerAction.SUSPEND_MENU.menuId)?.let { suspendItem ->
-        val suspendFlow = viewModel.canSuspendNoteFlow.flowWithLifecycle(lifecycle)
+        val suspendFlow =
+            viewModel.cardState
+                .map { it.canSuspendNote }
+                .distinctUntilChanged()
+                .flowWithLifecycle(lifecycle)
         suspendFlow
             .onEach { canSuspendNote ->
                 if (canSuspendNote) {
@@ -91,7 +101,11 @@ fun ReviewerMenuView.setup(
     }
 
     findItem(ViewerAction.BURY_MENU.menuId)?.let { buryItem ->
-        val buryFlow = viewModel.canBuryNoteFlow.flowWithLifecycle(lifecycle)
+        val buryFlow =
+            viewModel.cardState
+                .map { it.canBuryNote }
+                .distinctUntilChanged()
+                .flowWithLifecycle(lifecycle)
         buryFlow
             .onEach { canBuryNote ->
                 if (canBuryNote) {

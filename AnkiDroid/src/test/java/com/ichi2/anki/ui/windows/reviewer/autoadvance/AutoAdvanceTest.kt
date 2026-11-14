@@ -57,7 +57,7 @@ class AutoAdvanceTest {
         unmockkAll()
     }
 
-    private fun createAutoAdvance(): AutoAdvance = AutoAdvance(testScope, listener, CompletableDeferred(card))
+    private fun createAutoAdvance(): AutoAdvance = AutoAdvance(testScope, listener, CompletableDeferred(card), awaitMediaIdle = {})
 
     @Test
     fun `onShowQuestion triggers action after delay when enabled`() =
