@@ -2,10 +2,8 @@
 
 package com.ichi2.anki.previewer
 
-import android.os.Bundle
 import android.os.Parcelable
 import androidx.annotation.CheckResult
-import androidx.core.os.BundleCompat
 import androidx.lifecycle.SavedStateHandle
 import com.ichi2.anki.CollectionManager
 import com.ichi2.anki.CollectionManager.withCol
@@ -23,6 +21,7 @@ import com.ichi2.anki.libanki.NotetypeJson
 import com.ichi2.anki.libanki.clozeNumbersInNote
 import com.ichi2.anki.reviewer.CardSide
 import com.ichi2.anki.utils.ext.require
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.parcelize.Parcelize
@@ -33,8 +32,12 @@ class TemplatePreviewerViewModel(
     savedStateHandle: SavedStateHandle,
 ) : CardViewerViewModel(savedStateHandle) {
     private val arguments = savedStateHandle.require<TemplatePreviewerArguments>(TemplatePreviewerFragment.ARG_KEY)
-    private val notetype: NotetypeJson = arguments.notetype
-    private val isCloze: Boolean = notetype.isCloze
+    private val notetypeOrNull: NotetypeJson? = arguments.notetypeOrNull
+
+    /** `false` if the note type file is gone, e.g. the OS cleared the cache after process death */
+    val isUsable: Boolean = notetypeOrNull != null
+    private val notetype: NotetypeJson get() = notetypeOrNull!!
+    private val isCloze: Boolean get() = notetype.isCloze
 
     /**
      * Identifies which of the card templates or cloze deletions it corresponds to
@@ -55,7 +58,7 @@ class TemplatePreviewerViewModel(
         val cardsWithEmptyFronts: List<Boolean>,
     )
 
-    private val content: Deferred<Content> = asyncIO { loadContent() }
+    private val content: Deferred<Content> = if (isUsable) asyncIO { loadContent() } else CompletableDeferred()
 
     private suspend fun loadContent(): Content {
         val note =
@@ -63,7 +66,7 @@ class TemplatePreviewerViewModel(
                 if (arguments.id != 0L) {
                     Note(this, arguments.id)
                 } else {
-                    Note.fromNotetypeId(this@withCol, arguments.notetype.id)
+                    Note.fromNotetypeId(this@withCol, notetype.id)
                 }
             }.apply {
                 fields = arguments.fields.toMutableList()
@@ -233,20 +236,5 @@ data class TemplatePreviewerArguments(
     val fillEmpty: Boolean = false,
     val deckId: DeckId = DEFAULT_DECK_ID,
 ) : Parcelable {
-    val notetype: NotetypeJson get() = notetypeFile.getNotetype()
-
-    companion object {
-        /**
-         * Returns `true` if [bundle] holds a [TemplatePreviewerArguments]
-         * whose backing [NotetypeFile] is still readable. Use this before
-         * constructing [TemplatePreviewerViewModel] to detect when the
-         * temp file was cleaned up by the OS (e.g. after process death) so
-         * the previewer can abort instead of throwing from the constructor.
-         */
-        fun isUsable(bundle: Bundle): Boolean =
-            BundleCompat
-                .getParcelable(bundle, TemplatePreviewerFragment.ARG_KEY, TemplatePreviewerArguments::class.java)
-                ?.notetypeFile
-                ?.getNotetypeOrNull() != null
-    }
+    val notetypeOrNull: NotetypeJson? get() = notetypeFile.getNotetypeOrNull()
 }

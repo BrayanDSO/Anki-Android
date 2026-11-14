@@ -6,6 +6,7 @@ import androidx.annotation.VisibleForTesting
 import anki.collection.OpChanges
 import com.ichi2.anki.CollectionManager.withCol
 import com.ichi2.anki.Flag
+import com.ichi2.anki.browser.IdsFile
 import com.ichi2.anki.cardviewer.SingleCardSide
 import com.ichi2.anki.common.annotations.NeedsTest
 import com.ichi2.anki.common.destinations.NoteEditorDestination
@@ -18,22 +19,29 @@ import com.ichi2.anki.servicelayer.MARKED_TAG
 import com.ichi2.anki.servicelayer.NoteService
 import com.ichi2.anki.utils.ViewModelSavedStateHandle
 import com.ichi2.anki.utils.ext.flag
+import com.ichi2.anki.utils.ext.require
 import com.ichi2.anki.utils.ext.setUserFlagForCards
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import timber.log.Timber
+import java.io.IOException
 
 class PreviewerViewModel(
     savedStateHandle: ViewModelSavedStateHandle,
-    @VisibleForTesting val selectedCardIds: List<Long>,
-    initialIndex: Int,
 ) : CardViewerViewModel(savedStateHandle),
     ChangeManager.Subscriber {
-    val currentIndex =
-        savedStateHandle.getMutableStateFlow(
-            KEY_CURRENT_INDEX,
-            initialValue = initialIndex,
-        )
+    /** Empty if the IDs couldn't be read: [PreviewerFragment] closes itself then */
+    @VisibleForTesting
+    val selectedCardIds: List<Long> =
+        try {
+            savedStateHandle.require<IdsFile>(PreviewerFragment.ARG_CARD_IDS_FILE).getIdsOrNull().orEmpty()
+        } catch (e: IOException) {
+            Timber.w(e, "Failed to read previewer IDs")
+            emptyList()
+        }
+
+    // starts as the index given to the fragment, which uses the same key
+    val currentIndex = savedStateHandle.getMutableStateFlow(PreviewerFragment.ARG_CURRENT_INDEX, 0)
     val backSideOnly = savedStateHandle.getMutableStateFlow(KEY_BACKSIDE_ONLY, false)
     val isMarked = MutableStateFlow(false)
     val flag: MutableStateFlow<Flag> = MutableStateFlow(Flag.NONE)
@@ -223,6 +231,7 @@ class PreviewerViewModel(
         changes: OpChanges,
         handler: Any?,
     ) {
+        if (selectedCardIds.isEmpty()) return
         enqueue {
             when {
                 changes.noteText -> {
@@ -241,6 +250,5 @@ class PreviewerViewModel(
 
     companion object {
         private const val KEY_BACKSIDE_ONLY = "backsideOnly"
-        private const val KEY_CURRENT_INDEX = "currentIndex"
     }
 }

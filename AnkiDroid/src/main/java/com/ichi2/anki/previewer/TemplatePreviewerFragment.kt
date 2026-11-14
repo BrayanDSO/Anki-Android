@@ -37,10 +37,8 @@ class TemplatePreviewerFragment :
         // as super.onViewCreated depends on webViewLayout, which depends on the binding
         binding = FragmentTemplatePreviewerBinding.bind(view)
 
-        // The backing NotetypeFile may be missing after process death if the OS cleared
-        // its cache dir. Bail out before the ViewModel is constructed; the constructor
-        // would otherwise throw on `getNotetype()`.
-        if (!TemplatePreviewerArguments.isUsable(requireArguments())) {
+        // The backing NotetypeFile may be missing after process death if the OS cleared its cache dir
+        if (!viewModel.isUsable) {
             Timber.w("Notetype file missing on previewer open; finishing")
             requireActivity().finish()
             return

@@ -6,6 +6,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.ichi2.anki.Flag
+import com.ichi2.anki.browser.IdsFile
 import com.ichi2.anki.pages.PostRequestBridge
 import com.ichi2.anki.servicelayer.NoteService
 import com.ichi2.anki.utils.ext.flag
@@ -25,6 +26,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.io.path.createTempDirectory
 
 @RunWith(AndroidJUnit4::class)
 class PreviewerViewModelTest : JvmTest() {
@@ -61,7 +63,12 @@ class PreviewerViewModelTest : JvmTest() {
                 note.cards().map { it.id }
             }
         updateDeckConfig(col.decks.selected()) { autoplay = false }
-        viewModel = spyk(PreviewerViewModel(SavedStateHandle(), cardIds, initialIndex = 0))
+        val arguments =
+            mapOf(
+                PreviewerFragment.ARG_CARD_IDS_FILE to IdsFile(createTempDirectory().toFile(), cardIds, IdsFile.Purpose.SELECTION),
+                PreviewerFragment.ARG_CURRENT_INDEX to 0,
+            )
+        viewModel = spyk(PreviewerViewModel(SavedStateHandle(arguments)))
         // the default implementation requires the Collection media directory,
         // which needs Robolectric with CollectionStorageMode.IN_MEMORY_WITH_MEDIA or ON_DISK
         coEvery { viewModel.prepareCardTextForDisplay(any(), any()) } answers { secondArg() }

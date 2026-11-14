@@ -35,17 +35,13 @@ import com.ichi2.anki.snackbar.BaseSnackbarBuilderProvider
 import com.ichi2.anki.snackbar.SnackbarBuilder
 import com.ichi2.anki.ui.internationalization.sentenceCase
 import com.ichi2.anki.utils.ext.collectInViewLifecycle
-import com.ichi2.anki.utils.ext.getIntOrNull
-import com.ichi2.anki.utils.ext.requireParcelable
 import com.ichi2.anki.utils.ext.setIconRes
 import com.ichi2.anki.utils.ext.sharedPrefs
-import com.ichi2.anki.utils.savedStateViewModelFactory
 import com.ichi2.anki.workarounds.SafeWebViewLayout
 import com.ichi2.utils.performClickIfEnabled
 import dev.androidbroadcast.vbpd.viewBinding
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.io.IOException
 
 class PreviewerFragment :
     CardViewerFragment(R.layout.fragment_previewer),
@@ -53,20 +49,7 @@ class PreviewerFragment :
     BaseSnackbarBuilderProvider,
     DispatchKeyEventListener,
     BindingProcessor<MappableBinding, PreviewerAction> {
-    override val viewModel: PreviewerViewModel by viewModels {
-        savedStateViewModelFactory { handle ->
-            val arguments = requireArguments()
-            // Read before constructing the ViewModel, which immediately loads the first card.
-            val ids =
-                try {
-                    arguments.requireParcelable<IdsFile>(ARG_CARD_IDS_FILE).getIdsOrNull()
-                } catch (e: IOException) {
-                    throw UnavailableSelectionException(e)
-                }
-            if (ids.isNullOrEmpty()) throw UnavailableSelectionException()
-            PreviewerViewModel(handle, ids, requireNotNull(arguments.getIntOrNull(ARG_CURRENT_INDEX)))
-        }
-    }
+    override val viewModel: PreviewerViewModel by viewModels()
 
     @VisibleForTesting
     internal val binding by viewBinding(FragmentPreviewerBinding::bind)
@@ -89,10 +72,8 @@ class PreviewerFragment :
         view: View,
         savedInstanceState: Bundle?,
     ) {
-        try {
-            viewModel
-        } catch (e: UnavailableSelectionException) {
-            Timber.w(e, "Failed to read previewer IDs")
+        if (viewModel.cardsCount() == 0) {
+            Timber.w("No cards to preview")
             showThemedToast(requireContext(), CommonString.something_wrong, false)
             // The activity may still lay out this view before finishing. Its slider has no range yet.
             view.isVisible = false
@@ -276,11 +257,6 @@ class PreviewerFragment :
         if (event.action != KeyEvent.ACTION_DOWN || !::bindingMap.isInitialized) return false
         return bindingMap.onKeyDown(event)
     }
-
-    /** Distinguishes selection failures from I/O failures during ViewModel construction. */
-    private class UnavailableSelectionException(
-        cause: IOException? = null,
-    ) : Exception("Unable to load preview selection", cause)
 
     companion object {
         /** Index of the card to be first displayed among the IDs provided by [ARG_CARD_IDS_FILE] */
