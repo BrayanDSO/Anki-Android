@@ -4,6 +4,8 @@
     <!-- These resources are replaced at runtime before the corresponding overlay is applied. -->
     <color name="theme_preview_primary">#00000000</color>
     <color name="theme_preview_on_primary">#00000000</color>
+    <color name="theme_preview_primary_container">#00000000</color>
+    <color name="theme_preview_on_primary_container">#00000000</color>
     <color name="theme_preview_background">#00000000</color>
     <color name="theme_preview_surface">#00000000</color>
     <color name="theme_preview_surface_dim">#00000000</color>
@@ -27,6 +29,11 @@
         <item name="actionBarTextColor">?attr/colorOnPrimary</item>
     </style>
 
+    <style name="ThemeOverlay.AnkiDroid.PreviewCustomMain" parent="ThemeOverlay.AnkiDroid.PreviewMain">
+        <item name="colorPrimaryContainer">@color/theme_preview_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/theme_preview_on_primary_container</item>
+    </style>
+
     <style name="ThemeOverlay.AnkiDroid.PreviewBackground" parent="">
         <item name="android:colorBackground">@color/theme_preview_background</item>
         <item name="android:windowBackground">?android:attr/colorBackground</item>
@@ -41,7 +48,7 @@
         <item name="colorSurfaceContainerHighest">@color/theme_preview_surface_highest</item>
     </style>
 
-    <style name="ThemeOverlay.AnkiDroid.PreviewText" parent="">
+    <style name="ThemeOverlay.AnkiDroid.PreviewForeground" parent="">
         <item name="colorOnSurface">@color/theme_preview_on_surface</item>
         <item name="colorOnSurfaceVariant">@color/theme_preview_on_surface_variant</item>
         <item name="colorOnBackground">@color/theme_preview_on_background</item>

@@ -27,7 +27,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -42,26 +41,31 @@ import com.ichi2.compose.ui.preview.AnkiDroidThemeProvider
 /**
  * Shows the rows added in [content] as one group of rounded tiles, like Android's Settings app.
  *
+ * A [header] shares one rounded background with the rows underneath it.
  * In the E-ink theme the group is outlined instead, with thin lines between its rows.
  */
 @Composable
 fun GroupedList(
     modifier: Modifier = Modifier,
+    header: (@Composable () -> Unit)? = null,
     content: GroupedListScope.() -> Unit,
 ) {
     val items = GroupedListItems().apply(content).items
     val border = MaterialTheme.widgetBorder
-    if (border == null) {
+    val containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+    if (border == null && header == null) {
         Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
             items.forEachIndexed { index, item ->
-                GroupedListRow(item, shape = rowShape(index, items.lastIndex))
+                GroupedListRow(item, Modifier.clip(rowShape(index, items.lastIndex)).background(containerColor))
             }
         }
     } else {
         val shape = RoundedCornerShape(20.dp)
-        Column(modifier.clip(shape).border(border, shape)) {
+        val container = modifier.clip(shape).background(containerColor)
+        Column(if (border == null) container else container.border(border, shape)) {
+            header?.invoke()
             items.forEachIndexed { index, item ->
-                if (index > 0) {
+                if (border != null && index > 0) {
                     val start = if (items[index - 1].leadingContent != null) 72.dp else 16.dp
                     Spacer(
                         Modifier
@@ -71,7 +75,7 @@ fun GroupedList(
                             .background(border.brush),
                     )
                 }
-                GroupedListRow(item, shape = RectangleShape)
+                GroupedListRow(item)
             }
         }
     }
@@ -127,14 +131,13 @@ private fun rowShape(
 @Composable
 private fun GroupedListRow(
     item: GroupedListItem,
-    shape: Shape,
+    modifier: Modifier = Modifier,
 ) {
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clip(shape)
-                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                .then(modifier)
                 .then(item.modifier)
                 .heightIn(min = 72.dp)
                 .padding(horizontal = 16.dp, vertical = 12.dp),

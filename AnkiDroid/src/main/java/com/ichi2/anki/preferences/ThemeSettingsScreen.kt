@@ -28,13 +28,13 @@ import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LeadingIconTab
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -47,6 +47,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -66,6 +67,8 @@ import com.ichi2.themes.ThemeColorRole
 import com.ichi2.themes.ThemeColorSource
 import com.ichi2.themes.ThemePreviewColors
 import androidx.appcompat.R as AppCompatR
+
+private const val DISABLED_CONTROL_ALPHA = 0.38f
 
 internal data class ThemeSettingsState(
     val enabled: Boolean,
@@ -89,14 +92,20 @@ internal fun ThemeSettingsScreen(
     var editingDark by rememberSaveable { mutableStateOf(systemIsDark) }
     var choosingScheme by remember { mutableStateOf(false) }
     var choosingColor by remember { mutableStateOf<ThemeColorRole?>(null) }
-    val tabs =
+    val dark =
         when (state.scheme) {
-            AppTheme.FOLLOW_SYSTEM -> listOf(false, true)
-            AppTheme.DAY -> listOf(false)
-            AppTheme.NIGHT -> listOf(true)
+            AppTheme.FOLLOW_SYSTEM -> editingDark
+            AppTheme.DAY -> false
+            AppTheme.NIGHT -> true
         }
-    val dark = tabs.singleOrNull() ?: editingDark
+    val colorsEnabled = state.enabled && !state.eink
     val choices = if (dark) state.darkColors else state.lightColors
+    val colorTabs: (@Composable () -> Unit)? =
+        if (state.scheme == AppTheme.FOLLOW_SYSTEM) {
+            { ThemeColorTabs(dark, colorsEnabled, onSelect = { editingDark = it }) }
+        } else {
+            null
+        }
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
     val colors = remember(context, configuration, dark) { ThemePreviewColors(context, dark) }
@@ -134,7 +143,16 @@ internal fun ThemeSettingsScreen(
                 ) {
                     Text(stringResource(R.string.dev_theme_preview_enabled))
                 }
-                item(modifier = Modifier.clickable(enabled = state.enabled) { choosingScheme = true }) {
+                item(
+                    modifier = Modifier.clickable(enabled = state.enabled) { choosingScheme = true },
+                    leadingContent = {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_palette),
+                            contentDescription = null,
+                            modifier = Modifier.alpha(if (state.enabled) 1f else DISABLED_CONTROL_ALPHA),
+                        )
+                    },
+                ) {
                     SettingLabel(
                         title = stringResource(R.string.dev_theme_color_scheme),
                         summary = stringResource(state.scheme.label),
@@ -142,30 +160,18 @@ internal fun ThemeSettingsScreen(
                     )
                 }
             }
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                SecondaryTabRow(selectedTabIndex = tabs.indexOf(dark)) {
-                    for (tab in tabs) {
-                        Tab(
-                            selected = dark == tab,
-                            onClick = { editingDark = tab },
-                            enabled = state.enabled,
-                            text = { Text(stringResource(if (tab) CommonString.night_theme_dark else CommonString.day_theme_light)) },
+            GroupedList(header = colorTabs) {
+                ThemeColorRole.entries.forEach { role ->
+                    val choice = choices.getValue(role)
+                    item(
+                        modifier = Modifier.clickable(enabled = colorsEnabled) { choosingColor = role },
+                        leadingContent = { ColorSwatch(colors.swatch(role, choice), colorsEnabled) },
+                    ) {
+                        SettingLabel(
+                            title = stringResource(role.title),
+                            summary = stringResource(choice.effectiveSource.title),
+                            enabled = colorsEnabled,
                         )
-                    }
-                }
-                GroupedList {
-                    ThemeColorRole.entries.forEach { role ->
-                        val choice = choices.getValue(role)
-                        item(
-                            modifier = Modifier.clickable(enabled = state.enabled) { choosingColor = role },
-                            leadingContent = { ColorSwatch(colors.swatch(role, choice), state.enabled) },
-                        ) {
-                            SettingLabel(
-                                title = stringResource(role.title),
-                                summary = stringResource(choice.effectiveSource.title),
-                                enabled = state.enabled,
-                            )
-                        }
                     }
                 }
             }
@@ -225,6 +231,37 @@ internal fun ThemeSettingsScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ThemeColorTabs(
+    dark: Boolean,
+    enabled: Boolean,
+    onSelect: (Boolean) -> Unit,
+) {
+    SecondaryTabRow(
+        selectedTabIndex = if (dark) 1 else 0,
+        modifier = Modifier.alpha(if (enabled) 1f else DISABLED_CONTROL_ALPHA),
+        containerColor = Color.Transparent,
+    ) {
+        for (mode in listOf(AppTheme.DAY, AppTheme.NIGHT)) {
+            val darkTab = mode == AppTheme.NIGHT
+            LeadingIconTab(
+                selected = dark == darkTab,
+                onClick = { onSelect(darkTab) },
+                modifier = Modifier.heightIn(min = 56.dp),
+                enabled = enabled,
+                text = { Text(stringResource(mode.label)) },
+                icon = {
+                    Icon(
+                        painterResource(if (darkTab) R.drawable.ic_dark_mode_24 else R.drawable.ic_light_mode_24),
+                        contentDescription = null,
+                    )
+                },
+            )
+        }
+    }
+}
+
 private val AppTheme.label: Int
     @StringRes get() =
         when (this) {
@@ -239,7 +276,7 @@ private fun SettingLabel(
     summary: String?,
     enabled: Boolean,
 ) {
-    Column(modifier = Modifier.alpha(if (enabled) 1f else 0.38f)) {
+    Column(modifier = Modifier.alpha(if (enabled) 1f else DISABLED_CONTROL_ALPHA)) {
         Text(title, style = MaterialTheme.typography.bodyLarge)
         if (summary != null) {
             Text(summary, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -258,7 +295,7 @@ private fun ColorSwatch(
                 background = AppCompatResources.getDrawable(context, R.drawable.brush_preview_background)?.mutate()
             }
         },
-        modifier = Modifier.size(24.dp).alpha(if (enabled) 1f else 0.38f),
+        modifier = Modifier.size(24.dp).alpha(if (enabled) 1f else DISABLED_CONTROL_ALPHA),
         update = { view ->
             val fill = (view.background as LayerDrawable).findDrawableByLayerId(R.id.brush_preview_fill) as GradientDrawable
             fill.setColor(color)

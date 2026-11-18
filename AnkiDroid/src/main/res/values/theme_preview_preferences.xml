@@ -18,7 +18,7 @@
     <string name="dev_theme_color_scheme">Color scheme</string>
     <string name="dev_theme_main_color">Main color</string>
     <string name="dev_theme_background_color">Background color</string>
-    <string name="dev_theme_text_color">Text color</string>
+    <string name="dev_theme_foreground_color">Foreground color</string>
     <string name="dev_theme_ankidroid_color">AnkiDroid</string>
     <string name="dev_theme_dynamic_color">Dynamic</string>
     <string name="dev_theme_custom_color">Custom</string>

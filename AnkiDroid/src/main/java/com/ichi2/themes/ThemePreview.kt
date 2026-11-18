@@ -2,15 +2,21 @@
 
 package com.ichi2.themes
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.graphics.Color
 import android.os.Build
 import androidx.annotation.ColorInt
+import androidx.annotation.ColorRes
 import androidx.annotation.StringRes
-import androidx.core.graphics.ColorUtils
+import androidx.annotation.StyleRes
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.color.MaterialColors
+import com.google.android.material.color.utilities.Hct
+import com.google.android.material.color.utilities.MaterialDynamicColors
+import com.google.android.material.color.utilities.SchemeMonochrome
+import com.google.android.material.color.utilities.SchemeTonalSpot
 import com.ichi2.anki.R
 import com.ichi2.anki.common.utils.android.systemIsInNightMode
 import com.ichi2.anki.settings.PrefsRepository
@@ -56,25 +62,29 @@ internal enum class ThemeColorRole(
     @StringRes val title: Int,
     @StringRes private val lightKey: Int,
     @StringRes private val darkKey: Int,
-    val attribute: Int,
+    @ColorRes val swatchResource: Int,
+    @StyleRes val overlay: Int,
 ) {
     MAIN(
         R.string.dev_theme_main_color,
         R.string.dev_theme_light_main_key,
         R.string.dev_theme_dark_main_key,
-        AppCompatR.attr.colorPrimary,
+        R.color.theme_preview_primary,
+        R.style.ThemeOverlay_AnkiDroid_PreviewMain,
     ),
     BACKGROUND(
         R.string.dev_theme_background_color,
         R.string.dev_theme_light_background_key,
         R.string.dev_theme_dark_background_key,
-        MaterialR.attr.colorSurface,
+        R.color.theme_preview_surface,
+        R.style.ThemeOverlay_AnkiDroid_PreviewBackground,
     ),
-    TEXT(
-        R.string.dev_theme_text_color,
+    FOREGROUND(
+        R.string.dev_theme_foreground_color,
         R.string.dev_theme_light_text_key,
         R.string.dev_theme_dark_text_key,
-        MaterialR.attr.colorOnSurface,
+        R.color.theme_preview_on_surface,
+        R.style.ThemeOverlay_AnkiDroid_PreviewForeground,
     ),
     ;
 
@@ -115,7 +125,7 @@ internal fun Context.activeThemePreview(prefs: PrefsRepository = PrefsRepository
 /** Resolves both swatches and overrides against the same unmodified light or dark theme. */
 internal class ThemePreviewColors(
     context: Context,
-    dark: Boolean,
+    private val dark: Boolean,
 ) {
     private val base = (if (dark) NightTheme.DARK else DayTheme.LIGHT).themedContext(context.applicationContext)
     private val dynamic by lazy { DynamicColors.wrapContextIfAvailable(base) }
@@ -124,24 +134,21 @@ internal class ThemePreviewColors(
     fun swatch(
         role: ThemeColorRole,
         choice: ThemeColorChoice,
-    ): Int = color(role, choice, role.attribute)
-
-    @ColorInt
-    private fun color(
-        role: ThemeColorRole,
-        choice: ThemeColorChoice,
-        attribute: Int,
     ): Int =
         when (choice.effectiveSource) {
-            ThemeColorSource.ANKIDROID -> MaterialColors.getColor(base, attribute, Color.TRANSPARENT)
+            ThemeColorSource.ANKIDROID -> defaultSwatch(role)
             ThemeColorSource.DYNAMIC ->
                 MaterialColors.getColor(
                     dynamic,
-                    attribute,
-                    MaterialColors.getColor(base, role.attribute, Color.TRANSPARENT),
+                    attributes.getValue(role).getValue(role.swatchResource),
+                    defaultSwatch(role),
                 )
-            ThemeColorSource.CUSTOM -> requireNotNull(choice.customColor)
+            ThemeColorSource.CUSTOM -> customThemeColors(role, requireNotNull(choice.customColor), dark).getValue(role.swatchResource)
         }
+
+    @ColorInt
+    private fun defaultSwatch(role: ThemeColorRole): Int =
+        MaterialColors.getColor(base, attributes.getValue(role).getValue(role.swatchResource), Color.TRANSPARENT)
 
     fun applyTo(
         activity: Activity,
@@ -149,7 +156,7 @@ internal class ThemePreviewColors(
     ) {
         if (palette.isEmpty() || Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return
         val colors = mutableMapOf<Int, Int>()
-        val styles = palette.map { (role, choice) -> addRoleColors(colors, role, choice) }
+        val styles = palette.mapNotNull { (role, choice) -> addRoleColors(colors, role, choice) }
         if (activity.installThemeColorOverrides(colors)) {
             styles.forEach { activity.theme.applyStyle(it, true) }
         }
@@ -159,46 +166,97 @@ internal class ThemePreviewColors(
         colors: MutableMap<Int, Int>,
         role: ThemeColorRole,
         choice: ThemeColorChoice,
-    ): Int =
-        when (role) {
-            ThemeColorRole.MAIN -> {
-                val primary = swatch(role, choice)
-                colors[R.color.theme_preview_primary] = primary
-                colors[R.color.theme_preview_on_primary] =
-                    if (choice.effectiveSource == ThemeColorSource.CUSTOM) {
-                        if (ColorUtils.calculateLuminance(primary) > 0.179) Color.BLACK else Color.WHITE
-                    } else {
-                        color(role, choice, MaterialR.attr.colorOnPrimary)
-                    }
-                R.style.ThemeOverlay_AnkiDroid_PreviewMain
-            }
-            ThemeColorRole.BACKGROUND -> {
-                for ((resource, attribute) in surfaceAttributes) {
-                    colors[resource] = color(role, choice, attribute)
+    ): Int? {
+        when (choice.effectiveSource) {
+            ThemeColorSource.ANKIDROID -> return null
+            ThemeColorSource.DYNAMIC -> {
+                val fallback = defaultSwatch(role)
+                for ((resource, attribute) in attributes.getValue(role)) {
+                    colors[resource] = MaterialColors.getColor(dynamic, attribute, fallback)
                 }
-                R.style.ThemeOverlay_AnkiDroid_PreviewBackground
             }
-            ThemeColorRole.TEXT -> {
-                colors[R.color.theme_preview_on_surface] = swatch(role, choice)
-                colors[R.color.theme_preview_on_surface_variant] = color(role, choice, MaterialR.attr.colorOnSurfaceVariant)
-                colors[R.color.theme_preview_on_background] = color(role, choice, MaterialR.attr.colorOnBackground)
-                R.style.ThemeOverlay_AnkiDroid_PreviewText
+            ThemeColorSource.CUSTOM -> {
+                colors.putAll(customThemeColors(role, requireNotNull(choice.customColor), dark))
+                if (role == ThemeColorRole.MAIN) return R.style.ThemeOverlay_AnkiDroid_PreviewCustomMain
             }
         }
+        return role.overlay
+    }
 
     private companion object {
-        val surfaceAttributes =
+        val attributes =
             mapOf(
-                R.color.theme_preview_surface to MaterialR.attr.colorSurface,
-                R.color.theme_preview_surface_dim to MaterialR.attr.colorSurfaceDim,
-                R.color.theme_preview_surface_bright to MaterialR.attr.colorSurfaceBright,
-                R.color.theme_preview_surface_variant to MaterialR.attr.colorSurfaceVariant,
-                R.color.theme_preview_surface_lowest to MaterialR.attr.colorSurfaceContainerLowest,
-                R.color.theme_preview_surface_low to MaterialR.attr.colorSurfaceContainerLow,
-                R.color.theme_preview_surface_container to MaterialR.attr.colorSurfaceContainer,
-                R.color.theme_preview_surface_high to MaterialR.attr.colorSurfaceContainerHigh,
-                R.color.theme_preview_surface_highest to MaterialR.attr.colorSurfaceContainerHighest,
-                R.color.theme_preview_background to android.R.attr.colorBackground,
+                ThemeColorRole.MAIN to
+                    mapOf(
+                        R.color.theme_preview_primary to AppCompatR.attr.colorPrimary,
+                        R.color.theme_preview_on_primary to MaterialR.attr.colorOnPrimary,
+                    ),
+                ThemeColorRole.BACKGROUND to
+                    mapOf(
+                        R.color.theme_preview_surface to MaterialR.attr.colorSurface,
+                        R.color.theme_preview_surface_dim to MaterialR.attr.colorSurfaceDim,
+                        R.color.theme_preview_surface_bright to MaterialR.attr.colorSurfaceBright,
+                        R.color.theme_preview_surface_variant to MaterialR.attr.colorSurfaceVariant,
+                        R.color.theme_preview_surface_lowest to MaterialR.attr.colorSurfaceContainerLowest,
+                        R.color.theme_preview_surface_low to MaterialR.attr.colorSurfaceContainerLow,
+                        R.color.theme_preview_surface_container to MaterialR.attr.colorSurfaceContainer,
+                        R.color.theme_preview_surface_high to MaterialR.attr.colorSurfaceContainerHigh,
+                        R.color.theme_preview_surface_highest to MaterialR.attr.colorSurfaceContainerHighest,
+                        R.color.theme_preview_background to android.R.attr.colorBackground,
+                    ),
+                ThemeColorRole.FOREGROUND to
+                    mapOf(
+                        R.color.theme_preview_on_surface to MaterialR.attr.colorOnSurface,
+                        R.color.theme_preview_on_surface_variant to MaterialR.attr.colorOnSurfaceVariant,
+                        R.color.theme_preview_on_background to MaterialR.attr.colorOnBackground,
+                    ),
+            )
+    }
+}
+
+// Keep the Material Components color utilities behind this resolver.
+@SuppressLint("RestrictedApi")
+private fun customThemeColors(
+    role: ThemeColorRole,
+    @ColorInt seed: Int,
+    dark: Boolean,
+): Map<Int, Int> {
+    val seedColor = Hct.fromInt(seed)
+    val scheme =
+        if (Color.red(seed) == Color.green(seed) && Color.green(seed) == Color.blue(seed)) {
+            SchemeMonochrome(seedColor, dark, 0.0)
+        } else {
+            SchemeTonalSpot(seedColor, dark, 0.0)
+        }
+    val colors = MaterialDynamicColors()
+    return when (role) {
+        ThemeColorRole.MAIN ->
+            mapOf(
+                R.color.theme_preview_primary to colors.primary().getArgb(scheme),
+                R.color.theme_preview_on_primary to colors.onPrimary().getArgb(scheme),
+                R.color.theme_preview_primary_container to colors.primaryContainer().getArgb(scheme),
+                R.color.theme_preview_on_primary_container to colors.onPrimaryContainer().getArgb(scheme),
+            )
+        ThemeColorRole.BACKGROUND -> {
+            val surface = colors.surface().getArgb(scheme)
+            mapOf(
+                R.color.theme_preview_surface to surface,
+                R.color.theme_preview_surface_dim to colors.surfaceDim().getArgb(scheme),
+                R.color.theme_preview_surface_bright to colors.surfaceBright().getArgb(scheme),
+                R.color.theme_preview_surface_variant to colors.surfaceVariant().getArgb(scheme),
+                R.color.theme_preview_surface_lowest to colors.surfaceContainerLowest().getArgb(scheme),
+                R.color.theme_preview_surface_low to colors.surfaceContainerLow().getArgb(scheme),
+                R.color.theme_preview_surface_container to colors.surfaceContainer().getArgb(scheme),
+                R.color.theme_preview_surface_high to colors.surfaceContainerHigh().getArgb(scheme),
+                R.color.theme_preview_surface_highest to colors.surfaceContainerHighest().getArgb(scheme),
+                R.color.theme_preview_background to surface,
+            )
+        }
+        ThemeColorRole.FOREGROUND ->
+            mapOf(
+                R.color.theme_preview_on_surface to colors.onSurface().getArgb(scheme),
+                R.color.theme_preview_on_surface_variant to colors.onSurfaceVariant().getArgb(scheme),
+                R.color.theme_preview_on_background to colors.onBackground().getArgb(scheme),
             )
     }
 }
