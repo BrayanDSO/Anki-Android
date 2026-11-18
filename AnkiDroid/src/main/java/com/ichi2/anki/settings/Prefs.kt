@@ -28,6 +28,9 @@ import com.ichi2.anki.settings.enums.NightTheme
 import com.ichi2.anki.settings.enums.PrefEnum
 import com.ichi2.anki.settings.enums.ShouldFetchMedia
 import com.ichi2.anki.settings.enums.ToolbarPosition
+import com.ichi2.themes.ThemeColorChoice
+import com.ichi2.themes.ThemeColorRole
+import com.ichi2.themes.ThemeColorSource
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
@@ -468,6 +471,27 @@ open class PrefsRepository protected constructor(
 
     @set:VisibleForTesting
     var devMaterialYouEnabled: Boolean by booleanPref(R.string.dev_material_you_key, false)
+
+    internal var devThemePreviewEnabled by booleanPref(R.string.dev_theme_preview_enabled_key, false)
+    internal var devThemeColorScheme by enumPref(R.string.dev_theme_color_scheme_key, AppTheme.FOLLOW_SYSTEM)
+    internal var devThemeEink by booleanPref(R.string.dev_theme_eink_key, false)
+
+    internal fun themeColor(
+        dark: Boolean,
+        role: ThemeColorRole,
+    ): ThemeColorChoice {
+        val saved = getString(role.preferenceKey(dark), null) ?: return ThemeColorChoice()
+        val source = ThemeColorSource.entries.firstOrNull { it.name == saved.substringBefore(':') }
+        return ThemeColorChoice(source ?: ThemeColorSource.ANKIDROID, saved.substringAfter(':', "").toIntOrNull())
+    }
+
+    internal fun setThemeColor(
+        dark: Boolean,
+        role: ThemeColorRole,
+        color: ThemeColorChoice,
+    ) {
+        putString(role.preferenceKey(dark), "${color.source.name}:${color.customColor ?: ""}")
+    }
 
     @set:VisibleForTesting
     var devUsingCardBrowserSearchView: Boolean by booleanPref(R.string.dev_card_browser_search_view, false)

@@ -12,9 +12,12 @@ import android.os.Bundle
 import android.util.TypedValue
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.app.ActivityCompat
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import com.google.android.material.color.DynamicColors
 import com.ichi2.anki.BuildConfig
 import com.ichi2.anki.R
@@ -38,11 +41,24 @@ object Themes {
     val isNightTheme: Boolean get() = currentTheme is NightTheme
 
     fun setTheme(context: Context) {
-        updateCurrentTheme(context)
+        val prefs = PrefsRepository(context)
+        applyTheme(context, prefs, context.activeThemePreview(prefs))
+    }
+
+    private fun applyTheme(
+        context: Context,
+        prefs: PrefsRepository,
+        preview: ActiveThemePreview?,
+    ) {
+        updateCurrentTheme(context, prefs, preview)
         context.setTheme(currentTheme.styleResId)
         val isEink = currentTheme == DayTheme.EINK || currentTheme == NightTheme.EINK
-        if (context is Activity && !isEink && PrefsRepository(context).devMaterialYouEnabled) {
-            DynamicColors.applyToActivityIfAvailable(context)
+        if (context is Activity && !isEink) {
+            if (preview != null) {
+                ThemePreviewColors(context, preview.dark).applyTo(context, preview.palette)
+            } else if (prefs.devMaterialYouEnabled) {
+                DynamicColors.applyToActivityIfAvailable(context)
+            }
         }
     }
 
@@ -69,7 +85,20 @@ object Themes {
             if (BuildConfig.DEBUG) throw IllegalStateException(message) else Timber.w(message)
         }
 
-        setTheme(activity as Context)
+        val prefs = PrefsRepository(activity)
+        val preview = activity.activeThemePreview(prefs)
+        applyTheme(activity, prefs, preview)
+        if (activity is FragmentActivity) {
+            activity.lifecycle.addObserver(
+                object : DefaultLifecycleObserver {
+                    override fun onResume(owner: LifecycleOwner) {
+                        if (!activity.isFinishing && !activity.isChangingConfigurations && activity.activeThemePreview(prefs) != preview) {
+                            ActivityCompat.recreate(activity)
+                        }
+                    }
+                },
+            )
+        }
 
         if (hadLauncherSplash) {
             activity.theme.resolveAttribute(android.R.attr.windowBackground, tv, true)
@@ -91,14 +120,26 @@ object Themes {
      */
     fun updateCurrentTheme(context: Context) {
         val prefs = PrefsRepository(context)
-        val appTheme = prefs.appTheme
+        updateCurrentTheme(context, prefs, context.activeThemePreview(prefs))
+    }
 
-        val themeIsDark = (appTheme == AppTheme.FOLLOW_SYSTEM && systemIsInNightMode(context)) || appTheme == AppTheme.NIGHT
+    private fun updateCurrentTheme(
+        context: Context,
+        prefs: PrefsRepository,
+        preview: ActiveThemePreview?,
+    ) {
+        val appTheme = preview?.scheme ?: prefs.appTheme
+        val themeIsDark =
+            preview?.dark ?: when (appTheme) {
+                AppTheme.FOLLOW_SYSTEM -> systemIsInNightMode(context)
+                AppTheme.DAY -> false
+                AppTheme.NIGHT -> true
+            }
         currentTheme =
-            if (themeIsDark) {
-                prefs.nightTheme
-            } else {
-                prefs.dayTheme
+            when {
+                preview == null -> if (themeIsDark) prefs.nightTheme else prefs.dayTheme
+                preview.eink -> if (themeIsDark) NightTheme.EINK else DayTheme.EINK
+                else -> if (themeIsDark) NightTheme.DARK else DayTheme.LIGHT
             }
         val defaultNightMode =
             when (appTheme) {

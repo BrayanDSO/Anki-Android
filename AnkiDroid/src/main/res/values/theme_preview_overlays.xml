@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<resources>
+    <!-- These resources are replaced at runtime before the corresponding overlay is applied. -->
+    <color name="theme_preview_primary">#00000000</color>
+    <color name="theme_preview_on_primary">#00000000</color>
+    <color name="theme_preview_background">#00000000</color>
+    <color name="theme_preview_surface">#00000000</color>
+    <color name="theme_preview_surface_dim">#00000000</color>
+    <color name="theme_preview_surface_bright">#00000000</color>
+    <color name="theme_preview_surface_variant">#00000000</color>
+    <color name="theme_preview_surface_lowest">#00000000</color>
+    <color name="theme_preview_surface_low">#00000000</color>
+    <color name="theme_preview_surface_container">#00000000</color>
+    <color name="theme_preview_surface_high">#00000000</color>
+    <color name="theme_preview_surface_highest">#00000000</color>
+    <color name="theme_preview_on_surface">#00000000</color>
+    <color name="theme_preview_on_surface_variant">#00000000</color>
+    <color name="theme_preview_on_background">#00000000</color>
+
+    <style name="ThemeOverlay.AnkiDroid.PreviewMain" parent="">
+        <item name="colorPrimary">@color/theme_preview_primary</item>
+        <item name="android:colorPrimary">?attr/colorPrimary</item>
+        <item name="appBarColor">?attr/colorPrimary</item>
+        <item name="fabNormalColor">?attr/colorPrimary</item>
+        <item name="colorOnPrimary">@color/theme_preview_on_primary</item>
+        <item name="actionBarTextColor">?attr/colorOnPrimary</item>
+    </style>
+
+    <style name="ThemeOverlay.AnkiDroid.PreviewBackground" parent="">
+        <item name="android:colorBackground">@color/theme_preview_background</item>
+        <item name="android:windowBackground">?android:attr/colorBackground</item>
+        <item name="colorSurface">@color/theme_preview_surface</item>
+        <item name="colorSurfaceDim">@color/theme_preview_surface_dim</item>
+        <item name="colorSurfaceBright">@color/theme_preview_surface_bright</item>
+        <item name="colorSurfaceVariant">@color/theme_preview_surface_variant</item>
+        <item name="colorSurfaceContainerLowest">@color/theme_preview_surface_lowest</item>
+        <item name="colorSurfaceContainerLow">@color/theme_preview_surface_low</item>
+        <item name="colorSurfaceContainer">@color/theme_preview_surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/theme_preview_surface_high</item>
+        <item name="colorSurfaceContainerHighest">@color/theme_preview_surface_highest</item>
+    </style>
+
+    <style name="ThemeOverlay.AnkiDroid.PreviewText" parent="">
+        <item name="colorOnSurface">@color/theme_preview_on_surface</item>
+        <item name="colorOnSurfaceVariant">@color/theme_preview_on_surface_variant</item>
+        <item name="colorOnBackground">@color/theme_preview_on_background</item>
+    </style>
+</resources>

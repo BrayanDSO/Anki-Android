@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<resources>
+    <item name="dev_theme_settings_compose" type="id"/>
+    <string name="dev_theme_settings_key" translatable="false">devThemeSettings</string>
+    <string name="dev_theme_preview_enabled_key" translatable="false">devThemePreviewEnabled</string>
+    <string name="dev_theme_color_scheme_key" translatable="false">devThemeColorScheme</string>
+    <string name="dev_theme_eink_key" translatable="false">devThemeEink</string>
+    <string name="dev_theme_light_main_key" translatable="false">devThemeLightMain</string>
+    <string name="dev_theme_light_background_key" translatable="false">devThemeLightBackground</string>
+    <string name="dev_theme_light_text_key" translatable="false">devThemeLightText</string>
+    <string name="dev_theme_dark_main_key" translatable="false">devThemeDarkMain</string>
+    <string name="dev_theme_dark_background_key" translatable="false">devThemeDarkBackground</string>
+    <string name="dev_theme_dark_text_key" translatable="false">devThemeDarkText</string>
+
+    <string name="dev_theme_settings">Theme settings</string>
+    <string name="dev_theme_preview_enabled">Enable theme preview</string>
+    <string name="dev_theme_color_scheme">Color scheme</string>
+    <string name="dev_theme_main_color">Main color</string>
+    <string name="dev_theme_background_color">Background color</string>
+    <string name="dev_theme_text_color">Text color</string>
+    <string name="dev_theme_ankidroid_color">AnkiDroid</string>
+    <string name="dev_theme_dynamic_color">Dynamic</string>
+    <string name="dev_theme_custom_color">Custom</string>
+    <string name="dev_theme_dynamic_unavailable">Requires Material You support</string>
+    <string name="dev_theme_custom_unavailable">Requires Android 11 or later</string>
+    <string name="dev_theme_eink_summary">Uses the E-ink palette and ignores the colors above.</string>
+</resources>

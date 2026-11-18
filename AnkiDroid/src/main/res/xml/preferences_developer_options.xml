@@ -88,6 +88,10 @@
         android:title="Work in progress"
         android:summary="Only for testing. Not suited for use. Don't create reports about them">
 
+        <Preference
+            android:fragment="com.ichi2.anki.preferences.ThemeSettingsFragment"
+            android:key="@string/dev_theme_settings_key"
+            android:title="@string/dev_theme_settings"/>
         <SwitchPreferenceCompat
             android:title="[Tablet] Side-by-side browser and editor"
             android:key="@string/dev_card_browser_fragmented"

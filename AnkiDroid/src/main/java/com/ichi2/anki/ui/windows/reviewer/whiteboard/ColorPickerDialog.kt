@@ -9,6 +9,7 @@ import android.os.Build
 import android.view.Choreographer
 import android.widget.FrameLayout
 import androidx.annotation.ColorInt
+import androidx.appcompat.app.AlertDialog
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import com.ichi2.anki.CommonString
@@ -30,18 +31,21 @@ import com.skydoves.colorpickerview.sliders.BrightnessSlideBar
  *
  * @receiver The Android context used to create the dialog.
  * @param initialColor The initial color to display in the picker as an `AARRGGBB` integer.
+ * @param allowTransparency Whether the color picker exposes the alpha slider.
  * @param onColorSelected Callback invoked when the user confirms their color selection.
  *                        Receives the selected color as an `AARRGGBB` integer.
  */
 fun Context.showColorPickerDialog(
     @ColorInt initialColor: Int,
+    allowTransparency: Boolean = true,
     onColorSelected: (Int) -> Unit,
-) {
+): AlertDialog {
     val choreographer = Choreographer.getInstance()
     var dismissed = false
-    ColorPickerDialog
+    return ColorPickerDialog
         .Builder(this)
         .show {
+            attachAlphaSlideBar(allowTransparency)
             val onPositiveCallback =
                 ColorEnvelopeListener { envelope, _ ->
                     envelope?.color?.let(onColorSelected)
@@ -104,7 +108,7 @@ fun Context.showColorPickerDialog(
                     }
                 }
             choreographer.postFrameCallback(callback)
-        }.setOnDismissListener { dismissed = true }
+        }.apply { setOnDismissListener { dismissed = true } }
 }
 
 /**
